@@ -1,0 +1,4163 @@
+-- *****************************************************************
+-- MPLS-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-MPLS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Counter64 FROM SNMPv2-SMI
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlMplsMib MODULE-IDENTITY
+    LAST-UPDATED "201411170000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "Private MIB for Multi Protocol Label Switching, MPLS."
+    REVISION    "201411170000Z"
+    DESCRIPTION
+        "Changed range for ccCarrierCode"
+    REVISION    "201411030000Z"
+    DESCRIPTION
+        "Added range to HQoSId, ForwardHQoSId, ReverseHQoSId and changed name of
+         tunnelmode from undefined to useglobal"
+    REVISION    "201410010000Z"
+    DESCRIPTION
+        "Added luxlMplsStatusTunnelIngressLabel, luxlMplsStatusTunnelEgressLabel
+         and luxlMplsStatusTunnelWorkingActive to LUXLMplsStatusTunnelEntry"
+    REVISION    "201408040000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 127 }
+
+
+LUXLMplsStateType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the MPLS state."
+    SYNTAX      INTEGER { unconfigured(0), configured(1), up(2), down(3) }
+
+LUXLMplsTagType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the MPLS tag type."
+    SYNTAX      INTEGER { untagged(0), ctagged(1), stagged(2) }
+
+LUXLMplsTunnelMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the MPLS tunnel mode."
+    SYNTAX      INTEGER { pipe(0), shortpipe(1), uniform(2), useglobal(3) }
+
+LUXLMplsVccvType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the MPLS Vccv type."
+    SYNTAX      INTEGER { none(0), vccv1(1), vccv2(2), vccv3(3), vccv4(4) }
+
+luxlMplsMibObjects OBJECT IDENTIFIER
+    ::= { luxlMplsMib 1 }
+
+luxlMplsCapabilities OBJECT IDENTIFIER
+    ::= { luxlMplsMibObjects 1 }
+
+luxlMplsCapabilitiesMaxLinks OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of links."
+    ::= { luxlMplsCapabilities 1 }
+
+luxlMplsCapabilitiesMaxTunnels OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of tunnels."
+    ::= { luxlMplsCapabilities 2 }
+
+luxlMplsCapabilitiesMaxPw OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of pseudo wires."
+    ::= { luxlMplsCapabilities 3 }
+
+luxlMplsCapabilitiesMaxLsp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of LSP and xc."
+    ::= { luxlMplsCapabilities 4 }
+
+luxlMplsCapabilitiesMaxCosMap OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of Class of Service maps."
+    ::= { luxlMplsCapabilities 5 }
+
+luxlMplsCapabilitiesMaxTunnelNameLen OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of characters in tunnel name."
+    ::= { luxlMplsCapabilities 6 }
+
+luxlMplsConfig OBJECT IDENTIFIER
+    ::= { luxlMplsMibObjects 2 }
+
+luxlMplsConfigGlobal OBJECT IDENTIFIER
+    ::= { luxlMplsConfig 1 }
+
+luxlMplsConfigGlobalMain OBJECT IDENTIFIER
+    ::= { luxlMplsConfigGlobal 1 }
+
+luxlMplsConfigGlobalMainTunnelMode OBJECT-TYPE
+    SYNTAX      LUXLMplsTunnelMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Tunnel Mode"
+    ::= { luxlMplsConfigGlobalMain 1 }
+
+luxlMplsConfigGlobalMainGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global ID (for OAM)"
+    ::= { luxlMplsConfigGlobalMain 2 }
+
+luxlMplsConfigGlobalMainNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Node ID (for OAM)"
+    ::= { luxlMplsConfigGlobalMain 3 }
+
+luxlMplsConfigGlobalMainIccCarrierCode OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..6))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "ITU-T M.1400 Carrier Code (ICC)."
+    ::= { luxlMplsConfigGlobalMain 4 }
+
+luxlMplsConfigLink OBJECT IDENTIFIER
+    ::= { luxlMplsConfig 2 }
+
+luxlMplsConfigLinkTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsConfigLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the MPLS Link configuration table."
+    ::= { luxlMplsConfigLink 1 }
+
+luxlMplsConfigLinkEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsConfigLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an MPLS Link."
+    INDEX       { luxlMplsConfigLinkGroupIfIndex }
+    ::= { luxlMplsConfigLinkTable 1 }
+
+LUXLMplsConfigLinkEntry ::= SEQUENCE {
+    luxlMplsConfigLinkGroupIfIndex      LUXLInterfaceIndex,
+    luxlMplsConfigLinkPort      LUXLInterfaceIndex,
+    luxlMplsConfigLinkMACAddressNextHop     MacAddress,
+    luxlMplsConfigLinkMACAddress    MacAddress,
+    luxlMplsConfigLinkVLANTagType   LUXLMplsTagType,
+    luxlMplsConfigLinkVLANId    LUXLUnsigned16,
+    luxlMplsConfigLinkVLANpcp   Unsigned32,
+    luxlMplsConfigLinkVLANdei   LUXLUnsigned8,
+    luxlMplsConfigLinkSrcNodeId     IpAddress,
+    luxlMplsConfigLinkSrcGlobalId   Unsigned32,
+    luxlMplsConfigLinkDstNodeId     IpAddress,
+    luxlMplsConfigLinkDstGlobalId   Unsigned32,
+    luxlMplsConfigLinkDstIfNum      Unsigned32,
+    luxlMplsConfigLinkSrcNodeIdValid    TruthValue,
+    luxlMplsConfigLinkSrcGlobalIdValid      TruthValue,
+    luxlMplsConfigLinkDstGlobalIdValid      TruthValue,
+    luxlMplsConfigLinkAction    LUXLRowEditorState
+}
+
+luxlMplsConfigLinkGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsConfigLinkEntry 1 }
+
+luxlMplsConfigLinkPort OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Physical port interface index."
+    ::= { luxlMplsConfigLinkEntry 2 }
+
+luxlMplsConfigLinkMACAddressNextHop OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MAC address of peer (next hop) MPLS node."
+    ::= { luxlMplsConfigLinkEntry 3 }
+
+luxlMplsConfigLinkMACAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MAC address of this MPLS interface."
+    ::= { luxlMplsConfigLinkEntry 4 }
+
+luxlMplsConfigLinkVLANTagType OBJECT-TYPE
+    SYNTAX      LUXLMplsTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN tag type."
+    ::= { luxlMplsConfigLinkEntry 5 }
+
+luxlMplsConfigLinkVLANId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN ID, if tag_type isn't untagged."
+    ::= { luxlMplsConfigLinkEntry 6 }
+
+luxlMplsConfigLinkVLANpcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN PCP; only relevant if tagged."
+    ::= { luxlMplsConfigLinkEntry 7 }
+
+luxlMplsConfigLinkVLANdei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN DEI; only relevant if tagged."
+    ::= { luxlMplsConfigLinkEntry 8 }
+
+luxlMplsConfigLinkSrcNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID (for OAM)."
+    ::= { luxlMplsConfigLinkEntry 9 }
+
+luxlMplsConfigLinkSrcGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID (for OAM)."
+    ::= { luxlMplsConfigLinkEntry 10 }
+
+luxlMplsConfigLinkDstNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination node ID (for OAM)."
+    ::= { luxlMplsConfigLinkEntry 11 }
+
+luxlMplsConfigLinkDstGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID (for OAM)."
+    ::= { luxlMplsConfigLinkEntry 12 }
+
+luxlMplsConfigLinkDstIfNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination interface number (for OAM)."
+    ::= { luxlMplsConfigLinkEntry 13 }
+
+luxlMplsConfigLinkSrcNodeIdValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID valid (for OAM)."
+    ::= { luxlMplsConfigLinkEntry 14 }
+
+luxlMplsConfigLinkSrcGlobalIdValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID valid (for OAM)."
+    ::= { luxlMplsConfigLinkEntry 15 }
+
+luxlMplsConfigLinkDstGlobalIdValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID valid (for OAM)."
+    ::= { luxlMplsConfigLinkEntry 16 }
+
+luxlMplsConfigLinkAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMplsConfigLinkEntry 100 }
+
+luxlMplsConfigLinkRowEditor OBJECT IDENTIFIER
+    ::= { luxlMplsConfigLink 2 }
+
+luxlMplsConfigLinkRowEditorGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsConfigLinkRowEditor 1 }
+
+luxlMplsConfigLinkRowEditorPort OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Physical port interface index."
+    ::= { luxlMplsConfigLinkRowEditor 2 }
+
+luxlMplsConfigLinkRowEditorMACAddressNextHop OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MAC address of peer (next hop) MPLS node."
+    ::= { luxlMplsConfigLinkRowEditor 3 }
+
+luxlMplsConfigLinkRowEditorMACAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MAC address of this MPLS interface."
+    ::= { luxlMplsConfigLinkRowEditor 4 }
+
+luxlMplsConfigLinkRowEditorVLANTagType OBJECT-TYPE
+    SYNTAX      LUXLMplsTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN tag type."
+    ::= { luxlMplsConfigLinkRowEditor 5 }
+
+luxlMplsConfigLinkRowEditorVLANId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN ID, if tag_type isn't untagged."
+    ::= { luxlMplsConfigLinkRowEditor 6 }
+
+luxlMplsConfigLinkRowEditorVLANpcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN PCP; only relevant if tagged."
+    ::= { luxlMplsConfigLinkRowEditor 7 }
+
+luxlMplsConfigLinkRowEditorVLANdei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN DEI; only relevant if tagged."
+    ::= { luxlMplsConfigLinkRowEditor 8 }
+
+luxlMplsConfigLinkRowEditorSrcNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID (for OAM)."
+    ::= { luxlMplsConfigLinkRowEditor 9 }
+
+luxlMplsConfigLinkRowEditorSrcGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID (for OAM)."
+    ::= { luxlMplsConfigLinkRowEditor 10 }
+
+luxlMplsConfigLinkRowEditorDstNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination node ID (for OAM)."
+    ::= { luxlMplsConfigLinkRowEditor 11 }
+
+luxlMplsConfigLinkRowEditorDstGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID (for OAM)."
+    ::= { luxlMplsConfigLinkRowEditor 12 }
+
+luxlMplsConfigLinkRowEditorDstIfNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination interface number (for OAM)."
+    ::= { luxlMplsConfigLinkRowEditor 13 }
+
+luxlMplsConfigLinkRowEditorSrcNodeIdValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID valid (for OAM)."
+    ::= { luxlMplsConfigLinkRowEditor 14 }
+
+luxlMplsConfigLinkRowEditorSrcGlobalIdValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID valid (for OAM)."
+    ::= { luxlMplsConfigLinkRowEditor 15 }
+
+luxlMplsConfigLinkRowEditorDstGlobalIdValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID valid (for OAM)."
+    ::= { luxlMplsConfigLinkRowEditor 16 }
+
+luxlMplsConfigLinkRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMplsConfigLinkRowEditor 100 }
+
+luxlMplsConfigTunnel OBJECT IDENTIFIER
+    ::= { luxlMplsConfig 3 }
+
+luxlMplsConfigTunnelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsConfigTunnelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the MPLS Tunnel configuration table."
+    ::= { luxlMplsConfigTunnel 1 }
+
+luxlMplsConfigTunnelEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsConfigTunnelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an MPLS Tunnel."
+    INDEX       { luxlMplsConfigTunnelGroupIfIndex }
+    ::= { luxlMplsConfigTunnelTable 1 }
+
+LUXLMplsConfigTunnelEntry ::= SEQUENCE {
+    luxlMplsConfigTunnelGroupIfIndex    LUXLInterfaceIndex,
+    luxlMplsConfigTunnelTunnelName      LUXLDisplayString,
+    luxlMplsConfigTunnelTunnelMode      LUXLMplsTunnelMode,
+    luxlMplsConfigTunnelSrcNodeId   IpAddress,
+    luxlMplsConfigTunnelSrcGlobalId     Unsigned32,
+    luxlMplsConfigTunnelDstNodeId   IpAddress,
+    luxlMplsConfigTunnelDstGlobalId     Unsigned32,
+    luxlMplsConfigTunnelDstTunnelTpNum      Unsigned32,
+    luxlMplsConfigTunnelSrcTunnelTpNum      LUXLUnsigned16,
+    luxlMplsConfigTunnelSrcLspNum   LUXLUnsigned16,
+    luxlMplsConfigTunnelDstLspNum   LUXLUnsigned16,
+    luxlMplsConfigTunnelIsSpme      TruthValue,
+    luxlMplsConfigTunnelSrcNodeIsValid      TruthValue,
+    luxlMplsConfigTunnelSrcGlobalIdValid    TruthValue,
+    luxlMplsConfigTunnelDstGlobalIdValid    TruthValue,
+    luxlMplsConfigTunnelIngressLabel    Unsigned32,
+    luxlMplsConfigTunnelEgressLabel     Unsigned32,
+    luxlMplsConfigTunnelAttachInterface     LUXLInterfaceIndex,
+    luxlMplsConfigTunnelTrafficClass    LUXLUnsigned8,
+    luxlMplsConfigTunnelTtl     LUXLUnsigned8,
+    luxlMplsConfigTunnelInCosMapId      LUXLUnsigned8,
+    luxlMplsConfigTunnelOutCosMapId     LUXLUnsigned8,
+    luxlMplsConfigTunnelIsLLsp      TruthValue,
+    luxlMplsConfigTunnelLLspCos     LUXLUnsigned8,
+    luxlMplsConfigTunnelAction      LUXLRowEditorState
+}
+
+luxlMplsConfigTunnelGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsConfigTunnelEntry 1 }
+
+luxlMplsConfigTunnelTunnelName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Tunnel name."
+    ::= { luxlMplsConfigTunnelEntry 2 }
+
+luxlMplsConfigTunnelTunnelMode OBJECT-TYPE
+    SYNTAX      LUXLMplsTunnelMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DiffServ tunnel modes for Traffic Class and TTL."
+    ::= { luxlMplsConfigTunnelEntry 3 }
+
+luxlMplsConfigTunnelSrcNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID (for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 4 }
+
+luxlMplsConfigTunnelSrcGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID (for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 5 }
+
+luxlMplsConfigTunnelDstNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination node ID (for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 6 }
+
+luxlMplsConfigTunnelDstGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID (for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 7 }
+
+luxlMplsConfigTunnelDstTunnelTpNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination tunnel ID number (for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 8 }
+
+luxlMplsConfigTunnelSrcTunnelTpNum OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source tunnel ID number (if SPME, for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 9 }
+
+luxlMplsConfigTunnelSrcLspNum OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source LSP number (if SPME, for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 10 }
+
+luxlMplsConfigTunnelDstLspNum OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination LSP number (if SPME, for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 11 }
+
+luxlMplsConfigTunnelIsSpme OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE if tunnel endpoint is an SPME (OAM)."
+    ::= { luxlMplsConfigTunnelEntry 12 }
+
+luxlMplsConfigTunnelSrcNodeIsValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID valid (for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 13 }
+
+luxlMplsConfigTunnelSrcGlobalIdValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID valid (for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 14 }
+
+luxlMplsConfigTunnelDstGlobalIdValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID valid (for OAM)."
+    ::= { luxlMplsConfigTunnelEntry 15 }
+
+luxlMplsConfigTunnelIngressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigTunnelEntry 16 }
+
+luxlMplsConfigTunnelEgressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigTunnelEntry 17 }
+
+luxlMplsConfigTunnelAttachInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS link interface or MPLS tunnel endpoint interface that tunnel
+         endpoint is attached to."
+    ::= { luxlMplsConfigTunnelEntry 18 }
+
+luxlMplsConfigTunnelTrafficClass OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Traffic class used on egress unless overruled by uniform tunnel mode."
+    ::= { luxlMplsConfigTunnelEntry 19 }
+
+luxlMplsConfigTunnelTtl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Time-to-live used on egress unless overruled by uniform tunnel mode."
+    ::= { luxlMplsConfigTunnelEntry 20 }
+
+luxlMplsConfigTunnelInCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service Map ID or 0 for no mapping."
+    ::= { luxlMplsConfigTunnelEntry 21 }
+
+luxlMplsConfigTunnelOutCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress Class of Service Map ID or 0 for no mapping."
+    ::= { luxlMplsConfigTunnelEntry 22 }
+
+luxlMplsConfigTunnelIsLLsp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE for L-LSP, FALSE for E-LSP. Note that for L-LSP, the Ingress Class
+         of Service Map only maps the ingress Traffic Class to Drop Precedence.
+         The Class of Service is given by the luxlMplsConfigTunnelLLspCos field."
+    ::= { luxlMplsConfigTunnelEntry 23 }
+
+luxlMplsConfigTunnelLLspCos OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service for L-LSP (luxlMplsConfigTunnelIsLLsp == TRUE)"
+    ::= { luxlMplsConfigTunnelEntry 24 }
+
+luxlMplsConfigTunnelAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMplsConfigTunnelEntry 100 }
+
+luxlMplsConfigTunnelRowEditor OBJECT IDENTIFIER
+    ::= { luxlMplsConfigTunnel 2 }
+
+luxlMplsConfigTunnelRowEditorGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsConfigTunnelRowEditor 1 }
+
+luxlMplsConfigTunnelRowEditorTunnelName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Tunnel name."
+    ::= { luxlMplsConfigTunnelRowEditor 2 }
+
+luxlMplsConfigTunnelRowEditorTunnelMode OBJECT-TYPE
+    SYNTAX      LUXLMplsTunnelMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DiffServ tunnel modes for Traffic Class and TTL."
+    ::= { luxlMplsConfigTunnelRowEditor 3 }
+
+luxlMplsConfigTunnelRowEditorSrcNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID (for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 4 }
+
+luxlMplsConfigTunnelRowEditorSrcGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID (for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 5 }
+
+luxlMplsConfigTunnelRowEditorDstNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination node ID (for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 6 }
+
+luxlMplsConfigTunnelRowEditorDstGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID (for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 7 }
+
+luxlMplsConfigTunnelRowEditorDstTunnelTpNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination tunnel ID number (for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 8 }
+
+luxlMplsConfigTunnelRowEditorSrcTunnelTpNum OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source tunnel ID number (if SPME, for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 9 }
+
+luxlMplsConfigTunnelRowEditorSrcLspNum OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source LSP number (if SPME, for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 10 }
+
+luxlMplsConfigTunnelRowEditorDstLspNum OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination LSP number (if SPME, for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 11 }
+
+luxlMplsConfigTunnelRowEditorIsSpme OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE if tunnel endpoint is an SPME (OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 12 }
+
+luxlMplsConfigTunnelRowEditorSrcNodeIsValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID valid (for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 13 }
+
+luxlMplsConfigTunnelRowEditorSrcGlobalIdValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID valid (for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 14 }
+
+luxlMplsConfigTunnelRowEditorDstGlobalIdValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID valid (for OAM)."
+    ::= { luxlMplsConfigTunnelRowEditor 15 }
+
+luxlMplsConfigTunnelRowEditorIngressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigTunnelRowEditor 16 }
+
+luxlMplsConfigTunnelRowEditorEgressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigTunnelRowEditor 17 }
+
+luxlMplsConfigTunnelRowEditorAttachInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS link interface or MPLS tunnel endpoint interface that tunnel
+         endpoint is attached to."
+    ::= { luxlMplsConfigTunnelRowEditor 18 }
+
+luxlMplsConfigTunnelRowEditorTrafficClass OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Traffic class used on egress unless overruled by uniform tunnel mode."
+    ::= { luxlMplsConfigTunnelRowEditor 19 }
+
+luxlMplsConfigTunnelRowEditorTtl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Time-to-live used on egress unless overruled by uniform tunnel mode."
+    ::= { luxlMplsConfigTunnelRowEditor 20 }
+
+luxlMplsConfigTunnelRowEditorInCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service Map ID or 0 for no mapping."
+    ::= { luxlMplsConfigTunnelRowEditor 21 }
+
+luxlMplsConfigTunnelRowEditorOutCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress Class of Service Map ID or 0 for no mapping."
+    ::= { luxlMplsConfigTunnelRowEditor 22 }
+
+luxlMplsConfigTunnelRowEditorIsLLsp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE for L-LSP, FALSE for E-LSP. Note that for L-LSP, the Ingress Class
+         of Service Map only maps the ingress Traffic Class to Drop Precedence.
+         The Class of Service is given by the luxlMplsConfigTunnelLLspCos field."
+    ::= { luxlMplsConfigTunnelRowEditor 23 }
+
+luxlMplsConfigTunnelRowEditorLLspCos OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service for L-LSP (luxlMplsConfigTunnelIsLLsp == TRUE)"
+    ::= { luxlMplsConfigTunnelRowEditor 24 }
+
+luxlMplsConfigTunnelRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMplsConfigTunnelRowEditor 100 }
+
+luxlMplsConfigLsp OBJECT IDENTIFIER
+    ::= { luxlMplsConfig 4 }
+
+luxlMplsConfigLspTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsConfigLspEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the MPLS Lsp configuration table."
+    ::= { luxlMplsConfigLsp 1 }
+
+luxlMplsConfigLspEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsConfigLspEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an MPLS Lsp."
+    INDEX       { luxlMplsConfigLspGroupIndex }
+    ::= { luxlMplsConfigLspTable 1 }
+
+LUXLMplsConfigLspEntry ::= SEQUENCE {
+    luxlMplsConfigLspGroupIndex     Integer32,
+    luxlMplsConfigLspXcName     LUXLDisplayString,
+    luxlMplsConfigLspSrcNodeId      IpAddress,
+    luxlMplsConfigLspSrcNodeIdIsDefined     TruthValue,
+    luxlMplsConfigLspSrcGlobalId    Unsigned32,
+    luxlMplsConfigLspSrcGlobalIdIsDefined   TruthValue,
+    luxlMplsConfigLspSrcTunnelTpNum     LUXLUnsigned16,
+    luxlMplsConfigLspDstNodeId      IpAddress,
+    luxlMplsConfigLspDstGlobalId    Unsigned32,
+    luxlMplsConfigLspDstGlobalIdIsDefined   TruthValue,
+    luxlMplsConfigLspDstTunnelTpNum     LUXLUnsigned16,
+    luxlMplsConfigLspSrcLspNumber   LUXLUnsigned16,
+    luxlMplsConfigLspDstLspNumber   LUXLUnsigned16,
+    luxlMplsConfigLspForwardIngressLabel    Unsigned32,
+    luxlMplsConfigLspForwardEgressLabel     Unsigned32,
+    luxlMplsConfigLspForwardAttachInterface     LUXLInterfaceIndex,
+    luxlMplsConfigLspForwardInCosMapId      LUXLUnsigned8,
+    luxlMplsConfigLspForwardOutCosMapId     LUXLUnsigned8,
+    luxlMplsConfigLspForwardIsLLsp      TruthValue,
+    luxlMplsConfigLspForwardHQoSId      LUXLUnsigned16,
+    luxlMplsConfigLspForwardLLspCos     LUXLUnsigned8,
+    luxlMplsConfigLspReverseIngressLabel    Unsigned32,
+    luxlMplsConfigLspReverseEgressLabel     Unsigned32,
+    luxlMplsConfigLspReverseAttachInterface     LUXLInterfaceIndex,
+    luxlMplsConfigLspReverseInCosMapId      LUXLUnsigned8,
+    luxlMplsConfigLspReverseOutCosMapId     LUXLUnsigned8,
+    luxlMplsConfigLspReverseIsLLsp      TruthValue,
+    luxlMplsConfigLspReverseLLspCos     LUXLUnsigned8,
+    luxlMplsConfigLspReverseHQoSId      LUXLUnsigned16,
+    luxlMplsConfigLspAction     LUXLRowEditorState
+}
+
+luxlMplsConfigLspGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the MPLS
+         capabilities."
+    ::= { luxlMplsConfigLspEntry 1 }
+
+luxlMplsConfigLspXcName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "LSP cross-connect name."
+    ::= { luxlMplsConfigLspEntry 2 }
+
+luxlMplsConfigLspSrcNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID (for OAM)."
+    ::= { luxlMplsConfigLspEntry 3 }
+
+luxlMplsConfigLspSrcNodeIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Source node ID (for OAM) is defined."
+    ::= { luxlMplsConfigLspEntry 4 }
+
+luxlMplsConfigLspSrcGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID (for OAM)."
+    ::= { luxlMplsConfigLspEntry 5 }
+
+luxlMplsConfigLspSrcGlobalIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Source global ID (for OAM) is defined."
+    ::= { luxlMplsConfigLspEntry 6 }
+
+luxlMplsConfigLspSrcTunnelTpNum OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source tunnel ID number (for OAM)."
+    ::= { luxlMplsConfigLspEntry 7 }
+
+luxlMplsConfigLspDstNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination node ID (for OAM)."
+    ::= { luxlMplsConfigLspEntry 8 }
+
+luxlMplsConfigLspDstGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID (for OAM)."
+    ::= { luxlMplsConfigLspEntry 9 }
+
+luxlMplsConfigLspDstGlobalIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Destination global ID (for OAM) is defined."
+    ::= { luxlMplsConfigLspEntry 10 }
+
+luxlMplsConfigLspDstTunnelTpNum OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination tunnel ID number (for OAM)."
+    ::= { luxlMplsConfigLspEntry 11 }
+
+luxlMplsConfigLspSrcLspNumber OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source LSP number (for OAM)."
+    ::= { luxlMplsConfigLspEntry 12 }
+
+luxlMplsConfigLspDstLspNumber OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination LSP number (for OAM)."
+    ::= { luxlMplsConfigLspEntry 13 }
+
+luxlMplsConfigLspForwardIngressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigLspEntry 14 }
+
+luxlMplsConfigLspForwardEgressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigLspEntry 15 }
+
+luxlMplsConfigLspForwardAttachInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress MPLS link interface or MPLS tunnel interface for forward part of
+         LSP cross-connect."
+    ::= { luxlMplsConfigLspEntry 16 }
+
+luxlMplsConfigLspForwardInCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service Map ID or 0 for forward part of LSP
+         cross-connect."
+    ::= { luxlMplsConfigLspEntry 17 }
+
+luxlMplsConfigLspForwardOutCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress Class of Service Map ID or 0 for forward part of LSP
+         cross-connect."
+    ::= { luxlMplsConfigLspEntry 18 }
+
+luxlMplsConfigLspForwardIsLLsp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE for L-LSP, FALSE for E-LSP. Note that for L-LSP, the Ingress Class
+         of Service Map only maps the ingress Traffic Class to Drop Precedence.
+         The Class of Service is given by the luxlMplsConfigLspForwardLLspCos
+         field."
+    ::= { luxlMplsConfigLspEntry 19 }
+
+luxlMplsConfigLspForwardHQoSId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (0..256)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "HQoS Id for forward direction (1..256) or 0 for none"
+    ::= { luxlMplsConfigLspEntry 20 }
+
+luxlMplsConfigLspForwardLLspCos OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service for L-LSP (ForwardIsLLsp == TRUE)"
+    ::= { luxlMplsConfigLspEntry 21 }
+
+luxlMplsConfigLspReverseIngressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigLspEntry 22 }
+
+luxlMplsConfigLspReverseEgressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigLspEntry 23 }
+
+luxlMplsConfigLspReverseAttachInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress MPLS link interface or MPLS tunnel endpoint interface for
+         reverse part of LSP cross-connect."
+    ::= { luxlMplsConfigLspEntry 24 }
+
+luxlMplsConfigLspReverseInCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service Map ID or 0 for reverse part of LSP
+         cross-connect."
+    ::= { luxlMplsConfigLspEntry 25 }
+
+luxlMplsConfigLspReverseOutCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress Class of Service Map ID or 0 for reverse part of LSP
+         cross-connect."
+    ::= { luxlMplsConfigLspEntry 26 }
+
+luxlMplsConfigLspReverseIsLLsp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE for L-LSP, FALSE for E-LSP. Note that for L-LSP, the Ingress Class
+         of Service Map only maps the ingress Traffic Class to Drop Precedence.
+         The Class of Service is given by the luxlMplsConfigLspReverseLLspCos
+         field."
+    ::= { luxlMplsConfigLspEntry 27 }
+
+luxlMplsConfigLspReverseLLspCos OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service for L-LSP (ReverseIsLLsp == TRUE)"
+    ::= { luxlMplsConfigLspEntry 28 }
+
+luxlMplsConfigLspReverseHQoSId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (0..256)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "HQoS Id for reverse direction (1..256) or 0 for none"
+    ::= { luxlMplsConfigLspEntry 29 }
+
+luxlMplsConfigLspAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMplsConfigLspEntry 100 }
+
+luxlMplsConfigLspRowEditor OBJECT IDENTIFIER
+    ::= { luxlMplsConfigLsp 2 }
+
+luxlMplsConfigLspRowEditorGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the MPLS
+         capabilities."
+    ::= { luxlMplsConfigLspRowEditor 1 }
+
+luxlMplsConfigLspRowEditorXcName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "LSP cross-connect name."
+    ::= { luxlMplsConfigLspRowEditor 2 }
+
+luxlMplsConfigLspRowEditorSrcNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID (for OAM)."
+    ::= { luxlMplsConfigLspRowEditor 3 }
+
+luxlMplsConfigLspRowEditorSrcNodeIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Source node ID (for OAM) is defined."
+    ::= { luxlMplsConfigLspRowEditor 4 }
+
+luxlMplsConfigLspRowEditorSrcGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID (for OAM)."
+    ::= { luxlMplsConfigLspRowEditor 5 }
+
+luxlMplsConfigLspRowEditorSrcGlobalIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Source global ID (for OAM) is defined."
+    ::= { luxlMplsConfigLspRowEditor 6 }
+
+luxlMplsConfigLspRowEditorSrcTunnelTpNum OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source tunnel ID number (for OAM)."
+    ::= { luxlMplsConfigLspRowEditor 7 }
+
+luxlMplsConfigLspRowEditorDstNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination node ID (for OAM)."
+    ::= { luxlMplsConfigLspRowEditor 8 }
+
+luxlMplsConfigLspRowEditorDstGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID (for OAM)."
+    ::= { luxlMplsConfigLspRowEditor 9 }
+
+luxlMplsConfigLspRowEditorDstGlobalIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Destination global ID (for OAM) is defined."
+    ::= { luxlMplsConfigLspRowEditor 10 }
+
+luxlMplsConfigLspRowEditorDstTunnelTpNum OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination tunnel ID number (for OAM)."
+    ::= { luxlMplsConfigLspRowEditor 11 }
+
+luxlMplsConfigLspRowEditorSrcLspNumber OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source LSP number (for OAM)."
+    ::= { luxlMplsConfigLspRowEditor 12 }
+
+luxlMplsConfigLspRowEditorDstLspNumber OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination LSP number (for OAM)."
+    ::= { luxlMplsConfigLspRowEditor 13 }
+
+luxlMplsConfigLspRowEditorForwardIngressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigLspRowEditor 14 }
+
+luxlMplsConfigLspRowEditorForwardEgressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigLspRowEditor 15 }
+
+luxlMplsConfigLspRowEditorForwardAttachInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress MPLS link interface or MPLS tunnel interface for forward part of
+         LSP cross-connect."
+    ::= { luxlMplsConfigLspRowEditor 16 }
+
+luxlMplsConfigLspRowEditorForwardInCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service Map ID or 0 for forward part of LSP
+         cross-connect."
+    ::= { luxlMplsConfigLspRowEditor 17 }
+
+luxlMplsConfigLspRowEditorForwardOutCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress Class of Service Map ID or 0 for forward part of LSP
+         cross-connect."
+    ::= { luxlMplsConfigLspRowEditor 18 }
+
+luxlMplsConfigLspRowEditorForwardIsLLsp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE for L-LSP, FALSE for E-LSP. Note that for L-LSP, the Ingress Class
+         of Service Map only maps the ingress Traffic Class to Drop Precedence.
+         The Class of Service is given by the luxlMplsConfigLspForwardLLspCos
+         field."
+    ::= { luxlMplsConfigLspRowEditor 19 }
+
+luxlMplsConfigLspRowEditorForwardHQoSId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (0..256)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "HQoS Id for forward direction (1..256) or 0 for none"
+    ::= { luxlMplsConfigLspRowEditor 20 }
+
+luxlMplsConfigLspRowEditorForwardLLspCos OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service for L-LSP (ForwardIsLLsp == TRUE)"
+    ::= { luxlMplsConfigLspRowEditor 21 }
+
+luxlMplsConfigLspRowEditorReverseIngressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigLspRowEditor 22 }
+
+luxlMplsConfigLspRowEditorReverseEgressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigLspRowEditor 23 }
+
+luxlMplsConfigLspRowEditorReverseAttachInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress MPLS link interface or MPLS tunnel endpoint interface for
+         reverse part of LSP cross-connect."
+    ::= { luxlMplsConfigLspRowEditor 24 }
+
+luxlMplsConfigLspRowEditorReverseInCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service Map ID or 0 for reverse part of LSP
+         cross-connect."
+    ::= { luxlMplsConfigLspRowEditor 25 }
+
+luxlMplsConfigLspRowEditorReverseOutCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress Class of Service Map ID or 0 for reverse part of LSP
+         cross-connect."
+    ::= { luxlMplsConfigLspRowEditor 26 }
+
+luxlMplsConfigLspRowEditorReverseIsLLsp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE for L-LSP, FALSE for E-LSP. Note that for L-LSP, the Ingress Class
+         of Service Map only maps the ingress Traffic Class to Drop Precedence.
+         The Class of Service is given by the luxlMplsConfigLspReverseLLspCos
+         field."
+    ::= { luxlMplsConfigLspRowEditor 27 }
+
+luxlMplsConfigLspRowEditorReverseLLspCos OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service for L-LSP (ReverseIsLLsp == TRUE)"
+    ::= { luxlMplsConfigLspRowEditor 28 }
+
+luxlMplsConfigLspRowEditorReverseHQoSId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (0..256)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "HQoS Id for reverse direction (1..256) or 0 for none"
+    ::= { luxlMplsConfigLspRowEditor 29 }
+
+luxlMplsConfigLspRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMplsConfigLspRowEditor 100 }
+
+luxlMplsConfigPw OBJECT IDENTIFIER
+    ::= { luxlMplsConfig 5 }
+
+luxlMplsConfigPwTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsConfigPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the MPLS Pseudo Wire configuration table."
+    ::= { luxlMplsConfigPw 1 }
+
+luxlMplsConfigPwEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsConfigPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an MPLS Pseudo Wire."
+    INDEX       { luxlMplsConfigPwGroupIfIndex }
+    ::= { luxlMplsConfigPwTable 1 }
+
+LUXLMplsConfigPwEntry ::= SEQUENCE {
+    luxlMplsConfigPwGroupIfIndex    LUXLInterfaceIndex,
+    luxlMplsConfigPwInLabel     Unsigned32,
+    luxlMplsConfigPwOutLabel    Unsigned32,
+    luxlMplsConfigPwControlWord     Unsigned32,
+    luxlMplsConfigPwUseControlWord      TruthValue,
+    luxlMplsConfigPwTunnelMode      LUXLMplsTunnelMode,
+    luxlMplsConfigPwTrafficClass    LUXLUnsigned8,
+    luxlMplsConfigPwTtl     LUXLUnsigned8,
+    luxlMplsConfigPwInCosMapId      LUXLUnsigned8,
+    luxlMplsConfigPwOutCosMapId     LUXLUnsigned8,
+    luxlMplsConfigPwIsLLsp      TruthValue,
+    luxlMplsConfigPwLLspCos     LUXLUnsigned8,
+    luxlMplsConfigPwAttachInterface     LUXLInterfaceIndex,
+    luxlMplsConfigPwStitchPwInterface   LUXLInterfaceIndex,
+    luxlMplsConfigPwVccvType    LUXLMplsVccvType,
+    luxlMplsConfigPwHQoSId      LUXLUnsigned16,
+    luxlMplsConfigPwSrcNodeId   IpAddress,
+    luxlMplsConfigPwSrcNodeIdIsDefined      TruthValue,
+    luxlMplsConfigPwSrcGlobalId     Unsigned32,
+    luxlMplsConfigPwSrcGlobalIdIsDefined    TruthValue,
+    luxlMplsConfigPwDstNodeId   IpAddress,
+    luxlMplsConfigPwDstGlobalId     Unsigned32,
+    luxlMplsConfigPwDstGlobalIdIsDefined    TruthValue,
+    luxlMplsConfigPwSrcAcId     Unsigned32,
+    luxlMplsConfigPwDstAcId     Unsigned32,
+    luxlMplsConfigPwSrcAgiValue     OCTET STRING,
+    luxlMplsConfigPwDstAgiValue     OCTET STRING,
+    luxlMplsConfigPwSrcAgiType      LUXLUnsigned8,
+    luxlMplsConfigPwSrcAgiLength    LUXLUnsigned8,
+    luxlMplsConfigPwDstAgiType      LUXLUnsigned8,
+    luxlMplsConfigPwDstAgiLength    LUXLUnsigned8,
+    luxlMplsConfigPwAction      LUXLRowEditorState
+}
+
+luxlMplsConfigPwGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsConfigPwEntry 1 }
+
+luxlMplsConfigPwInLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "PW local/ingress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigPwEntry 2 }
+
+luxlMplsConfigPwOutLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "PW remote/egress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigPwEntry 3 }
+
+luxlMplsConfigPwControlWord OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..268435455)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "PW control word value to use on egress."
+    ::= { luxlMplsConfigPwEntry 4 }
+
+luxlMplsConfigPwUseControlWord OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE: Use control word on egress and ingress, FALSE: Do not use."
+    ::= { luxlMplsConfigPwEntry 5 }
+
+luxlMplsConfigPwTunnelMode OBJECT-TYPE
+    SYNTAX      LUXLMplsTunnelMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DiffServ tunnel modes for Traffic Class and TTL."
+    ::= { luxlMplsConfigPwEntry 6 }
+
+luxlMplsConfigPwTrafficClass OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Traffic class used on egress unless overruled by uniform tunnel mode."
+    ::= { luxlMplsConfigPwEntry 7 }
+
+luxlMplsConfigPwTtl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Time-to-live used on egress unless overruled by uniform tunnel mode."
+    ::= { luxlMplsConfigPwEntry 8 }
+
+luxlMplsConfigPwInCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service Map ID or 0 no mapping."
+    ::= { luxlMplsConfigPwEntry 9 }
+
+luxlMplsConfigPwOutCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress Class of Service Map ID or 0 for no mapping."
+    ::= { luxlMplsConfigPwEntry 10 }
+
+luxlMplsConfigPwIsLLsp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE for L-LSP, FALSE for E-LSP. Note that for L-LSP, the Ingress Class
+         of Service Map only maps the ingress Traffic Class to Drop Precedence.
+         The Class of Service is given by the LLspCos field."
+    ::= { luxlMplsConfigPwEntry 11 }
+
+luxlMplsConfigPwLLspCos OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service for L-LSP (IsLLsp == TRUE)"
+    ::= { luxlMplsConfigPwEntry 12 }
+
+luxlMplsConfigPwAttachInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS link interface or MPLS tunnel endpoint number that PW is attached
+         to."
+    ::= { luxlMplsConfigPwEntry 13 }
+
+luxlMplsConfigPwStitchPwInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS PW interface index to stitch this PW with, 0 for no stitch."
+    ::= { luxlMplsConfigPwEntry 14 }
+
+luxlMplsConfigPwVccvType OBJECT-TYPE
+    SYNTAX      LUXLMplsVccvType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS PW OAM Vccv type."
+    ::= { luxlMplsConfigPwEntry 15 }
+
+luxlMplsConfigPwHQoSId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (0..256)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "HQoS Id (1..256) or 0 for none. Will only take effect for stitched PWs."
+    ::= { luxlMplsConfigPwEntry 16 }
+
+luxlMplsConfigPwSrcNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID (for OAM)."
+    ::= { luxlMplsConfigPwEntry 17 }
+
+luxlMplsConfigPwSrcNodeIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Source node ID (for OAM) is defined."
+    ::= { luxlMplsConfigPwEntry 18 }
+
+luxlMplsConfigPwSrcGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID (for OAM)."
+    ::= { luxlMplsConfigPwEntry 19 }
+
+luxlMplsConfigPwSrcGlobalIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Source global ID (for OAM) is defined."
+    ::= { luxlMplsConfigPwEntry 20 }
+
+luxlMplsConfigPwDstNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination node ID (for OAM)."
+    ::= { luxlMplsConfigPwEntry 21 }
+
+luxlMplsConfigPwDstGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID (for OAM)."
+    ::= { luxlMplsConfigPwEntry 22 }
+
+luxlMplsConfigPwDstGlobalIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Destination global ID (for OAM) is defined."
+    ::= { luxlMplsConfigPwEntry 23 }
+
+luxlMplsConfigPwSrcAcId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source AC_ID (for OAM)."
+    ::= { luxlMplsConfigPwEntry 24 }
+
+luxlMplsConfigPwDstAcId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination AC_ID (for OAM)."
+    ::= { luxlMplsConfigPwEntry 25 }
+
+luxlMplsConfigPwSrcAgiValue OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source AGI Value (for OAM)."
+    ::= { luxlMplsConfigPwEntry 26 }
+
+luxlMplsConfigPwDstAgiValue OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination AGI Value (for OAM).."
+    ::= { luxlMplsConfigPwEntry 27 }
+
+luxlMplsConfigPwSrcAgiType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source AGI Type (for OAM)."
+    ::= { luxlMplsConfigPwEntry 28 }
+
+luxlMplsConfigPwSrcAgiLength OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source AGI Length 0-7 (for OAM)."
+    ::= { luxlMplsConfigPwEntry 29 }
+
+luxlMplsConfigPwDstAgiType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination AGI Type (for OAM)."
+    ::= { luxlMplsConfigPwEntry 30 }
+
+luxlMplsConfigPwDstAgiLength OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination AGI Length 0-7 (for OAM)."
+    ::= { luxlMplsConfigPwEntry 31 }
+
+luxlMplsConfigPwAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMplsConfigPwEntry 100 }
+
+luxlMplsConfigPwRowEditor OBJECT IDENTIFIER
+    ::= { luxlMplsConfigPw 2 }
+
+luxlMplsConfigPwRowEditorGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsConfigPwRowEditor 1 }
+
+luxlMplsConfigPwRowEditorInLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "PW local/ingress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigPwRowEditor 2 }
+
+luxlMplsConfigPwRowEditorOutLabel OBJECT-TYPE
+    SYNTAX      Unsigned32 (16..1048575)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "PW remote/egress MPLS label value or LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsConfigPwRowEditor 3 }
+
+luxlMplsConfigPwRowEditorControlWord OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..268435455)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "PW control word value to use on egress."
+    ::= { luxlMplsConfigPwRowEditor 4 }
+
+luxlMplsConfigPwRowEditorUseControlWord OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE: Use control word on egress and ingress, FALSE: Do not use."
+    ::= { luxlMplsConfigPwRowEditor 5 }
+
+luxlMplsConfigPwRowEditorTunnelMode OBJECT-TYPE
+    SYNTAX      LUXLMplsTunnelMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DiffServ tunnel modes for Traffic Class and TTL."
+    ::= { luxlMplsConfigPwRowEditor 6 }
+
+luxlMplsConfigPwRowEditorTrafficClass OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Traffic class used on egress unless overruled by uniform tunnel mode."
+    ::= { luxlMplsConfigPwRowEditor 7 }
+
+luxlMplsConfigPwRowEditorTtl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Time-to-live used on egress unless overruled by uniform tunnel mode."
+    ::= { luxlMplsConfigPwRowEditor 8 }
+
+luxlMplsConfigPwRowEditorInCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service Map ID or 0 no mapping."
+    ::= { luxlMplsConfigPwRowEditor 9 }
+
+luxlMplsConfigPwRowEditorOutCosMapId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress Class of Service Map ID or 0 for no mapping."
+    ::= { luxlMplsConfigPwRowEditor 10 }
+
+luxlMplsConfigPwRowEditorIsLLsp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE for L-LSP, FALSE for E-LSP. Note that for L-LSP, the Ingress Class
+         of Service Map only maps the ingress Traffic Class to Drop Precedence.
+         The Class of Service is given by the LLspCos field."
+    ::= { luxlMplsConfigPwRowEditor 11 }
+
+luxlMplsConfigPwRowEditorLLspCos OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Class of Service for L-LSP (IsLLsp == TRUE)"
+    ::= { luxlMplsConfigPwRowEditor 12 }
+
+luxlMplsConfigPwRowEditorAttachInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS link interface or MPLS tunnel endpoint number that PW is attached
+         to."
+    ::= { luxlMplsConfigPwRowEditor 13 }
+
+luxlMplsConfigPwRowEditorStitchPwInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS PW interface index to stitch this PW with, 0 for no stitch."
+    ::= { luxlMplsConfigPwRowEditor 14 }
+
+luxlMplsConfigPwRowEditorVccvType OBJECT-TYPE
+    SYNTAX      LUXLMplsVccvType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS PW OAM Vccv type."
+    ::= { luxlMplsConfigPwRowEditor 15 }
+
+luxlMplsConfigPwRowEditorHQoSId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (0..256)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "HQoS Id (1..256) or 0 for none. Will only take effect for stitched PWs."
+    ::= { luxlMplsConfigPwRowEditor 16 }
+
+luxlMplsConfigPwRowEditorSrcNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 17 }
+
+luxlMplsConfigPwRowEditorSrcNodeIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Source node ID (for OAM) is defined."
+    ::= { luxlMplsConfigPwRowEditor 18 }
+
+luxlMplsConfigPwRowEditorSrcGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 19 }
+
+luxlMplsConfigPwRowEditorSrcGlobalIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Source global ID (for OAM) is defined."
+    ::= { luxlMplsConfigPwRowEditor 20 }
+
+luxlMplsConfigPwRowEditorDstNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination node ID (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 21 }
+
+luxlMplsConfigPwRowEditorDstGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination global ID (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 22 }
+
+luxlMplsConfigPwRowEditorDstGlobalIdIsDefined OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if Destination global ID (for OAM) is defined."
+    ::= { luxlMplsConfigPwRowEditor 23 }
+
+luxlMplsConfigPwRowEditorSrcAcId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source AC_ID (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 24 }
+
+luxlMplsConfigPwRowEditorDstAcId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination AC_ID (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 25 }
+
+luxlMplsConfigPwRowEditorSrcAgiValue OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source AGI Value (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 26 }
+
+luxlMplsConfigPwRowEditorDstAgiValue OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination AGI Value (for OAM).."
+    ::= { luxlMplsConfigPwRowEditor 27 }
+
+luxlMplsConfigPwRowEditorSrcAgiType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source AGI Type (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 28 }
+
+luxlMplsConfigPwRowEditorSrcAgiLength OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source AGI Length 0-7 (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 29 }
+
+luxlMplsConfigPwRowEditorDstAgiType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination AGI Type (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 30 }
+
+luxlMplsConfigPwRowEditorDstAgiLength OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination AGI Length 0-7 (for OAM)."
+    ::= { luxlMplsConfigPwRowEditor 31 }
+
+luxlMplsConfigPwRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMplsConfigPwRowEditor 100 }
+
+luxlMplsConfigCosMap OBJECT IDENTIFIER
+    ::= { luxlMplsConfig 6 }
+
+luxlMplsConfigCosMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsConfigCosMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the MPLS Class of Service map configuration table."
+    ::= { luxlMplsConfigCosMap 1 }
+
+luxlMplsConfigCosMapEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsConfigCosMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an MPLS Class of Service mapping."
+    INDEX       { luxlMplsConfigCosMapGroupIndex }
+    ::= { luxlMplsConfigCosMapTable 1 }
+
+LUXLMplsConfigCosMapEntry ::= SEQUENCE {
+    luxlMplsConfigCosMapGroupIndex      Integer32,
+    luxlMplsConfigCosMapInTcToCos0      LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToCos1      LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToCos2      LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToCos3      LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToCos4      LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToCos5      LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToCos6      LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToCos7      LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToDp0   LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToDp1   LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToDp2   LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToDp3   LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToDp4   LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToDp5   LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToDp6   LUXLUnsigned8,
+    luxlMplsConfigCosMapInTcToDp7   LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc00      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc10      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc20      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc30      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc40      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc50      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc60      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc70      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc01      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc11      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc21      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc31      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc41      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc51      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc61      LUXLUnsigned8,
+    luxlMplsConfigCosMapOutCosDpToTc71      LUXLUnsigned8,
+    luxlMplsConfigCosMapAction      LUXLRowEditorState
+}
+
+luxlMplsConfigCosMapGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the MPLS
+         capabilities."
+    ::= { luxlMplsConfigCosMapEntry 1 }
+
+luxlMplsConfigCosMapInTcToCos0 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapEntry 10 }
+
+luxlMplsConfigCosMapInTcToCos1 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapEntry 11 }
+
+luxlMplsConfigCosMapInTcToCos2 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapEntry 12 }
+
+luxlMplsConfigCosMapInTcToCos3 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapEntry 13 }
+
+luxlMplsConfigCosMapInTcToCos4 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapEntry 14 }
+
+luxlMplsConfigCosMapInTcToCos5 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapEntry 15 }
+
+luxlMplsConfigCosMapInTcToCos6 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapEntry 16 }
+
+luxlMplsConfigCosMapInTcToCos7 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapEntry 17 }
+
+luxlMplsConfigCosMapInTcToDp0 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapEntry 20 }
+
+luxlMplsConfigCosMapInTcToDp1 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapEntry 21 }
+
+luxlMplsConfigCosMapInTcToDp2 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapEntry 22 }
+
+luxlMplsConfigCosMapInTcToDp3 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapEntry 23 }
+
+luxlMplsConfigCosMapInTcToDp4 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapEntry 24 }
+
+luxlMplsConfigCosMapInTcToDp5 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapEntry 25 }
+
+luxlMplsConfigCosMapInTcToDp6 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapEntry 26 }
+
+luxlMplsConfigCosMapInTcToDp7 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapEntry 27 }
+
+luxlMplsConfigCosMapOutCosDpToTc00 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 30 }
+
+luxlMplsConfigCosMapOutCosDpToTc10 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 31 }
+
+luxlMplsConfigCosMapOutCosDpToTc20 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 32 }
+
+luxlMplsConfigCosMapOutCosDpToTc30 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 33 }
+
+luxlMplsConfigCosMapOutCosDpToTc40 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 34 }
+
+luxlMplsConfigCosMapOutCosDpToTc50 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 35 }
+
+luxlMplsConfigCosMapOutCosDpToTc60 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 36 }
+
+luxlMplsConfigCosMapOutCosDpToTc70 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 37 }
+
+luxlMplsConfigCosMapOutCosDpToTc01 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 40 }
+
+luxlMplsConfigCosMapOutCosDpToTc11 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 41 }
+
+luxlMplsConfigCosMapOutCosDpToTc21 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 42 }
+
+luxlMplsConfigCosMapOutCosDpToTc31 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 43 }
+
+luxlMplsConfigCosMapOutCosDpToTc41 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 44 }
+
+luxlMplsConfigCosMapOutCosDpToTc51 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 45 }
+
+luxlMplsConfigCosMapOutCosDpToTc61 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 46 }
+
+luxlMplsConfigCosMapOutCosDpToTc71 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapEntry 47 }
+
+luxlMplsConfigCosMapAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMplsConfigCosMapEntry 100 }
+
+luxlMplsConfigCosMapRowEditor OBJECT IDENTIFIER
+    ::= { luxlMplsConfigCosMap 2 }
+
+luxlMplsConfigCosMapRowEditorGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the MPLS
+         capabilities."
+    ::= { luxlMplsConfigCosMapRowEditor 1 }
+
+luxlMplsConfigCosMapRowEditorInTcToCos0 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapRowEditor 10 }
+
+luxlMplsConfigCosMapRowEditorInTcToCos1 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapRowEditor 11 }
+
+luxlMplsConfigCosMapRowEditorInTcToCos2 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapRowEditor 12 }
+
+luxlMplsConfigCosMapRowEditorInTcToCos3 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapRowEditor 13 }
+
+luxlMplsConfigCosMapRowEditorInTcToCos4 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapRowEditor 14 }
+
+luxlMplsConfigCosMapRowEditorInTcToCos5 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapRowEditor 15 }
+
+luxlMplsConfigCosMapRowEditorInTcToCos6 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapRowEditor 16 }
+
+luxlMplsConfigCosMapRowEditorInTcToCos7 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Class of Service mapping"
+    ::= { luxlMplsConfigCosMapRowEditor 17 }
+
+luxlMplsConfigCosMapRowEditorInTcToDp0 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 20 }
+
+luxlMplsConfigCosMapRowEditorInTcToDp1 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 21 }
+
+luxlMplsConfigCosMapRowEditorInTcToDp2 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 22 }
+
+luxlMplsConfigCosMapRowEditorInTcToDp3 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 23 }
+
+luxlMplsConfigCosMapRowEditorInTcToDp4 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 24 }
+
+luxlMplsConfigCosMapRowEditorInTcToDp5 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 25 }
+
+luxlMplsConfigCosMapRowEditorInTcToDp6 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 26 }
+
+luxlMplsConfigCosMapRowEditorInTcToDp7 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress Traffic Class to Drop Precedence mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 27 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc00 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 30 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc10 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 31 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc20 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 32 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc30 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 33 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc40 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 34 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc50 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 35 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc60 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 36 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc70 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (0) to Traffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 37 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc01 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 40 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc11 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 41 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc21 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 42 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc31 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 43 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc41 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 44 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc51 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 45 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc61 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 46 }
+
+luxlMplsConfigCosMapRowEditorOutCosDpToTc71 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Class of Service (0-7) and Egress Drop Precedence (1) toTraffic Class
+         mapping."
+    ::= { luxlMplsConfigCosMapRowEditor 47 }
+
+luxlMplsConfigCosMapRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMplsConfigCosMapRowEditor 100 }
+
+luxlMplsStatus OBJECT IDENTIFIER
+    ::= { luxlMplsMibObjects 3 }
+
+luxlMplsStatusGlobal OBJECT IDENTIFIER
+    ::= { luxlMplsStatus 1 }
+
+luxlMplsStatusLink OBJECT IDENTIFIER
+    ::= { luxlMplsStatus 2 }
+
+luxlMplsStatusLinkTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsStatusLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains MPLS Link status per MPLS group."
+    ::= { luxlMplsStatusLink 1 }
+
+luxlMplsStatusLinkEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsStatusLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Status."
+    INDEX       { luxlMplsStatusLinkGroupIfIndex }
+    ::= { luxlMplsStatusLinkTable 1 }
+
+LUXLMplsStatusLinkEntry ::= SEQUENCE {
+    luxlMplsStatusLinkGroupIfIndex      LUXLInterfaceIndex,
+    luxlMplsStatusLinkOamActive     TruthValue
+}
+
+luxlMplsStatusLinkGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsStatusLinkEntry 1 }
+
+luxlMplsStatusLinkOamActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies whether Oam is currently active or not on this Link."
+    ::= { luxlMplsStatusLinkEntry 2 }
+
+luxlMplsStatusTunnel OBJECT IDENTIFIER
+    ::= { luxlMplsStatus 3 }
+
+luxlMplsStatusTunnelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsStatusTunnelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains MPLS Tunnel status per MPLS group."
+    ::= { luxlMplsStatusTunnel 1 }
+
+luxlMplsStatusTunnelEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsStatusTunnelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Status."
+    INDEX       { luxlMplsStatusTunnelGroupIfIndex }
+    ::= { luxlMplsStatusTunnelTable 1 }
+
+LUXLMplsStatusTunnelEntry ::= SEQUENCE {
+    luxlMplsStatusTunnelGroupIfIndex    LUXLInterfaceIndex,
+    luxlMplsStatusTunnelOamActive   TruthValue,
+    luxlMplsStatusTunnelState   LUXLMplsStateType,
+    luxlMplsStatusTunnelIngressLabel    Unsigned32,
+    luxlMplsStatusTunnelEgressLabel     Unsigned32,
+    luxlMplsStatusTunnelWorkingActive   TruthValue
+}
+
+luxlMplsStatusTunnelGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsStatusTunnelEntry 1 }
+
+luxlMplsStatusTunnelOamActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies whether Oam is currently active or not on this Tunnel."
+    ::= { luxlMplsStatusTunnelEntry 2 }
+
+luxlMplsStatusTunnelState OBJECT-TYPE
+    SYNTAX      LUXLMplsStateType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies current MPLS-TP Tunnel state."
+    ::= { luxlMplsStatusTunnelEntry 3 }
+
+luxlMplsStatusTunnelIngressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current MPLS-TP Tunnel ingress MPLS label value or
+         LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsStatusTunnelEntry 4 }
+
+luxlMplsStatusTunnelEgressLabel OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current MPLS-TP Tunnel egress MPLS label value or
+         LUXL_APPL_MPLSTP_LABEL_NONE."
+    ::= { luxlMplsStatusTunnelEntry 5 }
+
+luxlMplsStatusTunnelWorkingActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "TRUE if working tunnel is active in a protection setup, FALSE if
+         protection tunnel is active. Always TRUE for non-protection case."
+    ::= { luxlMplsStatusTunnelEntry 6 }
+
+luxlMplsStatusLsp OBJECT IDENTIFIER
+    ::= { luxlMplsStatus 4 }
+
+luxlMplsStatusLspTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsStatusLspEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains MPLS Lsp status per MPLS group."
+    ::= { luxlMplsStatusLsp 1 }
+
+luxlMplsStatusLspEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsStatusLspEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Status."
+    INDEX       { luxlMplsStatusLspGroupIndex }
+    ::= { luxlMplsStatusLspTable 1 }
+
+LUXLMplsStatusLspEntry ::= SEQUENCE {
+    luxlMplsStatusLspGroupIndex     Integer32,
+    luxlMplsStatusLspOamActive      TruthValue,
+    luxlMplsStatusLspState      LUXLMplsStateType
+}
+
+luxlMplsStatusLspGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the MPLS
+         capabilities."
+    ::= { luxlMplsStatusLspEntry 1 }
+
+luxlMplsStatusLspOamActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies whether Oam is currently active or not on this LSP."
+    ::= { luxlMplsStatusLspEntry 2 }
+
+luxlMplsStatusLspState OBJECT-TYPE
+    SYNTAX      LUXLMplsStateType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies current MPLS-TP LSP state."
+    ::= { luxlMplsStatusLspEntry 3 }
+
+luxlMplsStatusPw OBJECT IDENTIFIER
+    ::= { luxlMplsStatus 5 }
+
+luxlMplsStatusPwTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsStatusPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains MPLS Pseudo Wire status per MPLS group."
+    ::= { luxlMplsStatusPw 1 }
+
+luxlMplsStatusPwEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsStatusPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Status."
+    INDEX       { luxlMplsStatusPwGroupIfIndex }
+    ::= { luxlMplsStatusPwTable 1 }
+
+LUXLMplsStatusPwEntry ::= SEQUENCE {
+    luxlMplsStatusPwGroupIfIndex    LUXLInterfaceIndex,
+    luxlMplsStatusPwOamActive   TruthValue,
+    luxlMplsStatusPwState   LUXLMplsStateType
+}
+
+luxlMplsStatusPwGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsStatusPwEntry 1 }
+
+luxlMplsStatusPwOamActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies whether Oam is currently active or not on this Pseudo Wire."
+    ::= { luxlMplsStatusPwEntry 2 }
+
+luxlMplsStatusPwState OBJECT-TYPE
+    SYNTAX      LUXLMplsStateType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies current MPLS-TP Pseudo Wire state."
+    ::= { luxlMplsStatusPwEntry 3 }
+
+luxlMplsControl OBJECT IDENTIFIER
+    ::= { luxlMplsMibObjects 4 }
+
+luxlMplsControlGlobal OBJECT IDENTIFIER
+    ::= { luxlMplsControl 1 }
+
+luxlMplsControlLsp OBJECT IDENTIFIER
+    ::= { luxlMplsControl 2 }
+
+luxlMplsControlLspTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsControlLspEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance MPLS-TP LSP control parameters"
+    ::= { luxlMplsControlLsp 1 }
+
+luxlMplsControlLspEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsControlLspEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance MPLS-TP LSP control parameters"
+    INDEX       { luxlMplsControlLspGroupIndex }
+    ::= { luxlMplsControlLspTable 1 }
+
+LUXLMplsControlLspEntry ::= SEQUENCE {
+    luxlMplsControlLspGroupIndex    Integer32,
+    luxlMplsControlLspClear     TruthValue
+}
+
+luxlMplsControlLspGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the MPLS
+         capabilities."
+    ::= { luxlMplsControlLspEntry 1 }
+
+luxlMplsControlLspClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear statistics counters"
+    ::= { luxlMplsControlLspEntry 2 }
+
+luxlMplsControlIf OBJECT IDENTIFIER
+    ::= { luxlMplsControl 3 }
+
+luxlMplsControlIfTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsControlIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance MPLS-TP tunnel or PW control
+         parameters"
+    ::= { luxlMplsControlIf 1 }
+
+luxlMplsControlIfEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsControlIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance MPLS-TP tunnel or PW control parameters"
+    INDEX       { luxlMplsControlIfGroupIfIndex }
+    ::= { luxlMplsControlIfTable 1 }
+
+LUXLMplsControlIfEntry ::= SEQUENCE {
+    luxlMplsControlIfGroupIfIndex   LUXLInterfaceIndex,
+    luxlMplsControlIfClear      TruthValue
+}
+
+luxlMplsControlIfGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsControlIfEntry 1 }
+
+luxlMplsControlIfClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear statistics counters"
+    ::= { luxlMplsControlIfEntry 2 }
+
+luxlMplsStatistics OBJECT IDENTIFIER
+    ::= { luxlMplsMibObjects 5 }
+
+luxlMplsStatisticsGlobal OBJECT IDENTIFIER
+    ::= { luxlMplsStatistics 1 }
+
+luxlMplsStatisticsLink OBJECT IDENTIFIER
+    ::= { luxlMplsStatistics 2 }
+
+luxlMplsStatisticsTunnel OBJECT IDENTIFIER
+    ::= { luxlMplsStatistics 3 }
+
+luxlMplsStatisticsTunnelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsStatisticsTunnelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains MPLS Tunnel Counters."
+    ::= { luxlMplsStatisticsTunnel 1 }
+
+luxlMplsStatisticsTunnelEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsStatisticsTunnelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Counters."
+    INDEX       { luxlMplsStatisticsTunnelGroupIfIndex }
+    ::= { luxlMplsStatisticsTunnelTable 1 }
+
+LUXLMplsStatisticsTunnelEntry ::= SEQUENCE {
+    luxlMplsStatisticsTunnelGroupIfIndex    LUXLInterfaceIndex,
+    luxlMplsStatisticsTunnelRxGreenFrames   Counter64,
+    luxlMplsStatisticsTunnelRxGreenBytes    Counter64,
+    luxlMplsStatisticsTunnelRxYellowFrames      Counter64,
+    luxlMplsStatisticsTunnelRxYellowBytes   Counter64,
+    luxlMplsStatisticsTunnelRxRedFrames     Counter64,
+    luxlMplsStatisticsTunnelRxRedBytes      Counter64,
+    luxlMplsStatisticsTunnelRxDiscardFrames     Counter64,
+    luxlMplsStatisticsTunnelRxDiscardBytes      Counter64,
+    luxlMplsStatisticsTunnelTxGreenFrames   Counter64,
+    luxlMplsStatisticsTunnelTxGreenBytes    Counter64,
+    luxlMplsStatisticsTunnelTxYellowFrames      Counter64,
+    luxlMplsStatisticsTunnelTxYellowBytes   Counter64,
+    luxlMplsStatisticsTunnelTxDiscardFrames     Counter64,
+    luxlMplsStatisticsTunnelTxDiscardBytes      Counter64
+}
+
+luxlMplsStatisticsTunnelGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsStatisticsTunnelEntry 1 }
+
+luxlMplsStatisticsTunnelRxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green frames."
+    ::= { luxlMplsStatisticsTunnelEntry 3 }
+
+luxlMplsStatisticsTunnelRxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green bytes."
+    ::= { luxlMplsStatisticsTunnelEntry 4 }
+
+luxlMplsStatisticsTunnelRxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow frames."
+    ::= { luxlMplsStatisticsTunnelEntry 5 }
+
+luxlMplsStatisticsTunnelRxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow bytes."
+    ::= { luxlMplsStatisticsTunnelEntry 6 }
+
+luxlMplsStatisticsTunnelRxRedFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red frames."
+    ::= { luxlMplsStatisticsTunnelEntry 7 }
+
+luxlMplsStatisticsTunnelRxRedBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red bytes."
+    ::= { luxlMplsStatisticsTunnelEntry 8 }
+
+luxlMplsStatisticsTunnelRxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded frames."
+    ::= { luxlMplsStatisticsTunnelEntry 9 }
+
+luxlMplsStatisticsTunnelRxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded bytes."
+    ::= { luxlMplsStatisticsTunnelEntry 10 }
+
+luxlMplsStatisticsTunnelTxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green frames."
+    ::= { luxlMplsStatisticsTunnelEntry 11 }
+
+luxlMplsStatisticsTunnelTxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green bytes."
+    ::= { luxlMplsStatisticsTunnelEntry 12 }
+
+luxlMplsStatisticsTunnelTxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow frames."
+    ::= { luxlMplsStatisticsTunnelEntry 13 }
+
+luxlMplsStatisticsTunnelTxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow bytes."
+    ::= { luxlMplsStatisticsTunnelEntry 14 }
+
+luxlMplsStatisticsTunnelTxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded frames."
+    ::= { luxlMplsStatisticsTunnelEntry 15 }
+
+luxlMplsStatisticsTunnelTxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded bytes."
+    ::= { luxlMplsStatisticsTunnelEntry 16 }
+
+luxlMplsStatisticsLsp OBJECT IDENTIFIER
+    ::= { luxlMplsStatistics 4 }
+
+luxlMplsStatisticsLspTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsStatisticsLspEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains MPLS Lsp Counters."
+    ::= { luxlMplsStatisticsLsp 1 }
+
+luxlMplsStatisticsLspEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsStatisticsLspEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Counters."
+    INDEX       { luxlMplsStatisticsLspGroupIndex }
+    ::= { luxlMplsStatisticsLspTable 1 }
+
+LUXLMplsStatisticsLspEntry ::= SEQUENCE {
+    luxlMplsStatisticsLspGroupIndex     Integer32,
+    luxlMplsStatisticsLspFwdRxGreenFrames   Counter64,
+    luxlMplsStatisticsLspFwdRxGreenBytes    Counter64,
+    luxlMplsStatisticsLspFwdRxYellowFrames      Counter64,
+    luxlMplsStatisticsLspFwdRxYellowBytes   Counter64,
+    luxlMplsStatisticsLspFwdRxRedFrames     Counter64,
+    luxlMplsStatisticsLspFwdRxRedBytes      Counter64,
+    luxlMplsStatisticsLspFwdRxDiscardFrames     Counter64,
+    luxlMplsStatisticsLspFwdRxDiscardBytes      Counter64,
+    luxlMplsStatisticsLspFwdTxGreenFrames   Counter64,
+    luxlMplsStatisticsLspFwdTxGreenBytes    Counter64,
+    luxlMplsStatisticsLspFwdTxYellowFrames      Counter64,
+    luxlMplsStatisticsLspFwdTxYellowBytes   Counter64,
+    luxlMplsStatisticsLspFwdTxDiscardFrames     Counter64,
+    luxlMplsStatisticsLspFwdTxDiscardBytes      Counter64,
+    luxlMplsStatisticsLspRewRxGreenFrames   Counter64,
+    luxlMplsStatisticsLspRewRxGreenBytes    Counter64,
+    luxlMplsStatisticsLspRewRxYellowFrames      Counter64,
+    luxlMplsStatisticsLspRewRxYellowBytes   Counter64,
+    luxlMplsStatisticsLspRewRxRedFrames     Counter64,
+    luxlMplsStatisticsLspRewRxRedBytes      Counter64,
+    luxlMplsStatisticsLspRewRxDiscardFrames     Counter64,
+    luxlMplsStatisticsLspRewRxDiscardBytes      Counter64,
+    luxlMplsStatisticsLspRewTxGreenFrames   Counter64,
+    luxlMplsStatisticsLspRewTxGreenBytes    Counter64,
+    luxlMplsStatisticsLspRewTxYellowFrames      Counter64,
+    luxlMplsStatisticsLspRewTxYellowBytes   Counter64,
+    luxlMplsStatisticsLspRewTxDiscardFrames     Counter64,
+    luxlMplsStatisticsLspRewTxDiscardBytes      Counter64
+}
+
+luxlMplsStatisticsLspGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the MPLS
+         capabilities."
+    ::= { luxlMplsStatisticsLspEntry 1 }
+
+luxlMplsStatisticsLspFwdRxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green frames."
+    ::= { luxlMplsStatisticsLspEntry 3 }
+
+luxlMplsStatisticsLspFwdRxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green bytes."
+    ::= { luxlMplsStatisticsLspEntry 4 }
+
+luxlMplsStatisticsLspFwdRxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow frames."
+    ::= { luxlMplsStatisticsLspEntry 5 }
+
+luxlMplsStatisticsLspFwdRxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow bytes."
+    ::= { luxlMplsStatisticsLspEntry 6 }
+
+luxlMplsStatisticsLspFwdRxRedFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red frames."
+    ::= { luxlMplsStatisticsLspEntry 7 }
+
+luxlMplsStatisticsLspFwdRxRedBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red bytes."
+    ::= { luxlMplsStatisticsLspEntry 8 }
+
+luxlMplsStatisticsLspFwdRxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded frames."
+    ::= { luxlMplsStatisticsLspEntry 9 }
+
+luxlMplsStatisticsLspFwdRxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded bytes."
+    ::= { luxlMplsStatisticsLspEntry 10 }
+
+luxlMplsStatisticsLspFwdTxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green frames."
+    ::= { luxlMplsStatisticsLspEntry 11 }
+
+luxlMplsStatisticsLspFwdTxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green bytes."
+    ::= { luxlMplsStatisticsLspEntry 12 }
+
+luxlMplsStatisticsLspFwdTxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow frames."
+    ::= { luxlMplsStatisticsLspEntry 13 }
+
+luxlMplsStatisticsLspFwdTxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow bytes."
+    ::= { luxlMplsStatisticsLspEntry 14 }
+
+luxlMplsStatisticsLspFwdTxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded frames."
+    ::= { luxlMplsStatisticsLspEntry 15 }
+
+luxlMplsStatisticsLspFwdTxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded bytes."
+    ::= { luxlMplsStatisticsLspEntry 16 }
+
+luxlMplsStatisticsLspRewRxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green frames."
+    ::= { luxlMplsStatisticsLspEntry 17 }
+
+luxlMplsStatisticsLspRewRxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green bytes."
+    ::= { luxlMplsStatisticsLspEntry 18 }
+
+luxlMplsStatisticsLspRewRxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow frames."
+    ::= { luxlMplsStatisticsLspEntry 19 }
+
+luxlMplsStatisticsLspRewRxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow bytes."
+    ::= { luxlMplsStatisticsLspEntry 20 }
+
+luxlMplsStatisticsLspRewRxRedFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red frames."
+    ::= { luxlMplsStatisticsLspEntry 21 }
+
+luxlMplsStatisticsLspRewRxRedBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red bytes."
+    ::= { luxlMplsStatisticsLspEntry 22 }
+
+luxlMplsStatisticsLspRewRxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded frames."
+    ::= { luxlMplsStatisticsLspEntry 23 }
+
+luxlMplsStatisticsLspRewRxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded bytes."
+    ::= { luxlMplsStatisticsLspEntry 24 }
+
+luxlMplsStatisticsLspRewTxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green frames."
+    ::= { luxlMplsStatisticsLspEntry 25 }
+
+luxlMplsStatisticsLspRewTxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green bytes."
+    ::= { luxlMplsStatisticsLspEntry 26 }
+
+luxlMplsStatisticsLspRewTxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow frames."
+    ::= { luxlMplsStatisticsLspEntry 27 }
+
+luxlMplsStatisticsLspRewTxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow bytes."
+    ::= { luxlMplsStatisticsLspEntry 28 }
+
+luxlMplsStatisticsLspRewTxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded frames."
+    ::= { luxlMplsStatisticsLspEntry 29 }
+
+luxlMplsStatisticsLspRewTxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded bytes."
+    ::= { luxlMplsStatisticsLspEntry 30 }
+
+luxlMplsStatisticsPw OBJECT IDENTIFIER
+    ::= { luxlMplsStatistics 5 }
+
+luxlMplsStatisticsPwTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMplsStatisticsPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains MPLS Tunnel Counters."
+    ::= { luxlMplsStatisticsPw 1 }
+
+luxlMplsStatisticsPwEntry OBJECT-TYPE
+    SYNTAX      LUXLMplsStatisticsPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Counters."
+    INDEX       { luxlMplsStatisticsPwGroupIfIndex }
+    ::= { luxlMplsStatisticsPwTable 1 }
+
+LUXLMplsStatisticsPwEntry ::= SEQUENCE {
+    luxlMplsStatisticsPwGroupIfIndex    LUXLInterfaceIndex,
+    luxlMplsStatisticsPwRxGreenFrames   Counter64,
+    luxlMplsStatisticsPwRxGreenBytes    Counter64,
+    luxlMplsStatisticsPwRxYellowFrames      Counter64,
+    luxlMplsStatisticsPwRxYellowBytes   Counter64,
+    luxlMplsStatisticsPwRxRedFrames     Counter64,
+    luxlMplsStatisticsPwRxRedBytes      Counter64,
+    luxlMplsStatisticsPwRxDiscardFrames     Counter64,
+    luxlMplsStatisticsPwRxDiscardBytes      Counter64,
+    luxlMplsStatisticsPwTxGreenFrames   Counter64,
+    luxlMplsStatisticsPwTxGreenBytes    Counter64,
+    luxlMplsStatisticsPwTxYellowFrames      Counter64,
+    luxlMplsStatisticsPwTxYellowBytes   Counter64,
+    luxlMplsStatisticsPwTxDiscardFrames     Counter64,
+    luxlMplsStatisticsPwTxDiscardBytes      Counter64
+}
+
+luxlMplsStatisticsPwGroupIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS group interface index. Valid range is BASE+GROUP where the base is
+         specified in the interface index textual convention and the group
+         number range is 1..maximum group number. This maximum is
+         platform-specific and can be retrieved from the MPLS capabilities."
+    ::= { luxlMplsStatisticsPwEntry 1 }
+
+luxlMplsStatisticsPwRxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green frames."
+    ::= { luxlMplsStatisticsPwEntry 3 }
+
+luxlMplsStatisticsPwRxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green bytes."
+    ::= { luxlMplsStatisticsPwEntry 4 }
+
+luxlMplsStatisticsPwRxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow frames."
+    ::= { luxlMplsStatisticsPwEntry 5 }
+
+luxlMplsStatisticsPwRxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow bytes."
+    ::= { luxlMplsStatisticsPwEntry 6 }
+
+luxlMplsStatisticsPwRxRedFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red frames."
+    ::= { luxlMplsStatisticsPwEntry 7 }
+
+luxlMplsStatisticsPwRxRedBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red bytes."
+    ::= { luxlMplsStatisticsPwEntry 8 }
+
+luxlMplsStatisticsPwRxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded frames."
+    ::= { luxlMplsStatisticsPwEntry 9 }
+
+luxlMplsStatisticsPwRxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded bytes."
+    ::= { luxlMplsStatisticsPwEntry 10 }
+
+luxlMplsStatisticsPwTxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green frames."
+    ::= { luxlMplsStatisticsPwEntry 11 }
+
+luxlMplsStatisticsPwTxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green bytes."
+    ::= { luxlMplsStatisticsPwEntry 12 }
+
+luxlMplsStatisticsPwTxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow frames."
+    ::= { luxlMplsStatisticsPwEntry 13 }
+
+luxlMplsStatisticsPwTxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow bytes."
+    ::= { luxlMplsStatisticsPwEntry 14 }
+
+luxlMplsStatisticsPwTxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded frames."
+    ::= { luxlMplsStatisticsPwEntry 15 }
+
+luxlMplsStatisticsPwTxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded bytes."
+    ::= { luxlMplsStatisticsPwEntry 16 }
+
+luxlMplsMibConformance OBJECT IDENTIFIER
+    ::= { luxlMplsMib 2 }
+
+luxlMplsMibCompliances OBJECT IDENTIFIER
+    ::= { luxlMplsMibConformance 1 }
+
+luxlMplsMibGroups OBJECT IDENTIFIER
+    ::= { luxlMplsMibConformance 2 }
+
+luxlMplsCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsCapabilitiesMaxLinks, luxlMplsCapabilitiesMaxTunnels, 
+                  luxlMplsCapabilitiesMaxPw, luxlMplsCapabilitiesMaxLsp, 
+                  luxlMplsCapabilitiesMaxCosMap, 
+                  luxlMplsCapabilitiesMaxTunnelNameLen }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 1 }
+
+luxlMplsConfigGlobalMainInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigGlobalMainTunnelMode, 
+                  luxlMplsConfigGlobalMainGlobalId, 
+                  luxlMplsConfigGlobalMainNodeId, 
+                  luxlMplsConfigGlobalMainIccCarrierCode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 2 }
+
+luxlMplsConfigLinkTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigLinkPort, luxlMplsConfigLinkMACAddressNextHop, 
+                  luxlMplsConfigLinkMACAddress, luxlMplsConfigLinkVLANTagType, 
+                  luxlMplsConfigLinkVLANId, luxlMplsConfigLinkVLANpcp, 
+                  luxlMplsConfigLinkVLANdei, luxlMplsConfigLinkSrcNodeId, 
+                  luxlMplsConfigLinkSrcGlobalId, luxlMplsConfigLinkDstNodeId, 
+                  luxlMplsConfigLinkDstGlobalId, luxlMplsConfigLinkDstIfNum, 
+                  luxlMplsConfigLinkSrcNodeIdValid, 
+                  luxlMplsConfigLinkSrcGlobalIdValid, 
+                  luxlMplsConfigLinkDstGlobalIdValid, luxlMplsConfigLinkAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 3 }
+
+luxlMplsConfigLinkRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigLinkRowEditorGroupIfIndex, 
+                  luxlMplsConfigLinkRowEditorPort, 
+                  luxlMplsConfigLinkRowEditorMACAddressNextHop, 
+                  luxlMplsConfigLinkRowEditorMACAddress, 
+                  luxlMplsConfigLinkRowEditorVLANTagType, 
+                  luxlMplsConfigLinkRowEditorVLANId, 
+                  luxlMplsConfigLinkRowEditorVLANpcp, 
+                  luxlMplsConfigLinkRowEditorVLANdei, 
+                  luxlMplsConfigLinkRowEditorSrcNodeId, 
+                  luxlMplsConfigLinkRowEditorSrcGlobalId, 
+                  luxlMplsConfigLinkRowEditorDstNodeId, 
+                  luxlMplsConfigLinkRowEditorDstGlobalId, 
+                  luxlMplsConfigLinkRowEditorDstIfNum, 
+                  luxlMplsConfigLinkRowEditorSrcNodeIdValid, 
+                  luxlMplsConfigLinkRowEditorSrcGlobalIdValid, 
+                  luxlMplsConfigLinkRowEditorDstGlobalIdValid, 
+                  luxlMplsConfigLinkRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 4 }
+
+luxlMplsConfigTunnelTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigTunnelTunnelName, luxlMplsConfigTunnelTunnelMode, 
+                  luxlMplsConfigTunnelSrcNodeId, luxlMplsConfigTunnelSrcGlobalId, 
+                  luxlMplsConfigTunnelDstNodeId, luxlMplsConfigTunnelDstGlobalId, 
+                  luxlMplsConfigTunnelDstTunnelTpNum, 
+                  luxlMplsConfigTunnelSrcTunnelTpNum, 
+                  luxlMplsConfigTunnelSrcLspNum, luxlMplsConfigTunnelDstLspNum, 
+                  luxlMplsConfigTunnelIsSpme, luxlMplsConfigTunnelSrcNodeIsValid, 
+                  luxlMplsConfigTunnelSrcGlobalIdValid, 
+                  luxlMplsConfigTunnelDstGlobalIdValid, 
+                  luxlMplsConfigTunnelIngressLabel, 
+                  luxlMplsConfigTunnelEgressLabel, 
+                  luxlMplsConfigTunnelAttachInterface, 
+                  luxlMplsConfigTunnelTrafficClass, luxlMplsConfigTunnelTtl, 
+                  luxlMplsConfigTunnelInCosMapId, 
+                  luxlMplsConfigTunnelOutCosMapId, luxlMplsConfigTunnelIsLLsp, 
+                  luxlMplsConfigTunnelLLspCos, luxlMplsConfigTunnelAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 5 }
+
+luxlMplsConfigTunnelRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigTunnelRowEditorGroupIfIndex, 
+                  luxlMplsConfigTunnelRowEditorTunnelName, 
+                  luxlMplsConfigTunnelRowEditorTunnelMode, 
+                  luxlMplsConfigTunnelRowEditorSrcNodeId, 
+                  luxlMplsConfigTunnelRowEditorSrcGlobalId, 
+                  luxlMplsConfigTunnelRowEditorDstNodeId, 
+                  luxlMplsConfigTunnelRowEditorDstGlobalId, 
+                  luxlMplsConfigTunnelRowEditorDstTunnelTpNum, 
+                  luxlMplsConfigTunnelRowEditorSrcTunnelTpNum, 
+                  luxlMplsConfigTunnelRowEditorSrcLspNum, 
+                  luxlMplsConfigTunnelRowEditorDstLspNum, 
+                  luxlMplsConfigTunnelRowEditorIsSpme, 
+                  luxlMplsConfigTunnelRowEditorSrcNodeIsValid, 
+                  luxlMplsConfigTunnelRowEditorSrcGlobalIdValid, 
+                  luxlMplsConfigTunnelRowEditorDstGlobalIdValid, 
+                  luxlMplsConfigTunnelRowEditorIngressLabel, 
+                  luxlMplsConfigTunnelRowEditorEgressLabel, 
+                  luxlMplsConfigTunnelRowEditorAttachInterface, 
+                  luxlMplsConfigTunnelRowEditorTrafficClass, 
+                  luxlMplsConfigTunnelRowEditorTtl, 
+                  luxlMplsConfigTunnelRowEditorInCosMapId, 
+                  luxlMplsConfigTunnelRowEditorOutCosMapId, 
+                  luxlMplsConfigTunnelRowEditorIsLLsp, 
+                  luxlMplsConfigTunnelRowEditorLLspCos, 
+                  luxlMplsConfigTunnelRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 6 }
+
+luxlMplsConfigLspTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigLspXcName, luxlMplsConfigLspSrcNodeId, 
+                  luxlMplsConfigLspSrcNodeIdIsDefined, 
+                  luxlMplsConfigLspSrcGlobalId, 
+                  luxlMplsConfigLspSrcGlobalIdIsDefined, 
+                  luxlMplsConfigLspSrcTunnelTpNum, luxlMplsConfigLspDstNodeId, 
+                  luxlMplsConfigLspDstGlobalId, 
+                  luxlMplsConfigLspDstGlobalIdIsDefined, 
+                  luxlMplsConfigLspDstTunnelTpNum, luxlMplsConfigLspSrcLspNumber, 
+                  luxlMplsConfigLspDstLspNumber, 
+                  luxlMplsConfigLspForwardIngressLabel, 
+                  luxlMplsConfigLspForwardEgressLabel, 
+                  luxlMplsConfigLspForwardAttachInterface, 
+                  luxlMplsConfigLspForwardInCosMapId, 
+                  luxlMplsConfigLspForwardOutCosMapId, 
+                  luxlMplsConfigLspForwardIsLLsp, luxlMplsConfigLspForwardHQoSId, 
+                  luxlMplsConfigLspForwardLLspCos, 
+                  luxlMplsConfigLspReverseIngressLabel, 
+                  luxlMplsConfigLspReverseEgressLabel, 
+                  luxlMplsConfigLspReverseAttachInterface, 
+                  luxlMplsConfigLspReverseInCosMapId, 
+                  luxlMplsConfigLspReverseOutCosMapId, 
+                  luxlMplsConfigLspReverseIsLLsp, 
+                  luxlMplsConfigLspReverseLLspCos, 
+                  luxlMplsConfigLspReverseHQoSId, luxlMplsConfigLspAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 7 }
+
+luxlMplsConfigLspRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigLspRowEditorGroupIndex, 
+                  luxlMplsConfigLspRowEditorXcName, 
+                  luxlMplsConfigLspRowEditorSrcNodeId, 
+                  luxlMplsConfigLspRowEditorSrcNodeIdIsDefined, 
+                  luxlMplsConfigLspRowEditorSrcGlobalId, 
+                  luxlMplsConfigLspRowEditorSrcGlobalIdIsDefined, 
+                  luxlMplsConfigLspRowEditorSrcTunnelTpNum, 
+                  luxlMplsConfigLspRowEditorDstNodeId, 
+                  luxlMplsConfigLspRowEditorDstGlobalId, 
+                  luxlMplsConfigLspRowEditorDstGlobalIdIsDefined, 
+                  luxlMplsConfigLspRowEditorDstTunnelTpNum, 
+                  luxlMplsConfigLspRowEditorSrcLspNumber, 
+                  luxlMplsConfigLspRowEditorDstLspNumber, 
+                  luxlMplsConfigLspRowEditorForwardIngressLabel, 
+                  luxlMplsConfigLspRowEditorForwardEgressLabel, 
+                  luxlMplsConfigLspRowEditorForwardAttachInterface, 
+                  luxlMplsConfigLspRowEditorForwardInCosMapId, 
+                  luxlMplsConfigLspRowEditorForwardOutCosMapId, 
+                  luxlMplsConfigLspRowEditorForwardIsLLsp, 
+                  luxlMplsConfigLspRowEditorForwardHQoSId, 
+                  luxlMplsConfigLspRowEditorForwardLLspCos, 
+                  luxlMplsConfigLspRowEditorReverseIngressLabel, 
+                  luxlMplsConfigLspRowEditorReverseEgressLabel, 
+                  luxlMplsConfigLspRowEditorReverseAttachInterface, 
+                  luxlMplsConfigLspRowEditorReverseInCosMapId, 
+                  luxlMplsConfigLspRowEditorReverseOutCosMapId, 
+                  luxlMplsConfigLspRowEditorReverseIsLLsp, 
+                  luxlMplsConfigLspRowEditorReverseLLspCos, 
+                  luxlMplsConfigLspRowEditorReverseHQoSId, 
+                  luxlMplsConfigLspRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 8 }
+
+luxlMplsConfigPwTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigPwInLabel, luxlMplsConfigPwOutLabel, 
+                  luxlMplsConfigPwControlWord, luxlMplsConfigPwUseControlWord, 
+                  luxlMplsConfigPwTunnelMode, luxlMplsConfigPwTrafficClass, 
+                  luxlMplsConfigPwTtl, luxlMplsConfigPwInCosMapId, 
+                  luxlMplsConfigPwOutCosMapId, luxlMplsConfigPwIsLLsp, 
+                  luxlMplsConfigPwLLspCos, luxlMplsConfigPwAttachInterface, 
+                  luxlMplsConfigPwStitchPwInterface, luxlMplsConfigPwVccvType, 
+                  luxlMplsConfigPwHQoSId, luxlMplsConfigPwSrcNodeId, 
+                  luxlMplsConfigPwSrcNodeIdIsDefined, 
+                  luxlMplsConfigPwSrcGlobalId, 
+                  luxlMplsConfigPwSrcGlobalIdIsDefined, 
+                  luxlMplsConfigPwDstNodeId, luxlMplsConfigPwDstGlobalId, 
+                  luxlMplsConfigPwDstGlobalIdIsDefined, luxlMplsConfigPwSrcAcId, 
+                  luxlMplsConfigPwDstAcId, luxlMplsConfigPwSrcAgiValue, 
+                  luxlMplsConfigPwDstAgiValue, luxlMplsConfigPwSrcAgiType, 
+                  luxlMplsConfigPwSrcAgiLength, luxlMplsConfigPwDstAgiType, 
+                  luxlMplsConfigPwDstAgiLength, luxlMplsConfigPwAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 9 }
+
+luxlMplsConfigPwRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigPwRowEditorGroupIfIndex, 
+                  luxlMplsConfigPwRowEditorInLabel, 
+                  luxlMplsConfigPwRowEditorOutLabel, 
+                  luxlMplsConfigPwRowEditorControlWord, 
+                  luxlMplsConfigPwRowEditorUseControlWord, 
+                  luxlMplsConfigPwRowEditorTunnelMode, 
+                  luxlMplsConfigPwRowEditorTrafficClass, 
+                  luxlMplsConfigPwRowEditorTtl, 
+                  luxlMplsConfigPwRowEditorInCosMapId, 
+                  luxlMplsConfigPwRowEditorOutCosMapId, 
+                  luxlMplsConfigPwRowEditorIsLLsp, 
+                  luxlMplsConfigPwRowEditorLLspCos, 
+                  luxlMplsConfigPwRowEditorAttachInterface, 
+                  luxlMplsConfigPwRowEditorStitchPwInterface, 
+                  luxlMplsConfigPwRowEditorVccvType, 
+                  luxlMplsConfigPwRowEditorHQoSId, 
+                  luxlMplsConfigPwRowEditorSrcNodeId, 
+                  luxlMplsConfigPwRowEditorSrcNodeIdIsDefined, 
+                  luxlMplsConfigPwRowEditorSrcGlobalId, 
+                  luxlMplsConfigPwRowEditorSrcGlobalIdIsDefined, 
+                  luxlMplsConfigPwRowEditorDstNodeId, 
+                  luxlMplsConfigPwRowEditorDstGlobalId, 
+                  luxlMplsConfigPwRowEditorDstGlobalIdIsDefined, 
+                  luxlMplsConfigPwRowEditorSrcAcId, 
+                  luxlMplsConfigPwRowEditorDstAcId, 
+                  luxlMplsConfigPwRowEditorSrcAgiValue, 
+                  luxlMplsConfigPwRowEditorDstAgiValue, 
+                  luxlMplsConfigPwRowEditorSrcAgiType, 
+                  luxlMplsConfigPwRowEditorSrcAgiLength, 
+                  luxlMplsConfigPwRowEditorDstAgiType, 
+                  luxlMplsConfigPwRowEditorDstAgiLength, 
+                  luxlMplsConfigPwRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 10 }
+
+luxlMplsConfigCosMapTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigCosMapInTcToCos0, luxlMplsConfigCosMapInTcToCos1, 
+                  luxlMplsConfigCosMapInTcToCos2, luxlMplsConfigCosMapInTcToCos3, 
+                  luxlMplsConfigCosMapInTcToCos4, luxlMplsConfigCosMapInTcToCos5, 
+                  luxlMplsConfigCosMapInTcToCos6, luxlMplsConfigCosMapInTcToCos7, 
+                  luxlMplsConfigCosMapInTcToDp0, luxlMplsConfigCosMapInTcToDp1, 
+                  luxlMplsConfigCosMapInTcToDp2, luxlMplsConfigCosMapInTcToDp3, 
+                  luxlMplsConfigCosMapInTcToDp4, luxlMplsConfigCosMapInTcToDp5, 
+                  luxlMplsConfigCosMapInTcToDp6, luxlMplsConfigCosMapInTcToDp7, 
+                  luxlMplsConfigCosMapOutCosDpToTc00, 
+                  luxlMplsConfigCosMapOutCosDpToTc10, 
+                  luxlMplsConfigCosMapOutCosDpToTc20, 
+                  luxlMplsConfigCosMapOutCosDpToTc30, 
+                  luxlMplsConfigCosMapOutCosDpToTc40, 
+                  luxlMplsConfigCosMapOutCosDpToTc50, 
+                  luxlMplsConfigCosMapOutCosDpToTc60, 
+                  luxlMplsConfigCosMapOutCosDpToTc70, 
+                  luxlMplsConfigCosMapOutCosDpToTc01, 
+                  luxlMplsConfigCosMapOutCosDpToTc11, 
+                  luxlMplsConfigCosMapOutCosDpToTc21, 
+                  luxlMplsConfigCosMapOutCosDpToTc31, 
+                  luxlMplsConfigCosMapOutCosDpToTc41, 
+                  luxlMplsConfigCosMapOutCosDpToTc51, 
+                  luxlMplsConfigCosMapOutCosDpToTc61, 
+                  luxlMplsConfigCosMapOutCosDpToTc71, luxlMplsConfigCosMapAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 11 }
+
+luxlMplsConfigCosMapRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsConfigCosMapRowEditorGroupIndex, 
+                  luxlMplsConfigCosMapRowEditorInTcToCos0, 
+                  luxlMplsConfigCosMapRowEditorInTcToCos1, 
+                  luxlMplsConfigCosMapRowEditorInTcToCos2, 
+                  luxlMplsConfigCosMapRowEditorInTcToCos3, 
+                  luxlMplsConfigCosMapRowEditorInTcToCos4, 
+                  luxlMplsConfigCosMapRowEditorInTcToCos5, 
+                  luxlMplsConfigCosMapRowEditorInTcToCos6, 
+                  luxlMplsConfigCosMapRowEditorInTcToCos7, 
+                  luxlMplsConfigCosMapRowEditorInTcToDp0, 
+                  luxlMplsConfigCosMapRowEditorInTcToDp1, 
+                  luxlMplsConfigCosMapRowEditorInTcToDp2, 
+                  luxlMplsConfigCosMapRowEditorInTcToDp3, 
+                  luxlMplsConfigCosMapRowEditorInTcToDp4, 
+                  luxlMplsConfigCosMapRowEditorInTcToDp5, 
+                  luxlMplsConfigCosMapRowEditorInTcToDp6, 
+                  luxlMplsConfigCosMapRowEditorInTcToDp7, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc00, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc10, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc20, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc30, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc40, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc50, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc60, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc70, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc01, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc11, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc21, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc31, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc41, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc51, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc61, 
+                  luxlMplsConfigCosMapRowEditorOutCosDpToTc71, 
+                  luxlMplsConfigCosMapRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 12 }
+
+luxlMplsStatusLinkTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsStatusLinkOamActive }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 13 }
+
+luxlMplsStatusTunnelTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsStatusTunnelOamActive, luxlMplsStatusTunnelState, 
+                  luxlMplsStatusTunnelIngressLabel, 
+                  luxlMplsStatusTunnelEgressLabel, 
+                  luxlMplsStatusTunnelWorkingActive }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 14 }
+
+luxlMplsStatusLspTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsStatusLspOamActive, luxlMplsStatusLspState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 15 }
+
+luxlMplsStatusPwTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsStatusPwOamActive, luxlMplsStatusPwState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 16 }
+
+luxlMplsControlLspTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsControlLspClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 17 }
+
+luxlMplsControlIfTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsControlIfClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 18 }
+
+luxlMplsStatisticsTunnelTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsStatisticsTunnelRxGreenFrames, 
+                  luxlMplsStatisticsTunnelRxGreenBytes, 
+                  luxlMplsStatisticsTunnelRxYellowFrames, 
+                  luxlMplsStatisticsTunnelRxYellowBytes, 
+                  luxlMplsStatisticsTunnelRxRedFrames, 
+                  luxlMplsStatisticsTunnelRxRedBytes, 
+                  luxlMplsStatisticsTunnelRxDiscardFrames, 
+                  luxlMplsStatisticsTunnelRxDiscardBytes, 
+                  luxlMplsStatisticsTunnelTxGreenFrames, 
+                  luxlMplsStatisticsTunnelTxGreenBytes, 
+                  luxlMplsStatisticsTunnelTxYellowFrames, 
+                  luxlMplsStatisticsTunnelTxYellowBytes, 
+                  luxlMplsStatisticsTunnelTxDiscardFrames, 
+                  luxlMplsStatisticsTunnelTxDiscardBytes }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 19 }
+
+luxlMplsStatisticsLspTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsStatisticsLspFwdRxGreenFrames, 
+                  luxlMplsStatisticsLspFwdRxGreenBytes, 
+                  luxlMplsStatisticsLspFwdRxYellowFrames, 
+                  luxlMplsStatisticsLspFwdRxYellowBytes, 
+                  luxlMplsStatisticsLspFwdRxRedFrames, 
+                  luxlMplsStatisticsLspFwdRxRedBytes, 
+                  luxlMplsStatisticsLspFwdRxDiscardFrames, 
+                  luxlMplsStatisticsLspFwdRxDiscardBytes, 
+                  luxlMplsStatisticsLspFwdTxGreenFrames, 
+                  luxlMplsStatisticsLspFwdTxGreenBytes, 
+                  luxlMplsStatisticsLspFwdTxYellowFrames, 
+                  luxlMplsStatisticsLspFwdTxYellowBytes, 
+                  luxlMplsStatisticsLspFwdTxDiscardFrames, 
+                  luxlMplsStatisticsLspFwdTxDiscardBytes, 
+                  luxlMplsStatisticsLspRewRxGreenFrames, 
+                  luxlMplsStatisticsLspRewRxGreenBytes, 
+                  luxlMplsStatisticsLspRewRxYellowFrames, 
+                  luxlMplsStatisticsLspRewRxYellowBytes, 
+                  luxlMplsStatisticsLspRewRxRedFrames, 
+                  luxlMplsStatisticsLspRewRxRedBytes, 
+                  luxlMplsStatisticsLspRewRxDiscardFrames, 
+                  luxlMplsStatisticsLspRewRxDiscardBytes, 
+                  luxlMplsStatisticsLspRewTxGreenFrames, 
+                  luxlMplsStatisticsLspRewTxGreenBytes, 
+                  luxlMplsStatisticsLspRewTxYellowFrames, 
+                  luxlMplsStatisticsLspRewTxYellowBytes, 
+                  luxlMplsStatisticsLspRewTxDiscardFrames, 
+                  luxlMplsStatisticsLspRewTxDiscardBytes }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 20 }
+
+luxlMplsStatisticsPwTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMplsStatisticsPwRxGreenFrames, 
+                  luxlMplsStatisticsPwRxGreenBytes, 
+                  luxlMplsStatisticsPwRxYellowFrames, 
+                  luxlMplsStatisticsPwRxYellowBytes, 
+                  luxlMplsStatisticsPwRxRedFrames, 
+                  luxlMplsStatisticsPwRxRedBytes, 
+                  luxlMplsStatisticsPwRxDiscardFrames, 
+                  luxlMplsStatisticsPwRxDiscardBytes, 
+                  luxlMplsStatisticsPwTxGreenFrames, 
+                  luxlMplsStatisticsPwTxGreenBytes, 
+                  luxlMplsStatisticsPwTxYellowFrames, 
+                  luxlMplsStatisticsPwTxYellowBytes, 
+                  luxlMplsStatisticsPwTxDiscardFrames, 
+                  luxlMplsStatisticsPwTxDiscardBytes }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMplsMibGroups 21 }
+
+luxlMplsMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlMplsCapabilitiesInfoGroup, 
+                  luxlMplsConfigGlobalMainInfoGroup, 
+                  luxlMplsConfigLinkTableInfoGroup, 
+                  luxlMplsConfigLinkRowEditorInfoGroup, 
+                  luxlMplsConfigTunnelTableInfoGroup, 
+                  luxlMplsConfigTunnelRowEditorInfoGroup, 
+                  luxlMplsConfigLspTableInfoGroup, 
+                  luxlMplsConfigLspRowEditorInfoGroup, 
+                  luxlMplsConfigPwTableInfoGroup, 
+                  luxlMplsConfigPwRowEditorInfoGroup, 
+                  luxlMplsConfigCosMapTableInfoGroup, 
+                  luxlMplsConfigCosMapRowEditorInfoGroup, 
+                  luxlMplsStatusLinkTableInfoGroup, 
+                  luxlMplsStatusTunnelTableInfoGroup, 
+                  luxlMplsStatusLspTableInfoGroup, 
+                  luxlMplsStatusPwTableInfoGroup, 
+                  luxlMplsControlLspTableInfoGroup, 
+                  luxlMplsControlIfTableInfoGroup, 
+                  luxlMplsStatisticsTunnelTableInfoGroup, 
+                  luxlMplsStatisticsLspTableInfoGroup, 
+                  luxlMplsStatisticsPwTableInfoGroup }
+
+    ::= { luxlMplsMibCompliances 1 }
+
+END

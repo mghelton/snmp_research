@@ -1,0 +1,283 @@
+-- *****************************************************************
+-- UDLD-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-UDLD-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    ;
+
+luxlUdldMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private MIB for udld"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 123 }
+
+
+LUXLUdldDetectionState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the link detection state."
+    SYNTAX      INTEGER { inDeterminant(0), uniDirectional(1), biDirectional(2), neighborMismatch(3), loopback(4), multipleNeighbor(5) }
+
+LUXLUdldMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available udld mode."
+    SYNTAX      INTEGER { disable(0), normal(1), aggressive(2) }
+
+luxlUdldMibObjects OBJECT IDENTIFIER
+    ::= { luxlUdldMib 1 }
+
+luxlUdldConfig OBJECT IDENTIFIER
+    ::= { luxlUdldMibObjects 2 }
+
+luxlUdldConfigInterface OBJECT IDENTIFIER
+    ::= { luxlUdldConfig 1 }
+
+luxlUdldConfigInterfaceParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLUdldConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of udld interface conf parameters"
+    ::= { luxlUdldConfigInterface 1 }
+
+luxlUdldConfigInterfaceParamEntry OBJECT-TYPE
+    SYNTAX      LUXLUdldConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each physical interface has a set of configurable parameters"
+    INDEX       { luxlUdldConfigInterfaceParamIfIndex }
+    ::= { luxlUdldConfigInterfaceParamTable 1 }
+
+LUXLUdldConfigInterfaceParamEntry ::= SEQUENCE {
+    luxlUdldConfigInterfaceParamIfIndex     LUXLInterfaceIndex,
+    luxlUdldConfigInterfaceParamUdldMode    LUXLUdldMode,
+    luxlUdldConfigInterfaceParamProbeMsgInterval    Unsigned32
+}
+
+luxlUdldConfigInterfaceParamIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlUdldConfigInterfaceParamEntry 1 }
+
+luxlUdldConfigInterfaceParamUdldMode OBJECT-TYPE
+    SYNTAX      LUXLUdldMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Port udld mode disable/normal/aggresive."
+    ::= { luxlUdldConfigInterfaceParamEntry 2 }
+
+luxlUdldConfigInterfaceParamProbeMsgInterval OBJECT-TYPE
+    SYNTAX      Unsigned32 (7..90)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Port probe message interval(seconds). Valid range: 7 to 90 seconds."
+    ::= { luxlUdldConfigInterfaceParamEntry 3 }
+
+luxlUdldStatus OBJECT IDENTIFIER
+    ::= { luxlUdldMibObjects 3 }
+
+luxlUdldStatusInterface OBJECT IDENTIFIER
+    ::= { luxlUdldStatus 1 }
+
+luxlUdldStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLUdldStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of udld interface local device information"
+    ::= { luxlUdldStatusInterface 1 }
+
+luxlUdldStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLUdldStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each udld enabled interface has a local device information"
+    INDEX       { luxlUdldStatusInterfaceIfIndex }
+    ::= { luxlUdldStatusInterfaceTable 1 }
+
+LUXLUdldStatusInterfaceEntry ::= SEQUENCE {
+    luxlUdldStatusInterfaceIfIndex      LUXLInterfaceIndex,
+    luxlUdldStatusInterfaceDeviceID     LUXLDisplayString,
+    luxlUdldStatusInterfaceDeviceName   LUXLDisplayString,
+    luxlUdldStatusInterfaceLinkState    LUXLUdldDetectionState
+}
+
+luxlUdldStatusInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlUdldStatusInterfaceEntry 1 }
+
+luxlUdldStatusInterfaceDeviceID OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Local device id."
+    ::= { luxlUdldStatusInterfaceEntry 2 }
+
+luxlUdldStatusInterfaceDeviceName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Local device name."
+    ::= { luxlUdldStatusInterfaceEntry 3 }
+
+luxlUdldStatusInterfaceLinkState OBJECT-TYPE
+    SYNTAX      LUXLUdldDetectionState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Local device link detected state."
+    ::= { luxlUdldStatusInterfaceEntry 4 }
+
+luxlUdldStatusInterfaceNeighborTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLUdldStatusInterfaceNeighborEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of udld interface neighbor cache information"
+    ::= { luxlUdldStatusInterface 2 }
+
+luxlUdldStatusInterfaceNeighborEntry OBJECT-TYPE
+    SYNTAX      LUXLUdldStatusInterfaceNeighborEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each udld enabled interface has a neighbor cache information"
+    INDEX       { luxlUdldStatusInterfaceNeighborIfIndex }
+    ::= { luxlUdldStatusInterfaceNeighborTable 1 }
+
+LUXLUdldStatusInterfaceNeighborEntry ::= SEQUENCE {
+    luxlUdldStatusInterfaceNeighborIfIndex      LUXLInterfaceIndex,
+    luxlUdldStatusInterfaceNeighborNeighborDeviceID     LUXLDisplayString,
+    luxlUdldStatusInterfaceNeighborNeighborPortID   LUXLDisplayString,
+    luxlUdldStatusInterfaceNeighborNeighborDeviceName   LUXLDisplayString,
+    luxlUdldStatusInterfaceNeighborLinkDetectionState   LUXLUdldDetectionState
+}
+
+luxlUdldStatusInterfaceNeighborIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlUdldStatusInterfaceNeighborEntry 1 }
+
+luxlUdldStatusInterfaceNeighborNeighborDeviceID OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Neighbor device id."
+    ::= { luxlUdldStatusInterfaceNeighborEntry 2 }
+
+luxlUdldStatusInterfaceNeighborNeighborPortID OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Neighbor port id."
+    ::= { luxlUdldStatusInterfaceNeighborEntry 3 }
+
+luxlUdldStatusInterfaceNeighborNeighborDeviceName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Neighbor device name."
+    ::= { luxlUdldStatusInterfaceNeighborEntry 4 }
+
+luxlUdldStatusInterfaceNeighborLinkDetectionState OBJECT-TYPE
+    SYNTAX      LUXLUdldDetectionState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Neighbor device link detected state."
+    ::= { luxlUdldStatusInterfaceNeighborEntry 5 }
+
+luxlUdldMibConformance OBJECT IDENTIFIER
+    ::= { luxlUdldMib 2 }
+
+luxlUdldMibCompliances OBJECT IDENTIFIER
+    ::= { luxlUdldMibConformance 1 }
+
+luxlUdldMibGroups OBJECT IDENTIFIER
+    ::= { luxlUdldMibConformance 2 }
+
+luxlUdldConfigInterfaceParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlUdldConfigInterfaceParamUdldMode, 
+                  luxlUdldConfigInterfaceParamProbeMsgInterval }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlUdldMibGroups 1 }
+
+luxlUdldStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlUdldStatusInterfaceDeviceID, 
+                  luxlUdldStatusInterfaceDeviceName, 
+                  luxlUdldStatusInterfaceLinkState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlUdldMibGroups 2 }
+
+luxlUdldStatusInterfaceNeighborTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlUdldStatusInterfaceNeighborNeighborDeviceID, 
+                  luxlUdldStatusInterfaceNeighborNeighborPortID, 
+                  luxlUdldStatusInterfaceNeighborNeighborDeviceName, 
+                  luxlUdldStatusInterfaceNeighborLinkDetectionState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlUdldMibGroups 3 }
+
+luxlUdldMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlUdldConfigInterfaceParamTableInfoGroup, 
+                  luxlUdldStatusInterfaceTableInfoGroup, 
+                  luxlUdldStatusInterfaceNeighborTableInfoGroup }
+
+    ::= { luxlUdldMibCompliances 1 }
+
+END

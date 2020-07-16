@@ -1,0 +1,4667 @@
+-- *****************************************************************
+-- IP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-IP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Counter64 FROM SNMPv2-SMI
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlIpMib MODULE-IDENTITY
+    LAST-UPDATED "201410290000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "Private IP MIB."
+    REVISION    "201410290000Z"
+    DESCRIPTION
+        "Removed the fields arpRetransmitTime and reasmMaxSize."
+    REVISION    "201410210000Z"
+    DESCRIPTION
+        "Added arpCheck in the DhcpClientState enum"
+    REVISION    "201409110000Z"
+    DESCRIPTION
+        "Revise definition of IPv4/IPv6 interface status table index."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { luxlSwitchMgmt 102 }
+
+
+LUXLIpDhcpClientState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { stopped(0), init(1), selecting(2), requesting(3), rebinding(4), bound(5), renewing(6), fallback(7), arpCheck(8) }
+
+luxlIpMibObjects OBJECT IDENTIFIER
+    ::= { luxlIpMib 1 }
+
+luxlIpCapabilities OBJECT IDENTIFIER
+    ::= { luxlIpMibObjects 1 }
+
+luxlIpCapabilitiesHasIpv4HostCapabilities OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The device has IPv4 host capabilities for management."
+    ::= { luxlIpCapabilities 1 }
+
+luxlIpCapabilitiesHasIpv6HostCapabilities OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The device has IPv6 host capabilities for management."
+    ::= { luxlIpCapabilities 2 }
+
+luxlIpCapabilitiesHasIpv4UnicastRoutingCapabilities OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The device has IPv4 unicast routing capabilities."
+    ::= { luxlIpCapabilities 3 }
+
+luxlIpCapabilitiesHasIpv4UnicastHwRoutingCapabilities OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The device has IPv4 unicast hardware accelerated routing capabilities."
+    ::= { luxlIpCapabilities 4 }
+
+luxlIpCapabilitiesHasIpv6UnicastRoutingCapabilities OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The device has IPv6 unicast routing capabilities."
+    ::= { luxlIpCapabilities 5 }
+
+luxlIpCapabilitiesHasIpv6UnicastHwRoutingCapabilities OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The device has IPv6 unicast hardware accelerated routing capabilities."
+    ::= { luxlIpCapabilities 6 }
+
+luxlIpCapabilitiesMaxNumberOfIpInterfaces OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of IP interfaces supported by the device."
+    ::= { luxlIpCapabilities 7 }
+
+luxlIpCapabilitiesMaxNumberOfStaticRoutes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of static configured IP routes (shared by IPv4 and
+         IPv6)."
+    ::= { luxlIpCapabilities 8 }
+
+luxlIpCapabilitiesNumberOfLpmHardwareEntries OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of hardware LPM (longest prefix match) entries."
+    ::= { luxlIpCapabilities 9 }
+
+luxlIpConfig OBJECT IDENTIFIER
+    ::= { luxlIpMibObjects 2 }
+
+luxlIpConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlIpConfig 1 }
+
+luxlIpConfigGlobalsMain OBJECT IDENTIFIER
+    ::= { luxlIpConfigGlobals 1 }
+
+luxlIpConfigGlobalsMainEnableRouting OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable routing."
+    ::= { luxlIpConfigGlobalsMain 1 }
+
+luxlIpConfigInterfaces OBJECT IDENTIFIER
+    ::= { luxlIpConfig 2 }
+
+luxlIpConfigInterfacesTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpConfigInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the IP interface table. When an IP interface is created it can
+         be configured in the other tables found in this MIB."
+    ::= { luxlIpConfigInterfaces 1 }
+
+luxlIpConfigInterfacesEntry OBJECT-TYPE
+    SYNTAX      LUXLIpConfigInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Entries in this table represent IP interfaces created on the system"
+    INDEX       { luxlIpConfigInterfacesIfIndex }
+    ::= { luxlIpConfigInterfacesTable 1 }
+
+LUXLIpConfigInterfacesEntry ::= SEQUENCE {
+    luxlIpConfigInterfacesIfIndex   LUXLInterfaceIndex,
+    luxlIpConfigInterfacesAction    LUXLRowEditorState
+}
+
+luxlIpConfigInterfacesIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpConfigInterfacesEntry 1 }
+
+luxlIpConfigInterfacesAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpConfigInterfacesEntry 100 }
+
+luxlIpConfigInterfacesTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlIpConfigInterfaces 2 }
+
+luxlIpConfigInterfacesTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpConfigInterfacesTableRowEditor 1 }
+
+luxlIpConfigInterfacesTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpConfigInterfacesTableRowEditor 100 }
+
+luxlIpConfigInterfacesIpv4Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpConfigInterfacesIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "IPv4 interface configuration table. This table enables IPv4 related
+         configuration of the corresponding IP interface."
+    ::= { luxlIpConfigInterfaces 3 }
+
+luxlIpConfigInterfacesIpv4Entry OBJECT-TYPE
+    SYNTAX      LUXLIpConfigInterfacesIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an IP interface."
+    INDEX       { luxlIpConfigInterfacesIpv4IfIndex }
+    ::= { luxlIpConfigInterfacesIpv4Table 1 }
+
+LUXLIpConfigInterfacesIpv4Entry ::= SEQUENCE {
+    luxlIpConfigInterfacesIpv4IfIndex   LUXLInterfaceIndex,
+    luxlIpConfigInterfacesIpv4Active    TruthValue,
+    luxlIpConfigInterfacesIpv4EnableDhcpClient      TruthValue,
+    luxlIpConfigInterfacesIpv4Ipv4Address   IpAddress,
+    luxlIpConfigInterfacesIpv4PrefixSize    Unsigned32,
+    luxlIpConfigInterfacesIpv4DhcpClientFallbackTimeout     Unsigned32
+}
+
+luxlIpConfigInterfacesIpv4IfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpConfigInterfacesIpv4Entry 1 }
+
+luxlIpConfigInterfacesIpv4Active OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable IPv4.
+         
+         IPv4 can only be enabled if either the DHCP client is enabled, or a
+         valid address has been configured."
+    ::= { luxlIpConfigInterfacesIpv4Entry 2 }
+
+luxlIpConfigInterfacesIpv4EnableDhcpClient OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable IPv4 DHCP client.
+         
+         Note: the DHCP client can only be enabled if there is no conflict in
+         the values of: ipv4Address, prefixSize, and dhcpClientFallbackTimeout."
+    ::= { luxlIpConfigInterfacesIpv4Entry 3 }
+
+luxlIpConfigInterfacesIpv4Ipv4Address OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "IPv4 address.
+         
+         Note: Multiple interfaces may not have overlapping networks."
+    ::= { luxlIpConfigInterfacesIpv4Entry 4 }
+
+luxlIpConfigInterfacesIpv4PrefixSize OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Prefix size of the network.
+         
+         Note: Multiple interfaces may not have overlapping networks."
+    ::= { luxlIpConfigInterfacesIpv4Entry 5 }
+
+luxlIpConfigInterfacesIpv4DhcpClientFallbackTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DHCP client fallback timer.
+         
+         If DHCP is disabled then this object has no effect. If DHCP is enabled
+         and the fallback timeout value is different from zero, then this timer
+         will stop the DHCP process and assign the ipv4Address to the interface
+         instead."
+    ::= { luxlIpConfigInterfacesIpv4Entry 6 }
+
+luxlIpConfigInterfacesIpv6Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpConfigInterfacesIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "IPv6 interface configuration table. This table enables IPv6 related
+         configuration of the corresponding IP interface."
+    ::= { luxlIpConfigInterfaces 4 }
+
+luxlIpConfigInterfacesIpv6Entry OBJECT-TYPE
+    SYNTAX      LUXLIpConfigInterfacesIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an IP interface."
+    INDEX       { luxlIpConfigInterfacesIpv6IfIndex }
+    ::= { luxlIpConfigInterfacesIpv6Table 1 }
+
+LUXLIpConfigInterfacesIpv6Entry ::= SEQUENCE {
+    luxlIpConfigInterfacesIpv6IfIndex   LUXLInterfaceIndex,
+    luxlIpConfigInterfacesIpv6Active    TruthValue,
+    luxlIpConfigInterfacesIpv6Ipv6Address   InetAddressIPv6,
+    luxlIpConfigInterfacesIpv6PrefixSize    Unsigned32
+}
+
+luxlIpConfigInterfacesIpv6IfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpConfigInterfacesIpv6Entry 1 }
+
+luxlIpConfigInterfacesIpv6Active OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable the static configured IPv6 address.
+         
+         The static configured IPv6 address can only be configured if a valid
+         address has been written into 'ipv6Address' and 'prefixSize'."
+    ::= { luxlIpConfigInterfacesIpv6Entry 2 }
+
+luxlIpConfigInterfacesIpv6Ipv6Address OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Static configured IPv6 address."
+    ::= { luxlIpConfigInterfacesIpv6Entry 3 }
+
+luxlIpConfigInterfacesIpv6PrefixSize OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Prefix size of the network."
+    ::= { luxlIpConfigInterfacesIpv6Entry 4 }
+
+luxlIpConfigRoutes OBJECT IDENTIFIER
+    ::= { luxlIpConfig 3 }
+
+luxlIpConfigRoutesIpv4Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpConfigRoutesIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the IPv4 route configuration table."
+    ::= { luxlIpConfigRoutes 1 }
+
+luxlIpConfigRoutesIpv4Entry OBJECT-TYPE
+    SYNTAX      LUXLIpConfigRoutesIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents a configured route.
+         
+         Note: a route may be configured without being active."
+    INDEX       { luxlIpConfigRoutesIpv4NetworkAddress, luxlIpConfigRoutesIpv4NetworkPrefixSize, luxlIpConfigRoutesIpv4NextHop }
+    ::= { luxlIpConfigRoutesIpv4Table 1 }
+
+LUXLIpConfigRoutesIpv4Entry ::= SEQUENCE {
+    luxlIpConfigRoutesIpv4NetworkAddress    IpAddress,
+    luxlIpConfigRoutesIpv4NetworkPrefixSize     Integer32,
+    luxlIpConfigRoutesIpv4NextHop   IpAddress,
+    luxlIpConfigRoutesIpv4Action    LUXLRowEditorState
+}
+
+luxlIpConfigRoutesIpv4NetworkAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Network address."
+    ::= { luxlIpConfigRoutesIpv4Entry 1 }
+
+luxlIpConfigRoutesIpv4NetworkPrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..32)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Network prefix size."
+    ::= { luxlIpConfigRoutesIpv4Entry 2 }
+
+luxlIpConfigRoutesIpv4NextHop OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Next-hop address."
+    ::= { luxlIpConfigRoutesIpv4Entry 3 }
+
+luxlIpConfigRoutesIpv4Action OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpConfigRoutesIpv4Entry 100 }
+
+luxlIpConfigRoutesIpv4RowEditor OBJECT IDENTIFIER
+    ::= { luxlIpConfigRoutes 2 }
+
+luxlIpConfigRoutesIpv4RowEditorNetworkAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Network address."
+    ::= { luxlIpConfigRoutesIpv4RowEditor 1 }
+
+luxlIpConfigRoutesIpv4RowEditorNetworkPrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..32)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Network prefix size."
+    ::= { luxlIpConfigRoutesIpv4RowEditor 2 }
+
+luxlIpConfigRoutesIpv4RowEditorNextHop OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Next-hop address."
+    ::= { luxlIpConfigRoutesIpv4RowEditor 3 }
+
+luxlIpConfigRoutesIpv4RowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpConfigRoutesIpv4RowEditor 100 }
+
+luxlIpConfigRoutesIpv6Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpConfigRoutesIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the IPv6 route configuration table."
+    ::= { luxlIpConfigRoutes 3 }
+
+luxlIpConfigRoutesIpv6Entry OBJECT-TYPE
+    SYNTAX      LUXLIpConfigRoutesIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents a configured route.
+         
+         Note: a route may be configured without being active."
+    INDEX       { luxlIpConfigRoutesIpv6NetworkAddress, luxlIpConfigRoutesIpv6NetworkPrefixSize, luxlIpConfigRoutesIpv6NextHop, luxlIpConfigRoutesIpv6NextHopInterface }
+    ::= { luxlIpConfigRoutesIpv6Table 1 }
+
+LUXLIpConfigRoutesIpv6Entry ::= SEQUENCE {
+    luxlIpConfigRoutesIpv6NetworkAddress    InetAddressIPv6,
+    luxlIpConfigRoutesIpv6NetworkPrefixSize     Integer32,
+    luxlIpConfigRoutesIpv6NextHop   InetAddressIPv6,
+    luxlIpConfigRoutesIpv6NextHopInterface      LUXLInterfaceIndex,
+    luxlIpConfigRoutesIpv6Action    LUXLRowEditorState
+}
+
+luxlIpConfigRoutesIpv6NetworkAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Network address."
+    ::= { luxlIpConfigRoutesIpv6Entry 1 }
+
+luxlIpConfigRoutesIpv6NetworkPrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..128)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Network prefix size."
+    ::= { luxlIpConfigRoutesIpv6Entry 2 }
+
+luxlIpConfigRoutesIpv6NextHop OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Next-hop address."
+    ::= { luxlIpConfigRoutesIpv6Entry 3 }
+
+luxlIpConfigRoutesIpv6NextHopInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "If the next-hop address is a link-local address, then the interface of
+         the link-local address must be specified here. Otherwise this value is
+         not used."
+    ::= { luxlIpConfigRoutesIpv6Entry 4 }
+
+luxlIpConfigRoutesIpv6Action OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpConfigRoutesIpv6Entry 100 }
+
+luxlIpConfigRoutesIpv6RowEditor OBJECT IDENTIFIER
+    ::= { luxlIpConfigRoutes 4 }
+
+luxlIpConfigRoutesIpv6RowEditorNetworkAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Network address."
+    ::= { luxlIpConfigRoutesIpv6RowEditor 1 }
+
+luxlIpConfigRoutesIpv6RowEditorNetworkPrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..128)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Network prefix size."
+    ::= { luxlIpConfigRoutesIpv6RowEditor 2 }
+
+luxlIpConfigRoutesIpv6RowEditorNextHop OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Next-hop address."
+    ::= { luxlIpConfigRoutesIpv6RowEditor 3 }
+
+luxlIpConfigRoutesIpv6RowEditorNextHopInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If the next-hop address is a link-local address, then the interface of
+         the link-local address must be specified here. Otherwise this value is
+         not used."
+    ::= { luxlIpConfigRoutesIpv6RowEditor 4 }
+
+luxlIpConfigRoutesIpv6RowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpConfigRoutesIpv6RowEditor 100 }
+
+luxlIpStatus OBJECT IDENTIFIER
+    ::= { luxlIpMibObjects 3 }
+
+luxlIpStatusGlobals OBJECT IDENTIFIER
+    ::= { luxlIpStatus 1 }
+
+luxlIpStatusGlobalsIpv4NeighbourTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatusGlobalsIpv4NeighbourEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the IPv4 neighbour table (ARP)."
+    ::= { luxlIpStatusGlobals 1 }
+
+luxlIpStatusGlobalsIpv4NeighbourEntry OBJECT-TYPE
+    SYNTAX      LUXLIpStatusGlobalsIpv4NeighbourEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an entry in the underlying operting
+         system's ARP table."
+    INDEX       { luxlIpStatusGlobalsIpv4NeighbourIpv4 }
+    ::= { luxlIpStatusGlobalsIpv4NeighbourTable 1 }
+
+LUXLIpStatusGlobalsIpv4NeighbourEntry ::= SEQUENCE {
+    luxlIpStatusGlobalsIpv4NeighbourIpv4    IpAddress,
+    luxlIpStatusGlobalsIpv4NeighbourMacAddress      MacAddress,
+    luxlIpStatusGlobalsIpv4NeighbourInterface   LUXLInterfaceIndex
+}
+
+luxlIpStatusGlobalsIpv4NeighbourIpv4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "IPv4 address."
+    ::= { luxlIpStatusGlobalsIpv4NeighbourEntry 1 }
+
+luxlIpStatusGlobalsIpv4NeighbourMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC address associated with the IP address"
+    ::= { luxlIpStatusGlobalsIpv4NeighbourEntry 2 }
+
+luxlIpStatusGlobalsIpv4NeighbourInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Interface the neighbour can be reached on."
+    ::= { luxlIpStatusGlobalsIpv4NeighbourEntry 3 }
+
+luxlIpStatusGlobalsIpv6NeighbourTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatusGlobalsIpv6NeighbourEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the IPv6 neighbour table."
+    ::= { luxlIpStatusGlobals 2 }
+
+luxlIpStatusGlobalsIpv6NeighbourEntry OBJECT-TYPE
+    SYNTAX      LUXLIpStatusGlobalsIpv6NeighbourEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an entry in the underlying operting
+         system's nieghbour table."
+    INDEX       { luxlIpStatusGlobalsIpv6NeighbourIpAddress, luxlIpStatusGlobalsIpv6NeighbourInterfaceQuery }
+    ::= { luxlIpStatusGlobalsIpv6NeighbourTable 1 }
+
+LUXLIpStatusGlobalsIpv6NeighbourEntry ::= SEQUENCE {
+    luxlIpStatusGlobalsIpv6NeighbourIpAddress   InetAddressIPv6,
+    luxlIpStatusGlobalsIpv6NeighbourInterfaceQuery      Integer32,
+    luxlIpStatusGlobalsIpv6NeighbourMacAddress      MacAddress,
+    luxlIpStatusGlobalsIpv6NeighbourInterface   LUXLInterfaceIndex
+}
+
+luxlIpStatusGlobalsIpv6NeighbourIpAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "IP address."
+    ::= { luxlIpStatusGlobalsIpv6NeighbourEntry 1 }
+
+luxlIpStatusGlobalsIpv6NeighbourInterfaceQuery OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "If 'ipAddress' is a link-local address, then the interface index where
+         the host can be reached must be specified here, otherwise set this to
+         zero."
+    ::= { luxlIpStatusGlobalsIpv6NeighbourEntry 2 }
+
+luxlIpStatusGlobalsIpv6NeighbourMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC address associated with the IP address"
+    ::= { luxlIpStatusGlobalsIpv6NeighbourEntry 3 }
+
+luxlIpStatusGlobalsIpv6NeighbourInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Interface the neighbour can be reached on."
+    ::= { luxlIpStatusGlobalsIpv6NeighbourEntry 4 }
+
+luxlIpStatusInterfaces OBJECT IDENTIFIER
+    ::= { luxlIpStatus 2 }
+
+luxlIpStatusInterfacesLinkTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatusInterfacesLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides link-layer status information for IP interfaces."
+    ::= { luxlIpStatusInterfaces 1 }
+
+luxlIpStatusInterfacesLinkEntry OBJECT-TYPE
+    SYNTAX      LUXLIpStatusInterfacesLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an IP interface."
+    INDEX       { luxlIpStatusInterfacesLinkIfIndex }
+    ::= { luxlIpStatusInterfacesLinkTable 1 }
+
+LUXLIpStatusInterfacesLinkEntry ::= SEQUENCE {
+    luxlIpStatusInterfacesLinkIfIndex   LUXLInterfaceIndex,
+    luxlIpStatusInterfacesLinkOsInterfaceIndex      Unsigned32,
+    luxlIpStatusInterfacesLinkMtu   Unsigned32,
+    luxlIpStatusInterfacesLinkMacAddress    MacAddress,
+    luxlIpStatusInterfacesLinkUp    TruthValue,
+    luxlIpStatusInterfacesLinkBroadcast     TruthValue,
+    luxlIpStatusInterfacesLinkLoopback      TruthValue,
+    luxlIpStatusInterfacesLinkRunning   TruthValue,
+    luxlIpStatusInterfacesLinkNoarp     TruthValue,
+    luxlIpStatusInterfacesLinkPromisc   TruthValue,
+    luxlIpStatusInterfacesLinkMulticast     TruthValue
+}
+
+luxlIpStatusInterfacesLinkIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpStatusInterfacesLinkEntry 1 }
+
+luxlIpStatusInterfacesLinkOsInterfaceIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Interface index used by the operating system."
+    ::= { luxlIpStatusInterfacesLinkEntry 2 }
+
+luxlIpStatusInterfacesLinkMtu OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MTU for the interface."
+    ::= { luxlIpStatusInterfacesLinkEntry 3 }
+
+luxlIpStatusInterfacesLinkMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC-address of the interface."
+    ::= { luxlIpStatusInterfacesLinkEntry 4 }
+
+luxlIpStatusInterfacesLinkUp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if the interface is up."
+    ::= { luxlIpStatusInterfacesLinkEntry 5 }
+
+luxlIpStatusInterfacesLinkBroadcast OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if the interface is capable of transmitting broadcast
+         traffic."
+    ::= { luxlIpStatusInterfacesLinkEntry 6 }
+
+luxlIpStatusInterfacesLinkLoopback OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if the interface is a loop-back interface."
+    ::= { luxlIpStatusInterfacesLinkEntry 7 }
+
+luxlIpStatusInterfacesLinkRunning OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Interface is running (according to the operating system)."
+    ::= { luxlIpStatusInterfacesLinkEntry 8 }
+
+luxlIpStatusInterfacesLinkNoarp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if the interface will answer to ARP requests."
+    ::= { luxlIpStatusInterfacesLinkEntry 9 }
+
+luxlIpStatusInterfacesLinkPromisc OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if the interface is in promisc mode."
+    ::= { luxlIpStatusInterfacesLinkEntry 10 }
+
+luxlIpStatusInterfacesLinkMulticast OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if the interface supports multicast."
+    ::= { luxlIpStatusInterfacesLinkEntry 11 }
+
+luxlIpStatusInterfacesIpv4Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatusInterfacesIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides IPv4 status information for IP interfaces. If an
+         interface is configured to use a DHCP client, then the address can be
+         found here."
+    ::= { luxlIpStatusInterfaces 2 }
+
+luxlIpStatusInterfacesIpv4Entry OBJECT-TYPE
+    SYNTAX      LUXLIpStatusInterfacesIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an IP interface."
+    INDEX       { luxlIpStatusInterfacesIpv4IfIndex, luxlIpStatusInterfacesIpv4NetworkAddress, luxlIpStatusInterfacesIpv4NetworkMaskLength }
+    ::= { luxlIpStatusInterfacesIpv4Table 1 }
+
+LUXLIpStatusInterfacesIpv4Entry ::= SEQUENCE {
+    luxlIpStatusInterfacesIpv4IfIndex   LUXLInterfaceIndex,
+    luxlIpStatusInterfacesIpv4NetworkAddress    IpAddress,
+    luxlIpStatusInterfacesIpv4NetworkMaskLength     Integer32,
+    luxlIpStatusInterfacesIpv4Broadcast     IpAddress
+}
+
+luxlIpStatusInterfacesIpv4IfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpStatusInterfacesIpv4Entry 1 }
+
+luxlIpStatusInterfacesIpv4NetworkAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "IPv4 network address."
+    ::= { luxlIpStatusInterfacesIpv4Entry 2 }
+
+luxlIpStatusInterfacesIpv4NetworkMaskLength OBJECT-TYPE
+    SYNTAX      Integer32 (0..32)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "IPv4 network mask length."
+    ::= { luxlIpStatusInterfacesIpv4Entry 3 }
+
+luxlIpStatusInterfacesIpv4Broadcast OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Broadcast address."
+    ::= { luxlIpStatusInterfacesIpv4Entry 4 }
+
+luxlIpStatusInterfacesDhcpClientV4Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatusInterfacesDhcpClientV4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides status on the DHCP client running on a given
+         interface."
+    ::= { luxlIpStatusInterfaces 3 }
+
+luxlIpStatusInterfacesDhcpClientV4Entry OBJECT-TYPE
+    SYNTAX      LUXLIpStatusInterfacesDhcpClientV4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an instance of a DHCP client."
+    INDEX       { luxlIpStatusInterfacesDhcpClientV4IfIndex }
+    ::= { luxlIpStatusInterfacesDhcpClientV4Table 1 }
+
+LUXLIpStatusInterfacesDhcpClientV4Entry ::= SEQUENCE {
+    luxlIpStatusInterfacesDhcpClientV4IfIndex   LUXLInterfaceIndex,
+    luxlIpStatusInterfacesDhcpClientV4State     LUXLIpDhcpClientState,
+    luxlIpStatusInterfacesDhcpClientV4ServerIp      IpAddress
+}
+
+luxlIpStatusInterfacesDhcpClientV4IfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpStatusInterfacesDhcpClientV4Entry 1 }
+
+luxlIpStatusInterfacesDhcpClientV4State OBJECT-TYPE
+    SYNTAX      LUXLIpDhcpClientState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "State of the DHCP client."
+    ::= { luxlIpStatusInterfacesDhcpClientV4Entry 2 }
+
+luxlIpStatusInterfacesDhcpClientV4ServerIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "IP address of the DHCP server that has provided the DHCP offer."
+    ::= { luxlIpStatusInterfacesDhcpClientV4Entry 3 }
+
+luxlIpStatusInterfacesIpv6Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatusInterfacesIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides IPv6 status information for IP interfaces. If an
+         interface is configured to use a DHCP client, then the address can be
+         found here."
+    ::= { luxlIpStatusInterfaces 4 }
+
+luxlIpStatusInterfacesIpv6Entry OBJECT-TYPE
+    SYNTAX      LUXLIpStatusInterfacesIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an IP interface."
+    INDEX       { luxlIpStatusInterfacesIpv6IfIndex, luxlIpStatusInterfacesIpv6NetworkAddress, luxlIpStatusInterfacesIpv6NetworkMaskLength }
+    ::= { luxlIpStatusInterfacesIpv6Table 1 }
+
+LUXLIpStatusInterfacesIpv6Entry ::= SEQUENCE {
+    luxlIpStatusInterfacesIpv6IfIndex   LUXLInterfaceIndex,
+    luxlIpStatusInterfacesIpv6NetworkAddress    InetAddressIPv6,
+    luxlIpStatusInterfacesIpv6NetworkMaskLength     Integer32,
+    luxlIpStatusInterfacesIpv6Tentative     TruthValue,
+    luxlIpStatusInterfacesIpv6Duplicated    TruthValue,
+    luxlIpStatusInterfacesIpv6Detached      TruthValue,
+    luxlIpStatusInterfacesIpv6Nodad     TruthValue,
+    luxlIpStatusInterfacesIpv6Autoconf      TruthValue
+}
+
+luxlIpStatusInterfacesIpv6IfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpStatusInterfacesIpv6Entry 1 }
+
+luxlIpStatusInterfacesIpv6NetworkAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "IPv6 network address."
+    ::= { luxlIpStatusInterfacesIpv6Entry 2 }
+
+luxlIpStatusInterfacesIpv6NetworkMaskLength OBJECT-TYPE
+    SYNTAX      Integer32 (0..128)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "IPv6 network mask length."
+    ::= { luxlIpStatusInterfacesIpv6Entry 3 }
+
+luxlIpStatusInterfacesIpv6Tentative OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "An address whose uniqueness on a link is being verified, prior to its
+         assignment to an interface. A tentative address is not considered
+         assigned to an interface in the usual sense."
+    ::= { luxlIpStatusInterfacesIpv6Entry 4 }
+
+luxlIpStatusInterfacesIpv6Duplicated OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the address duplication is detected by Duplicate Address
+         Detection (DAD).
+         
+         If the address is a link-local address formed from an interface
+         identifier based on the hardware address, which is supposed to be
+         uniquely assigned (e.g., EUI-64 for an Ethernet interface), IP
+         operation on the interface should be disabled."
+    ::= { luxlIpStatusInterfacesIpv6Entry 5 }
+
+luxlIpStatusInterfacesIpv6Detached OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates this address is ready to be detached from the link (IPv6
+         network)."
+    ::= { luxlIpStatusInterfacesIpv6Entry 6 }
+
+luxlIpStatusInterfacesIpv6Nodad OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates this address does not perform Duplicate Address Detection
+         (DAD)."
+    ::= { luxlIpStatusInterfacesIpv6Entry 7 }
+
+luxlIpStatusInterfacesIpv6Autoconf OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates this address is capable of being retrieved by stateless
+         address autoconfiguration."
+    ::= { luxlIpStatusInterfacesIpv6Entry 8 }
+
+luxlIpStatusRoutes OBJECT IDENTIFIER
+    ::= { luxlIpStatus 3 }
+
+luxlIpStatusRoutesIpv4Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatusRoutesIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides IPv4 routing status."
+    ::= { luxlIpStatusRoutes 1 }
+
+luxlIpStatusRoutesIpv4Entry OBJECT-TYPE
+    SYNTAX      LUXLIpStatusRoutesIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an IP route in the system's routing
+         table."
+    INDEX       { luxlIpStatusRoutesIpv4NetworkAddress, luxlIpStatusRoutesIpv4NetworkPrefixSize, luxlIpStatusRoutesIpv4NextHop }
+    ::= { luxlIpStatusRoutesIpv4Table 1 }
+
+LUXLIpStatusRoutesIpv4Entry ::= SEQUENCE {
+    luxlIpStatusRoutesIpv4NetworkAddress    IpAddress,
+    luxlIpStatusRoutesIpv4NetworkPrefixSize     Integer32,
+    luxlIpStatusRoutesIpv4NextHop   IpAddress,
+    luxlIpStatusRoutesIpv4DerivedNextHopInterface   LUXLInterfaceIndex,
+    luxlIpStatusRoutesIpv4FlagUp    TruthValue,
+    luxlIpStatusRoutesIpv4FlagHost      TruthValue,
+    luxlIpStatusRoutesIpv4FlagGateway   TruthValue,
+    luxlIpStatusRoutesIpv4OwnerConf     TruthValue,
+    luxlIpStatusRoutesIpv4OwnerDhcp     TruthValue,
+    luxlIpStatusRoutesIpv4OwnerDynamic      TruthValue
+}
+
+luxlIpStatusRoutesIpv4NetworkAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Network address."
+    ::= { luxlIpStatusRoutesIpv4Entry 1 }
+
+luxlIpStatusRoutesIpv4NetworkPrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..32)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Network prefix size."
+    ::= { luxlIpStatusRoutesIpv4Entry 2 }
+
+luxlIpStatusRoutesIpv4NextHop OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Next-hop address."
+    ::= { luxlIpStatusRoutesIpv4Entry 3 }
+
+luxlIpStatusRoutesIpv4DerivedNextHopInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Next-hop interface."
+    ::= { luxlIpStatusRoutesIpv4Entry 4 }
+
+luxlIpStatusRoutesIpv4FlagUp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is up."
+    ::= { luxlIpStatusRoutesIpv4Entry 35 }
+
+luxlIpStatusRoutesIpv4FlagHost OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is forwarding to this host (loop-back)."
+    ::= { luxlIpStatusRoutesIpv4Entry 36 }
+
+luxlIpStatusRoutesIpv4FlagGateway OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is using a gateway as next-hop, of not set then an interface
+         is used."
+    ::= { luxlIpStatusRoutesIpv4Entry 37 }
+
+luxlIpStatusRoutesIpv4OwnerConf OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is installed as part of the user configuration."
+    ::= { luxlIpStatusRoutesIpv4Entry 67 }
+
+luxlIpStatusRoutesIpv4OwnerDhcp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is installed by a DHCP client."
+    ::= { luxlIpStatusRoutesIpv4Entry 68 }
+
+luxlIpStatusRoutesIpv4OwnerDynamic OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is installed by a routing protocol."
+    ::= { luxlIpStatusRoutesIpv4Entry 69 }
+
+luxlIpStatusRoutesIpv6Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatusRoutesIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides IPv6 routing status."
+    ::= { luxlIpStatusRoutes 2 }
+
+luxlIpStatusRoutesIpv6Entry OBJECT-TYPE
+    SYNTAX      LUXLIpStatusRoutesIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an IP route in the system's routing
+         table."
+    INDEX       { luxlIpStatusRoutesIpv6NetworkAddress, luxlIpStatusRoutesIpv6NetworkPrefixSize, luxlIpStatusRoutesIpv6NextHop, luxlIpStatusRoutesIpv6NextHopInterface }
+    ::= { luxlIpStatusRoutesIpv6Table 1 }
+
+LUXLIpStatusRoutesIpv6Entry ::= SEQUENCE {
+    luxlIpStatusRoutesIpv6NetworkAddress    InetAddressIPv6,
+    luxlIpStatusRoutesIpv6NetworkPrefixSize     Integer32,
+    luxlIpStatusRoutesIpv6NextHop   InetAddressIPv6,
+    luxlIpStatusRoutesIpv6NextHopInterface      LUXLInterfaceIndex,
+    luxlIpStatusRoutesIpv6DerivedNextHopInterface   LUXLInterfaceIndex,
+    luxlIpStatusRoutesIpv6FlagUp    TruthValue,
+    luxlIpStatusRoutesIpv6FlagHost      TruthValue,
+    luxlIpStatusRoutesIpv6FlagGateway   TruthValue,
+    luxlIpStatusRoutesIpv6OwnerConf     TruthValue,
+    luxlIpStatusRoutesIpv6OwnerDhcp     TruthValue,
+    luxlIpStatusRoutesIpv6OwnerDynamic      TruthValue
+}
+
+luxlIpStatusRoutesIpv6NetworkAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Network address."
+    ::= { luxlIpStatusRoutesIpv6Entry 1 }
+
+luxlIpStatusRoutesIpv6NetworkPrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..128)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Network prefix size."
+    ::= { luxlIpStatusRoutesIpv6Entry 2 }
+
+luxlIpStatusRoutesIpv6NextHop OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Next-hop address."
+    ::= { luxlIpStatusRoutesIpv6Entry 3 }
+
+luxlIpStatusRoutesIpv6NextHopInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "If the next-hop address is a link-local address, then the interface of
+         the link-local address must be specified here. Otherwise this value is
+         not used."
+    ::= { luxlIpStatusRoutesIpv6Entry 4 }
+
+luxlIpStatusRoutesIpv6DerivedNextHopInterface OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Next-hop interface."
+    ::= { luxlIpStatusRoutesIpv6Entry 5 }
+
+luxlIpStatusRoutesIpv6FlagUp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is up."
+    ::= { luxlIpStatusRoutesIpv6Entry 36 }
+
+luxlIpStatusRoutesIpv6FlagHost OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is forwarding to this host (loop-back)."
+    ::= { luxlIpStatusRoutesIpv6Entry 37 }
+
+luxlIpStatusRoutesIpv6FlagGateway OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is using a gateway as next-hop, of not set then an interface
+         is used."
+    ::= { luxlIpStatusRoutesIpv6Entry 38 }
+
+luxlIpStatusRoutesIpv6OwnerConf OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is installed as part of the user configuration."
+    ::= { luxlIpStatusRoutesIpv6Entry 68 }
+
+luxlIpStatusRoutesIpv6OwnerDhcp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is installed by a DHCP client."
+    ::= { luxlIpStatusRoutesIpv6Entry 69 }
+
+luxlIpStatusRoutesIpv6OwnerDynamic OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The route is installed by a routing protocol."
+    ::= { luxlIpStatusRoutesIpv6Entry 70 }
+
+luxlIpControl OBJECT IDENTIFIER
+    ::= { luxlIpMibObjects 4 }
+
+luxlIpControlGlobals OBJECT IDENTIFIER
+    ::= { luxlIpControl 1 }
+
+luxlIpControlGlobalsIpv4NeighbourTableClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Flush the entries in IPv4 ARP cache except for the permanent ones."
+    ::= { luxlIpControlGlobals 1 }
+
+luxlIpControlGlobalsIpv6NeighbourTableClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Erase all the NDP (Neighbor Discovery Protocol) entries registered in
+         IPv6 neighbour cache."
+    ::= { luxlIpControlGlobals 2 }
+
+luxlIpControlGlobalsIpv4SystemStatisticsClear OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear the system-wide IPv4 traffic statistics."
+    ::= { luxlIpControlGlobals 3 }
+
+luxlIpControlGlobalsIpv6SystemStatisticsClear OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear the system-wide IPv6 traffic statistics."
+    ::= { luxlIpControlGlobals 4 }
+
+luxlIpControlInterface OBJECT IDENTIFIER
+    ::= { luxlIpControl 2 }
+
+luxlIpControlInterfaceDhcpClientTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpControlInterfaceDhcpClientEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides control facilities to control an instance of the
+         DHCP client."
+    ::= { luxlIpControlInterface 1 }
+
+luxlIpControlInterfaceDhcpClientEntry OBJECT-TYPE
+    SYNTAX      LUXLIpControlInterfaceDhcpClientEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an instance of the DHCP client."
+    INDEX       { luxlIpControlInterfaceDhcpClientIfIndex }
+    ::= { luxlIpControlInterfaceDhcpClientTable 1 }
+
+LUXLIpControlInterfaceDhcpClientEntry ::= SEQUENCE {
+    luxlIpControlInterfaceDhcpClientIfIndex     LUXLInterfaceIndex,
+    luxlIpControlInterfaceDhcpClientRestart     TruthValue
+}
+
+luxlIpControlInterfaceDhcpClientIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpControlInterfaceDhcpClientEntry 1 }
+
+luxlIpControlInterfaceDhcpClientRestart OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Restart the DHCP client."
+    ::= { luxlIpControlInterfaceDhcpClientEntry 2 }
+
+luxlIpStatistics OBJECT IDENTIFIER
+    ::= { luxlIpMibObjects 5 }
+
+luxlIpStatisticsGlobals OBJECT IDENTIFIER
+    ::= { luxlIpStatistics 1 }
+
+luxlIpStatisticsGlobalsIpv4 OBJECT IDENTIFIER
+    ::= { luxlIpStatisticsGlobals 1 }
+
+luxlIpStatisticsGlobalsIpv4InReceives OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams received, including those received in
+         error.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 1 }
+
+luxlIpStatisticsGlobalsIpv4HCInReceives OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams received, including those received in
+         error. This object counts the same datagrams as InReceives, but allows
+         for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 2 }
+
+luxlIpStatisticsGlobalsIpv4InOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in input IP datagrams, including those
+         received in error. Octets from datagrams counted in InReceives must be
+         counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 3 }
+
+luxlIpStatisticsGlobalsIpv4HCInOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in input IP datagrams, including those
+         received in error. This object counts the same octets as InOctets, but
+         allows for a larger value.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 4 }
+
+luxlIpStatisticsGlobalsIpv4InHdrErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded due to errors in their IP
+         headers, including version number mismatch, other format errors, hop
+         count exceeded, and errors discovered in processing their IP options.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 5 }
+
+luxlIpStatisticsGlobalsIpv4InNoRoutes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because no route could be found
+         to transmit them to their destination.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 6 }
+
+luxlIpStatisticsGlobalsIpv4InAddrErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because the IP address in their
+         IP header's destination field was not a valid address to be received at
+         this entity. This count includes invalid addresses (e.g., ::0). For
+         entities that are not IP routers and therefore do not forward
+         datagrams, this counter includes datagrams discarded because the
+         destination address was not a local address.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 7 }
+
+luxlIpStatisticsGlobalsIpv4InUnknownProtos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of locally-addressed IP datagrams received successfully but
+         discarded because of an unknown or unsupported protocol.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 8 }
+
+luxlIpStatisticsGlobalsIpv4InTruncatedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because the datagram frame
+         didn't carry enough data.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 9 }
+
+luxlIpStatisticsGlobalsIpv4InForwDatagrams OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input datagrams for which this entity was not their final IP
+         destination and for which this entity attempted to find a route to
+         forward them to their final destination.
+         
+         When tracking interface statistics, the counter of the incoming
+         interface is incremented for each datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 10 }
+
+luxlIpStatisticsGlobalsIpv4HCInForwDatagrams OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input datagrams for which this entity was not their final IP
+         destination and for which this entity attempted to find a route to
+         forward them to their final destination. This object counts the same
+         packets as InForwDatagrams, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 11 }
+
+luxlIpStatisticsGlobalsIpv4ReasmReqds OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP fragments received that needed to be reassembled at this
+         interface.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these fragments were addressed is incremented. This interface
+         might not be the same as the input interface for some of the fragments.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 12 }
+
+luxlIpStatisticsGlobalsIpv4ReasmOKs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams successfully reassembled.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 13 }
+
+luxlIpStatisticsGlobalsIpv4ReasmFails OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of failures detected by the IP re-assembly algorithm.
+         
+         Note: this is not necessarily a count of discarded IP fragments because
+         some algorithms (notably the algorithm in RFC 815) can lose track of
+         the number of fragments by combining them as they are received.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these fragments were addressed is incremented. This interface
+         might not be the same as the input interface for some of the fragments.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 14 }
+
+luxlIpStatisticsGlobalsIpv4InDiscards OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams for which no problems were encountered to
+         prevent their continued processing, but were discarded.
+         
+         Note: this counter does not include any datagrams discarded while
+         awaiting re-assembly.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 15 }
+
+luxlIpStatisticsGlobalsIpv4InDelivers OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams successfully delivered to IP user-protocols
+         (including ICMP).
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 16 }
+
+luxlIpStatisticsGlobalsIpv4HCInDelivers OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams successfully delivered to IP user-protocols
+         (including ICMP). This object counts the same packets as
+         ipSystemStatsInDelivers, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 17 }
+
+luxlIpStatisticsGlobalsIpv4OutRequests OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that local IP user-protocols (including ICMP)
+         supplied to IP in requests for transmission.
+         
+         Note: this counter does not include any datagrams counted in
+         OutForwDatagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 18 }
+
+luxlIpStatisticsGlobalsIpv4HCOutRequests OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that local IP user-protocols (including ICMP)
+         supplied to IP in requests for transmission. This object counts the
+         same packets as OutRequests, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 19 }
+
+luxlIpStatisticsGlobalsIpv4OutNoRoutes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of locally generated IP datagrams discarded because no route
+         could be found to transmit them to their destination.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 20 }
+
+luxlIpStatisticsGlobalsIpv4OutForwDatagrams OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams for which this entity was not their final IP
+         destination and for which it was successful in finding a path to their
+         final destination.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully forwarded datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 21 }
+
+luxlIpStatisticsGlobalsIpv4HCOutForwDatagrams OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams for which this entity was not their final IP
+         destination and for which it was successful in finding a path to their
+         final destination. This object counts the same packets as
+         OutForwDatagrams, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 22 }
+
+luxlIpStatisticsGlobalsIpv4OutDiscards OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of output IP datagrams for which no problem was encountered to
+         prevent their transmission to their destination, but were discarded.
+         
+         Note: this counter includes datagrams counted in OutForwDatagrams if
+         any such datagrams met this (discretionary) discard criterion.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 23 }
+
+luxlIpStatisticsGlobalsIpv4OutFragReqds OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that require fragmentation in order to be
+         transmitted.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 24 }
+
+luxlIpStatisticsGlobalsIpv4OutFragOKs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that have been successfully fragmented.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 25 }
+
+luxlIpStatisticsGlobalsIpv4OutFragFails OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that have been discarded because they needed to
+         be fragmented but could not be. This includes IPv4 packets that have
+         the DF bit set and IPv6 packets that are being forwarded and exceed the
+         outgoing link MTU.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for an unsuccessfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 26 }
+
+luxlIpStatisticsGlobalsIpv4OutFragCreates OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of output datagram fragments that have been generated as a
+         result of IP fragmentation.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 27 }
+
+luxlIpStatisticsGlobalsIpv4OutTransmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that this entity supplied to the lower layers
+         for transmission. This includes datagrams generated locally and those
+         forwarded by this entity.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 28 }
+
+luxlIpStatisticsGlobalsIpv4HCOutTransmits OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that this entity supplied to the lower layers
+         for transmission. This object counts the same datagrams as
+         OutTransmits, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 29 }
+
+luxlIpStatisticsGlobalsIpv4OutOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets in IP datagrams delivered to the lower layers for
+         transmission. Octets from datagrams counted in OutTransmits must be
+         counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 30 }
+
+luxlIpStatisticsGlobalsIpv4HCOutOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets in IP datagrams delivered to the lower layers for
+         transmission. This objects counts the same octets as OutOctets, but
+         allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 31 }
+
+luxlIpStatisticsGlobalsIpv4InMcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams received.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 32 }
+
+luxlIpStatisticsGlobalsIpv4HCInMcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams received. This object counts the same
+         datagrams as InMcastPkts but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 33 }
+
+luxlIpStatisticsGlobalsIpv4InMcastOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in IP multicast datagrams. Octets from
+         datagrams counted in InMcastPkts MUST be counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 34 }
+
+luxlIpStatisticsGlobalsIpv4HCInMcastOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in IP multicast datagrams. This object counts
+         the same octets as InMcastOctets, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 35 }
+
+luxlIpStatisticsGlobalsIpv4OutMcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams transmitted.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 36 }
+
+luxlIpStatisticsGlobalsIpv4HCOutMcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams transmitted. This object counts the
+         same datagrams as OutMcastPkts, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 37 }
+
+luxlIpStatisticsGlobalsIpv4OutMcastOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets transmitted in IP multicast datagrams. Octets from
+         datagrams counted in OutMcastPkts must be counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 38 }
+
+luxlIpStatisticsGlobalsIpv4HCOutMcastOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets transmitted in IP multicast datagrams. This object
+         counts the same octets as OutMcastOctets, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 39 }
+
+luxlIpStatisticsGlobalsIpv4InBcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams received.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 40 }
+
+luxlIpStatisticsGlobalsIpv4HCInBcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams received. This object counts the same
+         datagrams as InBcastPkts but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 41 }
+
+luxlIpStatisticsGlobalsIpv4OutBcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams transmitted.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 42 }
+
+luxlIpStatisticsGlobalsIpv4HCOutBcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams transmitted. This object counts the
+         same datagrams as OutBcastPkts, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv4 43 }
+
+luxlIpStatisticsGlobalsIpv4DiscontinuityTime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Value of sysUpTime on the most recent occasion when any one or more of
+         this entry's counters suffered a discontinuity.
+         
+         If no such discontinuities have occurred since the last
+         re-initialization of the IP stack, then this object contains a zero
+         value."
+    ::= { luxlIpStatisticsGlobalsIpv4 44 }
+
+luxlIpStatisticsGlobalsIpv4RefreshRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum reasonable polling interval for this entry. This object
+         provides an indication of the minimum amount of time required to update
+         the counters in this entry."
+    ::= { luxlIpStatisticsGlobalsIpv4 45 }
+
+luxlIpStatisticsGlobalsIpv6 OBJECT IDENTIFIER
+    ::= { luxlIpStatisticsGlobals 2 }
+
+luxlIpStatisticsGlobalsIpv6InReceives OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams received, including those received in
+         error.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 1 }
+
+luxlIpStatisticsGlobalsIpv6HCInReceives OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams received, including those received in
+         error. This object counts the same datagrams as InReceives, but allows
+         for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 2 }
+
+luxlIpStatisticsGlobalsIpv6InOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in input IP datagrams, including those
+         received in error. Octets from datagrams counted in InReceives must be
+         counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 3 }
+
+luxlIpStatisticsGlobalsIpv6HCInOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in input IP datagrams, including those
+         received in error. This object counts the same octets as InOctets, but
+         allows for a larger value.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 4 }
+
+luxlIpStatisticsGlobalsIpv6InHdrErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded due to errors in their IP
+         headers, including version number mismatch, other format errors, hop
+         count exceeded, and errors discovered in processing their IP options.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 5 }
+
+luxlIpStatisticsGlobalsIpv6InNoRoutes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because no route could be found
+         to transmit them to their destination.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 6 }
+
+luxlIpStatisticsGlobalsIpv6InAddrErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because the IP address in their
+         IP header's destination field was not a valid address to be received at
+         this entity. This count includes invalid addresses (e.g., ::0). For
+         entities that are not IP routers and therefore do not forward
+         datagrams, this counter includes datagrams discarded because the
+         destination address was not a local address.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 7 }
+
+luxlIpStatisticsGlobalsIpv6InUnknownProtos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of locally-addressed IP datagrams received successfully but
+         discarded because of an unknown or unsupported protocol.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 8 }
+
+luxlIpStatisticsGlobalsIpv6InTruncatedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because the datagram frame
+         didn't carry enough data.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 9 }
+
+luxlIpStatisticsGlobalsIpv6InForwDatagrams OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input datagrams for which this entity was not their final IP
+         destination and for which this entity attempted to find a route to
+         forward them to their final destination.
+         
+         When tracking interface statistics, the counter of the incoming
+         interface is incremented for each datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 10 }
+
+luxlIpStatisticsGlobalsIpv6HCInForwDatagrams OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input datagrams for which this entity was not their final IP
+         destination and for which this entity attempted to find a route to
+         forward them to their final destination. This object counts the same
+         packets as InForwDatagrams, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 11 }
+
+luxlIpStatisticsGlobalsIpv6ReasmReqds OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP fragments received that needed to be reassembled at this
+         interface.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these fragments were addressed is incremented. This interface
+         might not be the same as the input interface for some of the fragments.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 12 }
+
+luxlIpStatisticsGlobalsIpv6ReasmOKs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams successfully reassembled.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 13 }
+
+luxlIpStatisticsGlobalsIpv6ReasmFails OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of failures detected by the IP re-assembly algorithm.
+         
+         Note: this is not necessarily a count of discarded IP fragments because
+         some algorithms (notably the algorithm in RFC 815) can lose track of
+         the number of fragments by combining them as they are received.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these fragments were addressed is incremented. This interface
+         might not be the same as the input interface for some of the fragments.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 14 }
+
+luxlIpStatisticsGlobalsIpv6InDiscards OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams for which no problems were encountered to
+         prevent their continued processing, but were discarded.
+         
+         Note: this counter does not include any datagrams discarded while
+         awaiting re-assembly.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 15 }
+
+luxlIpStatisticsGlobalsIpv6InDelivers OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams successfully delivered to IP user-protocols
+         (including ICMP).
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 16 }
+
+luxlIpStatisticsGlobalsIpv6HCInDelivers OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams successfully delivered to IP user-protocols
+         (including ICMP). This object counts the same packets as
+         ipSystemStatsInDelivers, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 17 }
+
+luxlIpStatisticsGlobalsIpv6OutRequests OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that local IP user-protocols (including ICMP)
+         supplied to IP in requests for transmission.
+         
+         Note: this counter does not include any datagrams counted in
+         OutForwDatagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 18 }
+
+luxlIpStatisticsGlobalsIpv6HCOutRequests OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that local IP user-protocols (including ICMP)
+         supplied to IP in requests for transmission. This object counts the
+         same packets as OutRequests, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 19 }
+
+luxlIpStatisticsGlobalsIpv6OutNoRoutes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of locally generated IP datagrams discarded because no route
+         could be found to transmit them to their destination.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 20 }
+
+luxlIpStatisticsGlobalsIpv6OutForwDatagrams OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams for which this entity was not their final IP
+         destination and for which it was successful in finding a path to their
+         final destination.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully forwarded datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 21 }
+
+luxlIpStatisticsGlobalsIpv6HCOutForwDatagrams OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams for which this entity was not their final IP
+         destination and for which it was successful in finding a path to their
+         final destination. This object counts the same packets as
+         OutForwDatagrams, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 22 }
+
+luxlIpStatisticsGlobalsIpv6OutDiscards OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of output IP datagrams for which no problem was encountered to
+         prevent their transmission to their destination, but were discarded.
+         
+         Note: this counter includes datagrams counted in OutForwDatagrams if
+         any such datagrams met this (discretionary) discard criterion.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 23 }
+
+luxlIpStatisticsGlobalsIpv6OutFragReqds OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that require fragmentation in order to be
+         transmitted.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 24 }
+
+luxlIpStatisticsGlobalsIpv6OutFragOKs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that have been successfully fragmented.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 25 }
+
+luxlIpStatisticsGlobalsIpv6OutFragFails OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that have been discarded because they needed to
+         be fragmented but could not be. This includes IPv4 packets that have
+         the DF bit set and IPv6 packets that are being forwarded and exceed the
+         outgoing link MTU.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for an unsuccessfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 26 }
+
+luxlIpStatisticsGlobalsIpv6OutFragCreates OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of output datagram fragments that have been generated as a
+         result of IP fragmentation.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 27 }
+
+luxlIpStatisticsGlobalsIpv6OutTransmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that this entity supplied to the lower layers
+         for transmission. This includes datagrams generated locally and those
+         forwarded by this entity.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 28 }
+
+luxlIpStatisticsGlobalsIpv6HCOutTransmits OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that this entity supplied to the lower layers
+         for transmission. This object counts the same datagrams as
+         OutTransmits, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 29 }
+
+luxlIpStatisticsGlobalsIpv6OutOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets in IP datagrams delivered to the lower layers for
+         transmission. Octets from datagrams counted in OutTransmits must be
+         counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 30 }
+
+luxlIpStatisticsGlobalsIpv6HCOutOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets in IP datagrams delivered to the lower layers for
+         transmission. This objects counts the same octets as OutOctets, but
+         allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 31 }
+
+luxlIpStatisticsGlobalsIpv6InMcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams received.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 32 }
+
+luxlIpStatisticsGlobalsIpv6HCInMcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams received. This object counts the same
+         datagrams as InMcastPkts but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 33 }
+
+luxlIpStatisticsGlobalsIpv6InMcastOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in IP multicast datagrams. Octets from
+         datagrams counted in InMcastPkts MUST be counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 34 }
+
+luxlIpStatisticsGlobalsIpv6HCInMcastOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in IP multicast datagrams. This object counts
+         the same octets as InMcastOctets, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 35 }
+
+luxlIpStatisticsGlobalsIpv6OutMcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams transmitted.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 36 }
+
+luxlIpStatisticsGlobalsIpv6HCOutMcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams transmitted. This object counts the
+         same datagrams as OutMcastPkts, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 37 }
+
+luxlIpStatisticsGlobalsIpv6OutMcastOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets transmitted in IP multicast datagrams. Octets from
+         datagrams counted in OutMcastPkts must be counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 38 }
+
+luxlIpStatisticsGlobalsIpv6HCOutMcastOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets transmitted in IP multicast datagrams. This object
+         counts the same octets as OutMcastOctets, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 39 }
+
+luxlIpStatisticsGlobalsIpv6InBcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams received.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 40 }
+
+luxlIpStatisticsGlobalsIpv6HCInBcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams received. This object counts the same
+         datagrams as InBcastPkts but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 41 }
+
+luxlIpStatisticsGlobalsIpv6OutBcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams transmitted.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 42 }
+
+luxlIpStatisticsGlobalsIpv6HCOutBcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams transmitted. This object counts the
+         same datagrams as OutBcastPkts, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsGlobalsIpv6 43 }
+
+luxlIpStatisticsGlobalsIpv6DiscontinuityTime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Value of sysUpTime on the most recent occasion when any one or more of
+         this entry's counters suffered a discontinuity.
+         
+         If no such discontinuities have occurred since the last
+         re-initialization of the IP stack, then this object contains a zero
+         value."
+    ::= { luxlIpStatisticsGlobalsIpv6 44 }
+
+luxlIpStatisticsGlobalsIpv6RefreshRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum reasonable polling interval for this entry. This object
+         provides an indication of the minimum amount of time required to update
+         the counters in this entry."
+    ::= { luxlIpStatisticsGlobalsIpv6 45 }
+
+luxlIpStatisticsInterfaces OBJECT IDENTIFIER
+    ::= { luxlIpStatistics 2 }
+
+luxlIpStatisticsInterfacesLinkTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatisticsInterfacesLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides interface link statistics for a given IP interface."
+    ::= { luxlIpStatisticsInterfaces 1 }
+
+luxlIpStatisticsInterfacesLinkEntry OBJECT-TYPE
+    SYNTAX      LUXLIpStatisticsInterfacesLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an IP interface."
+    INDEX       { luxlIpStatisticsInterfacesLinkIfIndex }
+    ::= { luxlIpStatisticsInterfacesLinkTable 1 }
+
+LUXLIpStatisticsInterfacesLinkEntry ::= SEQUENCE {
+    luxlIpStatisticsInterfacesLinkIfIndex   LUXLInterfaceIndex,
+    luxlIpStatisticsInterfacesLinkInPackets     Counter64,
+    luxlIpStatisticsInterfacesLinkOutPackets    Counter64,
+    luxlIpStatisticsInterfacesLinkInBytes   Counter64,
+    luxlIpStatisticsInterfacesLinkOutBytes      Counter64,
+    luxlIpStatisticsInterfacesLinkInMulticasts      Counter64,
+    luxlIpStatisticsInterfacesLinkOutMulticasts     Counter64,
+    luxlIpStatisticsInterfacesLinkInBroadcasts      Counter64,
+    luxlIpStatisticsInterfacesLinkOutBroadcasts     Counter64
+}
+
+luxlIpStatisticsInterfacesLinkIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpStatisticsInterfacesLinkEntry 1 }
+
+luxlIpStatisticsInterfacesLinkInPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of packets delivered by MAC layer to IP layer."
+    ::= { luxlIpStatisticsInterfacesLinkEntry 2 }
+
+luxlIpStatisticsInterfacesLinkOutPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of packets IP protocols requested be transmitted, including
+         those that were discarded or not sent."
+    ::= { luxlIpStatisticsInterfacesLinkEntry 3 }
+
+luxlIpStatisticsInterfacesLinkInBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received on the interface, including framing
+         characters."
+    ::= { luxlIpStatisticsInterfacesLinkEntry 4 }
+
+luxlIpStatisticsInterfacesLinkOutBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets transmitted out of the interface, including framing
+         characters."
+    ::= { luxlIpStatisticsInterfacesLinkEntry 5 }
+
+luxlIpStatisticsInterfacesLinkInMulticasts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of packets delivered by MAC layer to IP layer that were
+         addressed to a MAC multicast address.
+         
+         For a MAC layer protocol, this includes both Group and Functional
+         addresses."
+    ::= { luxlIpStatisticsInterfacesLinkEntry 6 }
+
+luxlIpStatisticsInterfacesLinkOutMulticasts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of packets addressed to a multicast MAC address that IP
+         protocols requested be transmitted, including those that were discarded
+         or not sent.
+         
+         For a MAC layer protocol, this includes both Group and Functional
+         addresses."
+    ::= { luxlIpStatisticsInterfacesLinkEntry 7 }
+
+luxlIpStatisticsInterfacesLinkInBroadcasts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of packets delivered by MAC layer to IP layer that were
+         addressed to a MAC broadcast address."
+    ::= { luxlIpStatisticsInterfacesLinkEntry 8 }
+
+luxlIpStatisticsInterfacesLinkOutBroadcasts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of packets addressed to a broadcast MAC address that IP
+         protocols requested be transmitted, including those that were discarded
+         or not sent."
+    ::= { luxlIpStatisticsInterfacesLinkEntry 9 }
+
+luxlIpStatisticsInterfacesIpv4Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatisticsInterfacesIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides IPv4 related statitics for a given IP interface."
+    ::= { luxlIpStatisticsInterfaces 2 }
+
+luxlIpStatisticsInterfacesIpv4Entry OBJECT-TYPE
+    SYNTAX      LUXLIpStatisticsInterfacesIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an IP interface."
+    INDEX       { luxlIpStatisticsInterfacesIpv4IfIndex }
+    ::= { luxlIpStatisticsInterfacesIpv4Table 1 }
+
+LUXLIpStatisticsInterfacesIpv4Entry ::= SEQUENCE {
+    luxlIpStatisticsInterfacesIpv4IfIndex   LUXLInterfaceIndex,
+    luxlIpStatisticsInterfacesIpv4InReceives    Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCInReceives      Counter64,
+    luxlIpStatisticsInterfacesIpv4InOctets      Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCInOctets    Counter64,
+    luxlIpStatisticsInterfacesIpv4InHdrErrors   Unsigned32,
+    luxlIpStatisticsInterfacesIpv4InNoRoutes    Unsigned32,
+    luxlIpStatisticsInterfacesIpv4InAddrErrors      Unsigned32,
+    luxlIpStatisticsInterfacesIpv4InUnknownProtos   Unsigned32,
+    luxlIpStatisticsInterfacesIpv4InTruncatedPkts   Unsigned32,
+    luxlIpStatisticsInterfacesIpv4InForwDatagrams   Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCInForwDatagrams     Counter64,
+    luxlIpStatisticsInterfacesIpv4ReasmReqds    Unsigned32,
+    luxlIpStatisticsInterfacesIpv4ReasmOKs      Unsigned32,
+    luxlIpStatisticsInterfacesIpv4ReasmFails    Unsigned32,
+    luxlIpStatisticsInterfacesIpv4InDiscards    Unsigned32,
+    luxlIpStatisticsInterfacesIpv4InDelivers    Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCInDelivers      Counter64,
+    luxlIpStatisticsInterfacesIpv4OutRequests   Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCOutRequests     Counter64,
+    luxlIpStatisticsInterfacesIpv4OutNoRoutes   Unsigned32,
+    luxlIpStatisticsInterfacesIpv4OutForwDatagrams      Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCOutForwDatagrams    Counter64,
+    luxlIpStatisticsInterfacesIpv4OutDiscards   Unsigned32,
+    luxlIpStatisticsInterfacesIpv4OutFragReqds      Unsigned32,
+    luxlIpStatisticsInterfacesIpv4OutFragOKs    Unsigned32,
+    luxlIpStatisticsInterfacesIpv4OutFragFails      Unsigned32,
+    luxlIpStatisticsInterfacesIpv4OutFragCreates    Unsigned32,
+    luxlIpStatisticsInterfacesIpv4OutTransmits      Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCOutTransmits    Counter64,
+    luxlIpStatisticsInterfacesIpv4OutOctets     Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCOutOctets   Counter64,
+    luxlIpStatisticsInterfacesIpv4InMcastPkts   Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCInMcastPkts     Counter64,
+    luxlIpStatisticsInterfacesIpv4InMcastOctets     Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCInMcastOctets   Counter64,
+    luxlIpStatisticsInterfacesIpv4OutMcastPkts      Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCOutMcastPkts    Counter64,
+    luxlIpStatisticsInterfacesIpv4OutMcastOctets    Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCOutMcastOctets      Counter64,
+    luxlIpStatisticsInterfacesIpv4InBcastPkts   Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCInBcastPkts     Counter64,
+    luxlIpStatisticsInterfacesIpv4OutBcastPkts      Unsigned32,
+    luxlIpStatisticsInterfacesIpv4HCOutBcastPkts    Counter64,
+    luxlIpStatisticsInterfacesIpv4DiscontinuityTime     Counter64,
+    luxlIpStatisticsInterfacesIpv4RefreshRate   Unsigned32
+}
+
+luxlIpStatisticsInterfacesIpv4IfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 1 }
+
+luxlIpStatisticsInterfacesIpv4InReceives OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams received, including those received in
+         error.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 2 }
+
+luxlIpStatisticsInterfacesIpv4HCInReceives OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams received, including those received in
+         error. This object counts the same datagrams as InReceives, but allows
+         for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 3 }
+
+luxlIpStatisticsInterfacesIpv4InOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in input IP datagrams, including those
+         received in error. Octets from datagrams counted in InReceives must be
+         counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 4 }
+
+luxlIpStatisticsInterfacesIpv4HCInOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in input IP datagrams, including those
+         received in error. This object counts the same octets as InOctets, but
+         allows for a larger value.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 5 }
+
+luxlIpStatisticsInterfacesIpv4InHdrErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded due to errors in their IP
+         headers, including version number mismatch, other format errors, hop
+         count exceeded, and errors discovered in processing their IP options.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 6 }
+
+luxlIpStatisticsInterfacesIpv4InNoRoutes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because no route could be found
+         to transmit them to their destination.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 7 }
+
+luxlIpStatisticsInterfacesIpv4InAddrErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because the IP address in their
+         IP header's destination field was not a valid address to be received at
+         this entity. This count includes invalid addresses (e.g., ::0). For
+         entities that are not IP routers and therefore do not forward
+         datagrams, this counter includes datagrams discarded because the
+         destination address was not a local address.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 8 }
+
+luxlIpStatisticsInterfacesIpv4InUnknownProtos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of locally-addressed IP datagrams received successfully but
+         discarded because of an unknown or unsupported protocol.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 9 }
+
+luxlIpStatisticsInterfacesIpv4InTruncatedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because the datagram frame
+         didn't carry enough data.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 10 }
+
+luxlIpStatisticsInterfacesIpv4InForwDatagrams OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input datagrams for which this entity was not their final IP
+         destination and for which this entity attempted to find a route to
+         forward them to their final destination.
+         
+         When tracking interface statistics, the counter of the incoming
+         interface is incremented for each datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 11 }
+
+luxlIpStatisticsInterfacesIpv4HCInForwDatagrams OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input datagrams for which this entity was not their final IP
+         destination and for which this entity attempted to find a route to
+         forward them to their final destination. This object counts the same
+         packets as InForwDatagrams, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 12 }
+
+luxlIpStatisticsInterfacesIpv4ReasmReqds OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP fragments received that needed to be reassembled at this
+         interface.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these fragments were addressed is incremented. This interface
+         might not be the same as the input interface for some of the fragments.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 13 }
+
+luxlIpStatisticsInterfacesIpv4ReasmOKs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams successfully reassembled.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 14 }
+
+luxlIpStatisticsInterfacesIpv4ReasmFails OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of failures detected by the IP re-assembly algorithm.
+         
+         Note: this is not necessarily a count of discarded IP fragments because
+         some algorithms (notably the algorithm in RFC 815) can lose track of
+         the number of fragments by combining them as they are received.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these fragments were addressed is incremented. This interface
+         might not be the same as the input interface for some of the fragments.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 15 }
+
+luxlIpStatisticsInterfacesIpv4InDiscards OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams for which no problems were encountered to
+         prevent their continued processing, but were discarded.
+         
+         Note: this counter does not include any datagrams discarded while
+         awaiting re-assembly.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 16 }
+
+luxlIpStatisticsInterfacesIpv4InDelivers OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams successfully delivered to IP user-protocols
+         (including ICMP).
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 17 }
+
+luxlIpStatisticsInterfacesIpv4HCInDelivers OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams successfully delivered to IP user-protocols
+         (including ICMP). This object counts the same packets as
+         ipSystemStatsInDelivers, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 18 }
+
+luxlIpStatisticsInterfacesIpv4OutRequests OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that local IP user-protocols (including ICMP)
+         supplied to IP in requests for transmission.
+         
+         Note: this counter does not include any datagrams counted in
+         OutForwDatagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 19 }
+
+luxlIpStatisticsInterfacesIpv4HCOutRequests OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that local IP user-protocols (including ICMP)
+         supplied to IP in requests for transmission. This object counts the
+         same packets as OutRequests, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 20 }
+
+luxlIpStatisticsInterfacesIpv4OutNoRoutes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of locally generated IP datagrams discarded because no route
+         could be found to transmit them to their destination.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 21 }
+
+luxlIpStatisticsInterfacesIpv4OutForwDatagrams OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams for which this entity was not their final IP
+         destination and for which it was successful in finding a path to their
+         final destination.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully forwarded datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 22 }
+
+luxlIpStatisticsInterfacesIpv4HCOutForwDatagrams OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams for which this entity was not their final IP
+         destination and for which it was successful in finding a path to their
+         final destination. This object counts the same packets as
+         OutForwDatagrams, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 23 }
+
+luxlIpStatisticsInterfacesIpv4OutDiscards OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of output IP datagrams for which no problem was encountered to
+         prevent their transmission to their destination, but were discarded.
+         
+         Note: this counter includes datagrams counted in OutForwDatagrams if
+         any such datagrams met this (discretionary) discard criterion.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 24 }
+
+luxlIpStatisticsInterfacesIpv4OutFragReqds OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that require fragmentation in order to be
+         transmitted.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 25 }
+
+luxlIpStatisticsInterfacesIpv4OutFragOKs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that have been successfully fragmented.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 26 }
+
+luxlIpStatisticsInterfacesIpv4OutFragFails OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that have been discarded because they needed to
+         be fragmented but could not be. This includes IPv4 packets that have
+         the DF bit set and IPv6 packets that are being forwarded and exceed the
+         outgoing link MTU.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for an unsuccessfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 27 }
+
+luxlIpStatisticsInterfacesIpv4OutFragCreates OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of output datagram fragments that have been generated as a
+         result of IP fragmentation.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 28 }
+
+luxlIpStatisticsInterfacesIpv4OutTransmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that this entity supplied to the lower layers
+         for transmission. This includes datagrams generated locally and those
+         forwarded by this entity.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 29 }
+
+luxlIpStatisticsInterfacesIpv4HCOutTransmits OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that this entity supplied to the lower layers
+         for transmission. This object counts the same datagrams as
+         OutTransmits, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 30 }
+
+luxlIpStatisticsInterfacesIpv4OutOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets in IP datagrams delivered to the lower layers for
+         transmission. Octets from datagrams counted in OutTransmits must be
+         counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 31 }
+
+luxlIpStatisticsInterfacesIpv4HCOutOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets in IP datagrams delivered to the lower layers for
+         transmission. This objects counts the same octets as OutOctets, but
+         allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 32 }
+
+luxlIpStatisticsInterfacesIpv4InMcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams received.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 33 }
+
+luxlIpStatisticsInterfacesIpv4HCInMcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams received. This object counts the same
+         datagrams as InMcastPkts but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 34 }
+
+luxlIpStatisticsInterfacesIpv4InMcastOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in IP multicast datagrams. Octets from
+         datagrams counted in InMcastPkts MUST be counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 35 }
+
+luxlIpStatisticsInterfacesIpv4HCInMcastOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in IP multicast datagrams. This object counts
+         the same octets as InMcastOctets, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 36 }
+
+luxlIpStatisticsInterfacesIpv4OutMcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams transmitted.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 37 }
+
+luxlIpStatisticsInterfacesIpv4HCOutMcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams transmitted. This object counts the
+         same datagrams as OutMcastPkts, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 38 }
+
+luxlIpStatisticsInterfacesIpv4OutMcastOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets transmitted in IP multicast datagrams. Octets from
+         datagrams counted in OutMcastPkts must be counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 39 }
+
+luxlIpStatisticsInterfacesIpv4HCOutMcastOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets transmitted in IP multicast datagrams. This object
+         counts the same octets as OutMcastOctets, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 40 }
+
+luxlIpStatisticsInterfacesIpv4InBcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams received.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 41 }
+
+luxlIpStatisticsInterfacesIpv4HCInBcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams received. This object counts the same
+         datagrams as InBcastPkts but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 42 }
+
+luxlIpStatisticsInterfacesIpv4OutBcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams transmitted.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 43 }
+
+luxlIpStatisticsInterfacesIpv4HCOutBcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams transmitted. This object counts the
+         same datagrams as OutBcastPkts, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 44 }
+
+luxlIpStatisticsInterfacesIpv4DiscontinuityTime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Value of sysUpTime on the most recent occasion when any one or more of
+         this entry's counters suffered a discontinuity.
+         
+         If no such discontinuities have occurred since the last
+         re-initialization of the IP stack, then this object contains a zero
+         value."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 45 }
+
+luxlIpStatisticsInterfacesIpv4RefreshRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum reasonable polling interval for this entry. This object
+         provides an indication of the minimum amount of time required to update
+         the counters in this entry."
+    ::= { luxlIpStatisticsInterfacesIpv4Entry 46 }
+
+luxlIpStatisticsInterfacesIpv6Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpStatisticsInterfacesIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides IPv6 related statitics for a given IP interface."
+    ::= { luxlIpStatisticsInterfaces 3 }
+
+luxlIpStatisticsInterfacesIpv6Entry OBJECT-TYPE
+    SYNTAX      LUXLIpStatisticsInterfacesIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an IP interface."
+    INDEX       { luxlIpStatisticsInterfacesIpv6IfIndex }
+    ::= { luxlIpStatisticsInterfacesIpv6Table 1 }
+
+LUXLIpStatisticsInterfacesIpv6Entry ::= SEQUENCE {
+    luxlIpStatisticsInterfacesIpv6IfIndex   LUXLInterfaceIndex,
+    luxlIpStatisticsInterfacesIpv6InReceives    Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCInReceives      Counter64,
+    luxlIpStatisticsInterfacesIpv6InOctets      Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCInOctets    Counter64,
+    luxlIpStatisticsInterfacesIpv6InHdrErrors   Unsigned32,
+    luxlIpStatisticsInterfacesIpv6InNoRoutes    Unsigned32,
+    luxlIpStatisticsInterfacesIpv6InAddrErrors      Unsigned32,
+    luxlIpStatisticsInterfacesIpv6InUnknownProtos   Unsigned32,
+    luxlIpStatisticsInterfacesIpv6InTruncatedPkts   Unsigned32,
+    luxlIpStatisticsInterfacesIpv6InForwDatagrams   Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCInForwDatagrams     Counter64,
+    luxlIpStatisticsInterfacesIpv6ReasmReqds    Unsigned32,
+    luxlIpStatisticsInterfacesIpv6ReasmOKs      Unsigned32,
+    luxlIpStatisticsInterfacesIpv6ReasmFails    Unsigned32,
+    luxlIpStatisticsInterfacesIpv6InDiscards    Unsigned32,
+    luxlIpStatisticsInterfacesIpv6InDelivers    Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCInDelivers      Counter64,
+    luxlIpStatisticsInterfacesIpv6OutRequests   Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCOutRequests     Counter64,
+    luxlIpStatisticsInterfacesIpv6OutNoRoutes   Unsigned32,
+    luxlIpStatisticsInterfacesIpv6OutForwDatagrams      Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCOutForwDatagrams    Counter64,
+    luxlIpStatisticsInterfacesIpv6OutDiscards   Unsigned32,
+    luxlIpStatisticsInterfacesIpv6OutFragReqds      Unsigned32,
+    luxlIpStatisticsInterfacesIpv6OutFragOKs    Unsigned32,
+    luxlIpStatisticsInterfacesIpv6OutFragFails      Unsigned32,
+    luxlIpStatisticsInterfacesIpv6OutFragCreates    Unsigned32,
+    luxlIpStatisticsInterfacesIpv6OutTransmits      Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCOutTransmits    Counter64,
+    luxlIpStatisticsInterfacesIpv6OutOctets     Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCOutOctets   Counter64,
+    luxlIpStatisticsInterfacesIpv6InMcastPkts   Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCInMcastPkts     Counter64,
+    luxlIpStatisticsInterfacesIpv6InMcastOctets     Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCInMcastOctets   Counter64,
+    luxlIpStatisticsInterfacesIpv6OutMcastPkts      Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCOutMcastPkts    Counter64,
+    luxlIpStatisticsInterfacesIpv6OutMcastOctets    Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCOutMcastOctets      Counter64,
+    luxlIpStatisticsInterfacesIpv6InBcastPkts   Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCInBcastPkts     Counter64,
+    luxlIpStatisticsInterfacesIpv6OutBcastPkts      Unsigned32,
+    luxlIpStatisticsInterfacesIpv6HCOutBcastPkts    Counter64,
+    luxlIpStatisticsInterfacesIpv6DiscontinuityTime     Counter64,
+    luxlIpStatisticsInterfacesIpv6RefreshRate   Unsigned32
+}
+
+luxlIpStatisticsInterfacesIpv6IfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index number."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 1 }
+
+luxlIpStatisticsInterfacesIpv6InReceives OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams received, including those received in
+         error.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 2 }
+
+luxlIpStatisticsInterfacesIpv6HCInReceives OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams received, including those received in
+         error. This object counts the same datagrams as InReceives, but allows
+         for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 3 }
+
+luxlIpStatisticsInterfacesIpv6InOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in input IP datagrams, including those
+         received in error. Octets from datagrams counted in InReceives must be
+         counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 4 }
+
+luxlIpStatisticsInterfacesIpv6HCInOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in input IP datagrams, including those
+         received in error. This object counts the same octets as InOctets, but
+         allows for a larger value.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 5 }
+
+luxlIpStatisticsInterfacesIpv6InHdrErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded due to errors in their IP
+         headers, including version number mismatch, other format errors, hop
+         count exceeded, and errors discovered in processing their IP options.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 6 }
+
+luxlIpStatisticsInterfacesIpv6InNoRoutes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because no route could be found
+         to transmit them to their destination.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 7 }
+
+luxlIpStatisticsInterfacesIpv6InAddrErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because the IP address in their
+         IP header's destination field was not a valid address to be received at
+         this entity. This count includes invalid addresses (e.g., ::0). For
+         entities that are not IP routers and therefore do not forward
+         datagrams, this counter includes datagrams discarded because the
+         destination address was not a local address.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 8 }
+
+luxlIpStatisticsInterfacesIpv6InUnknownProtos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of locally-addressed IP datagrams received successfully but
+         discarded because of an unknown or unsupported protocol.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 9 }
+
+luxlIpStatisticsInterfacesIpv6InTruncatedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams discarded because the datagram frame
+         didn't carry enough data.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 10 }
+
+luxlIpStatisticsInterfacesIpv6InForwDatagrams OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input datagrams for which this entity was not their final IP
+         destination and for which this entity attempted to find a route to
+         forward them to their final destination.
+         
+         When tracking interface statistics, the counter of the incoming
+         interface is incremented for each datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 11 }
+
+luxlIpStatisticsInterfacesIpv6HCInForwDatagrams OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input datagrams for which this entity was not their final IP
+         destination and for which this entity attempted to find a route to
+         forward them to their final destination. This object counts the same
+         packets as InForwDatagrams, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 12 }
+
+luxlIpStatisticsInterfacesIpv6ReasmReqds OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP fragments received that needed to be reassembled at this
+         interface.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these fragments were addressed is incremented. This interface
+         might not be the same as the input interface for some of the fragments.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 13 }
+
+luxlIpStatisticsInterfacesIpv6ReasmOKs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams successfully reassembled.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 14 }
+
+luxlIpStatisticsInterfacesIpv6ReasmFails OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of failures detected by the IP re-assembly algorithm.
+         
+         Note: this is not necessarily a count of discarded IP fragments because
+         some algorithms (notably the algorithm in RFC 815) can lose track of
+         the number of fragments by combining them as they are received.
+         
+         When tracking interface statistics, the counter of the interface to
+         which these fragments were addressed is incremented. This interface
+         might not be the same as the input interface for some of the fragments.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 15 }
+
+luxlIpStatisticsInterfacesIpv6InDiscards OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of input IP datagrams for which no problems were encountered to
+         prevent their continued processing, but were discarded.
+         
+         Note: this counter does not include any datagrams discarded while
+         awaiting re-assembly.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 16 }
+
+luxlIpStatisticsInterfacesIpv6InDelivers OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams successfully delivered to IP user-protocols
+         (including ICMP).
+         
+         When tracking interface statistics, the counter of the interface to
+         which these datagrams were addressed is incremented. This interface
+         might not be the same as the input interface for some of the datagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 17 }
+
+luxlIpStatisticsInterfacesIpv6HCInDelivers OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams successfully delivered to IP user-protocols
+         (including ICMP). This object counts the same packets as
+         ipSystemStatsInDelivers, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 18 }
+
+luxlIpStatisticsInterfacesIpv6OutRequests OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that local IP user-protocols (including ICMP)
+         supplied to IP in requests for transmission.
+         
+         Note: this counter does not include any datagrams counted in
+         OutForwDatagrams.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 19 }
+
+luxlIpStatisticsInterfacesIpv6HCOutRequests OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that local IP user-protocols (including ICMP)
+         supplied to IP in requests for transmission. This object counts the
+         same packets as OutRequests, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 20 }
+
+luxlIpStatisticsInterfacesIpv6OutNoRoutes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of locally generated IP datagrams discarded because no route
+         could be found to transmit them to their destination.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 21 }
+
+luxlIpStatisticsInterfacesIpv6OutForwDatagrams OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams for which this entity was not their final IP
+         destination and for which it was successful in finding a path to their
+         final destination.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully forwarded datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 22 }
+
+luxlIpStatisticsInterfacesIpv6HCOutForwDatagrams OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of datagrams for which this entity was not their final IP
+         destination and for which it was successful in finding a path to their
+         final destination. This object counts the same packets as
+         OutForwDatagrams, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 23 }
+
+luxlIpStatisticsInterfacesIpv6OutDiscards OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of output IP datagrams for which no problem was encountered to
+         prevent their transmission to their destination, but were discarded.
+         
+         Note: this counter includes datagrams counted in OutForwDatagrams if
+         any such datagrams met this (discretionary) discard criterion.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 24 }
+
+luxlIpStatisticsInterfacesIpv6OutFragReqds OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that require fragmentation in order to be
+         transmitted.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 25 }
+
+luxlIpStatisticsInterfacesIpv6OutFragOKs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that have been successfully fragmented.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 26 }
+
+luxlIpStatisticsInterfacesIpv6OutFragFails OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that have been discarded because they needed to
+         be fragmented but could not be. This includes IPv4 packets that have
+         the DF bit set and IPv6 packets that are being forwarded and exceed the
+         outgoing link MTU.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for an unsuccessfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 27 }
+
+luxlIpStatisticsInterfacesIpv6OutFragCreates OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of output datagram fragments that have been generated as a
+         result of IP fragmentation.
+         
+         When tracking interface statistics, the counter of the outgoing
+         interface is incremented for a successfully fragmented datagram.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 28 }
+
+luxlIpStatisticsInterfacesIpv6OutTransmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that this entity supplied to the lower layers
+         for transmission. This includes datagrams generated locally and those
+         forwarded by this entity.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 29 }
+
+luxlIpStatisticsInterfacesIpv6HCOutTransmits OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP datagrams that this entity supplied to the lower layers
+         for transmission. This object counts the same datagrams as
+         OutTransmits, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 30 }
+
+luxlIpStatisticsInterfacesIpv6OutOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets in IP datagrams delivered to the lower layers for
+         transmission. Octets from datagrams counted in OutTransmits must be
+         counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 31 }
+
+luxlIpStatisticsInterfacesIpv6HCOutOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets in IP datagrams delivered to the lower layers for
+         transmission. This objects counts the same octets as OutOctets, but
+         allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 32 }
+
+luxlIpStatisticsInterfacesIpv6InMcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams received.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 33 }
+
+luxlIpStatisticsInterfacesIpv6HCInMcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams received. This object counts the same
+         datagrams as InMcastPkts but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 34 }
+
+luxlIpStatisticsInterfacesIpv6InMcastOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in IP multicast datagrams. Octets from
+         datagrams counted in InMcastPkts MUST be counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 35 }
+
+luxlIpStatisticsInterfacesIpv6HCInMcastOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets received in IP multicast datagrams. This object counts
+         the same octets as InMcastOctets, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 36 }
+
+luxlIpStatisticsInterfacesIpv6OutMcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams transmitted.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 37 }
+
+luxlIpStatisticsInterfacesIpv6HCOutMcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP multicast datagrams transmitted. This object counts the
+         same datagrams as OutMcastPkts, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 38 }
+
+luxlIpStatisticsInterfacesIpv6OutMcastOctets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets transmitted in IP multicast datagrams. Octets from
+         datagrams counted in OutMcastPkts must be counted here.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 39 }
+
+luxlIpStatisticsInterfacesIpv6HCOutMcastOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of octets transmitted in IP multicast datagrams. This object
+         counts the same octets as OutMcastOctets, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 40 }
+
+luxlIpStatisticsInterfacesIpv6InBcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams received.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 41 }
+
+luxlIpStatisticsInterfacesIpv6HCInBcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams received. This object counts the same
+         datagrams as InBcastPkts but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 42 }
+
+luxlIpStatisticsInterfacesIpv6OutBcastPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams transmitted.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 43 }
+
+luxlIpStatisticsInterfacesIpv6HCOutBcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of IP broadcast datagrams transmitted. This object counts the
+         same datagrams as OutBcastPkts, but allows for larger values.
+         
+         Discontinuities in the value of this counter may occur at
+         re-initialization of the system, and at other times as indicated by the
+         value of DiscontinuityTime."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 44 }
+
+luxlIpStatisticsInterfacesIpv6DiscontinuityTime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Value of sysUpTime on the most recent occasion when any one or more of
+         this entry's counters suffered a discontinuity.
+         
+         If no such discontinuities have occurred since the last
+         re-initialization of the IP stack, then this object contains a zero
+         value."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 45 }
+
+luxlIpStatisticsInterfacesIpv6RefreshRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum reasonable polling interval for this entry. This object
+         provides an indication of the minimum amount of time required to update
+         the counters in this entry."
+    ::= { luxlIpStatisticsInterfacesIpv6Entry 46 }
+
+luxlIpMibConformance OBJECT IDENTIFIER
+    ::= { luxlIpMib 2 }
+
+luxlIpMibCompliances OBJECT IDENTIFIER
+    ::= { luxlIpMibConformance 1 }
+
+luxlIpMibGroups OBJECT IDENTIFIER
+    ::= { luxlIpMibConformance 2 }
+
+luxlIpCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpCapabilitiesHasIpv4HostCapabilities, 
+                  luxlIpCapabilitiesHasIpv6HostCapabilities, 
+                  luxlIpCapabilitiesHasIpv4UnicastRoutingCapabilities, 
+                  luxlIpCapabilitiesHasIpv4UnicastHwRoutingCapabilities, 
+                  luxlIpCapabilitiesHasIpv6UnicastRoutingCapabilities, 
+                  luxlIpCapabilitiesHasIpv6UnicastHwRoutingCapabilities, 
+                  luxlIpCapabilitiesMaxNumberOfIpInterfaces, 
+                  luxlIpCapabilitiesMaxNumberOfStaticRoutes, 
+                  luxlIpCapabilitiesNumberOfLpmHardwareEntries }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 1 }
+
+luxlIpConfigGlobalsMainInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpConfigGlobalsMainEnableRouting }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 2 }
+
+luxlIpConfigInterfacesTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpConfigInterfacesAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 3 }
+
+luxlIpConfigInterfacesTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpConfigInterfacesTableRowEditorIfIndex, 
+                  luxlIpConfigInterfacesTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 4 }
+
+luxlIpConfigInterfacesIpv4TableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpConfigInterfacesIpv4Active, 
+                  luxlIpConfigInterfacesIpv4EnableDhcpClient, 
+                  luxlIpConfigInterfacesIpv4Ipv4Address, 
+                  luxlIpConfigInterfacesIpv4PrefixSize, 
+                  luxlIpConfigInterfacesIpv4DhcpClientFallbackTimeout }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 5 }
+
+luxlIpConfigInterfacesIpv6TableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpConfigInterfacesIpv6Active, 
+                  luxlIpConfigInterfacesIpv6Ipv6Address, 
+                  luxlIpConfigInterfacesIpv6PrefixSize }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 6 }
+
+luxlIpConfigRoutesIpv4TableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpConfigRoutesIpv4Action }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 7 }
+
+luxlIpConfigRoutesIpv4RowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpConfigRoutesIpv4RowEditorNetworkAddress, 
+                  luxlIpConfigRoutesIpv4RowEditorNetworkPrefixSize, 
+                  luxlIpConfigRoutesIpv4RowEditorNextHop, 
+                  luxlIpConfigRoutesIpv4RowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 8 }
+
+luxlIpConfigRoutesIpv6TableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpConfigRoutesIpv6Action }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 9 }
+
+luxlIpConfigRoutesIpv6RowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpConfigRoutesIpv6RowEditorNetworkAddress, 
+                  luxlIpConfigRoutesIpv6RowEditorNetworkPrefixSize, 
+                  luxlIpConfigRoutesIpv6RowEditorNextHop, 
+                  luxlIpConfigRoutesIpv6RowEditorNextHopInterface, 
+                  luxlIpConfigRoutesIpv6RowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 10 }
+
+luxlIpStatusGlobalsIpv4NeighbourInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatusGlobalsIpv4NeighbourMacAddress, 
+                  luxlIpStatusGlobalsIpv4NeighbourInterface }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 11 }
+
+luxlIpStatusGlobalsIpv6NeighbourInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatusGlobalsIpv6NeighbourMacAddress, 
+                  luxlIpStatusGlobalsIpv6NeighbourInterface }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 12 }
+
+luxlIpStatusInterfacesLinkInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatusInterfacesLinkOsInterfaceIndex, 
+                  luxlIpStatusInterfacesLinkMtu, 
+                  luxlIpStatusInterfacesLinkMacAddress, 
+                  luxlIpStatusInterfacesLinkUp, 
+                  luxlIpStatusInterfacesLinkBroadcast, 
+                  luxlIpStatusInterfacesLinkLoopback, 
+                  luxlIpStatusInterfacesLinkRunning, 
+                  luxlIpStatusInterfacesLinkNoarp, 
+                  luxlIpStatusInterfacesLinkPromisc, 
+                  luxlIpStatusInterfacesLinkMulticast }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 13 }
+
+luxlIpStatusInterfacesIpv4InfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatusInterfacesIpv4Broadcast }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 14 }
+
+luxlIpStatusInterfacesDhcpClientV4InfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatusInterfacesDhcpClientV4State, 
+                  luxlIpStatusInterfacesDhcpClientV4ServerIp }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 15 }
+
+luxlIpStatusInterfacesIpv6InfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatusInterfacesIpv6Tentative, 
+                  luxlIpStatusInterfacesIpv6Duplicated, 
+                  luxlIpStatusInterfacesIpv6Detached, 
+                  luxlIpStatusInterfacesIpv6Nodad, 
+                  luxlIpStatusInterfacesIpv6Autoconf }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 16 }
+
+luxlIpStatusRoutesIpv4InfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatusRoutesIpv4DerivedNextHopInterface, 
+                  luxlIpStatusRoutesIpv4FlagUp, luxlIpStatusRoutesIpv4FlagHost, 
+                  luxlIpStatusRoutesIpv4FlagGateway, 
+                  luxlIpStatusRoutesIpv4OwnerConf, 
+                  luxlIpStatusRoutesIpv4OwnerDhcp, 
+                  luxlIpStatusRoutesIpv4OwnerDynamic }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 17 }
+
+luxlIpStatusRoutesIpv6InfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatusRoutesIpv6DerivedNextHopInterface, 
+                  luxlIpStatusRoutesIpv6FlagUp, luxlIpStatusRoutesIpv6FlagHost, 
+                  luxlIpStatusRoutesIpv6FlagGateway, 
+                  luxlIpStatusRoutesIpv6OwnerConf, 
+                  luxlIpStatusRoutesIpv6OwnerDhcp, 
+                  luxlIpStatusRoutesIpv6OwnerDynamic }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 18 }
+
+luxlIpControlGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpControlGlobalsIpv4NeighbourTableClear, 
+                  luxlIpControlGlobalsIpv6NeighbourTableClear, 
+                  luxlIpControlGlobalsIpv4SystemStatisticsClear, 
+                  luxlIpControlGlobalsIpv6SystemStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 19 }
+
+luxlIpControlInterfaceDhcpClientInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpControlInterfaceDhcpClientRestart }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 20 }
+
+luxlIpStatisticsGlobalsIpv4InfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatisticsGlobalsIpv4InReceives, 
+                  luxlIpStatisticsGlobalsIpv4HCInReceives, 
+                  luxlIpStatisticsGlobalsIpv4InOctets, 
+                  luxlIpStatisticsGlobalsIpv4HCInOctets, 
+                  luxlIpStatisticsGlobalsIpv4InHdrErrors, 
+                  luxlIpStatisticsGlobalsIpv4InNoRoutes, 
+                  luxlIpStatisticsGlobalsIpv4InAddrErrors, 
+                  luxlIpStatisticsGlobalsIpv4InUnknownProtos, 
+                  luxlIpStatisticsGlobalsIpv4InTruncatedPkts, 
+                  luxlIpStatisticsGlobalsIpv4InForwDatagrams, 
+                  luxlIpStatisticsGlobalsIpv4HCInForwDatagrams, 
+                  luxlIpStatisticsGlobalsIpv4ReasmReqds, 
+                  luxlIpStatisticsGlobalsIpv4ReasmOKs, 
+                  luxlIpStatisticsGlobalsIpv4ReasmFails, 
+                  luxlIpStatisticsGlobalsIpv4InDiscards, 
+                  luxlIpStatisticsGlobalsIpv4InDelivers, 
+                  luxlIpStatisticsGlobalsIpv4HCInDelivers, 
+                  luxlIpStatisticsGlobalsIpv4OutRequests, 
+                  luxlIpStatisticsGlobalsIpv4HCOutRequests, 
+                  luxlIpStatisticsGlobalsIpv4OutNoRoutes, 
+                  luxlIpStatisticsGlobalsIpv4OutForwDatagrams, 
+                  luxlIpStatisticsGlobalsIpv4HCOutForwDatagrams, 
+                  luxlIpStatisticsGlobalsIpv4OutDiscards, 
+                  luxlIpStatisticsGlobalsIpv4OutFragReqds, 
+                  luxlIpStatisticsGlobalsIpv4OutFragOKs, 
+                  luxlIpStatisticsGlobalsIpv4OutFragFails, 
+                  luxlIpStatisticsGlobalsIpv4OutFragCreates, 
+                  luxlIpStatisticsGlobalsIpv4OutTransmits, 
+                  luxlIpStatisticsGlobalsIpv4HCOutTransmits, 
+                  luxlIpStatisticsGlobalsIpv4OutOctets, 
+                  luxlIpStatisticsGlobalsIpv4HCOutOctets, 
+                  luxlIpStatisticsGlobalsIpv4InMcastPkts, 
+                  luxlIpStatisticsGlobalsIpv4HCInMcastPkts, 
+                  luxlIpStatisticsGlobalsIpv4InMcastOctets, 
+                  luxlIpStatisticsGlobalsIpv4HCInMcastOctets, 
+                  luxlIpStatisticsGlobalsIpv4OutMcastPkts, 
+                  luxlIpStatisticsGlobalsIpv4HCOutMcastPkts, 
+                  luxlIpStatisticsGlobalsIpv4OutMcastOctets, 
+                  luxlIpStatisticsGlobalsIpv4HCOutMcastOctets, 
+                  luxlIpStatisticsGlobalsIpv4InBcastPkts, 
+                  luxlIpStatisticsGlobalsIpv4HCInBcastPkts, 
+                  luxlIpStatisticsGlobalsIpv4OutBcastPkts, 
+                  luxlIpStatisticsGlobalsIpv4HCOutBcastPkts, 
+                  luxlIpStatisticsGlobalsIpv4DiscontinuityTime, 
+                  luxlIpStatisticsGlobalsIpv4RefreshRate }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 21 }
+
+luxlIpStatisticsGlobalsIpv6InfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatisticsGlobalsIpv6InReceives, 
+                  luxlIpStatisticsGlobalsIpv6HCInReceives, 
+                  luxlIpStatisticsGlobalsIpv6InOctets, 
+                  luxlIpStatisticsGlobalsIpv6HCInOctets, 
+                  luxlIpStatisticsGlobalsIpv6InHdrErrors, 
+                  luxlIpStatisticsGlobalsIpv6InNoRoutes, 
+                  luxlIpStatisticsGlobalsIpv6InAddrErrors, 
+                  luxlIpStatisticsGlobalsIpv6InUnknownProtos, 
+                  luxlIpStatisticsGlobalsIpv6InTruncatedPkts, 
+                  luxlIpStatisticsGlobalsIpv6InForwDatagrams, 
+                  luxlIpStatisticsGlobalsIpv6HCInForwDatagrams, 
+                  luxlIpStatisticsGlobalsIpv6ReasmReqds, 
+                  luxlIpStatisticsGlobalsIpv6ReasmOKs, 
+                  luxlIpStatisticsGlobalsIpv6ReasmFails, 
+                  luxlIpStatisticsGlobalsIpv6InDiscards, 
+                  luxlIpStatisticsGlobalsIpv6InDelivers, 
+                  luxlIpStatisticsGlobalsIpv6HCInDelivers, 
+                  luxlIpStatisticsGlobalsIpv6OutRequests, 
+                  luxlIpStatisticsGlobalsIpv6HCOutRequests, 
+                  luxlIpStatisticsGlobalsIpv6OutNoRoutes, 
+                  luxlIpStatisticsGlobalsIpv6OutForwDatagrams, 
+                  luxlIpStatisticsGlobalsIpv6HCOutForwDatagrams, 
+                  luxlIpStatisticsGlobalsIpv6OutDiscards, 
+                  luxlIpStatisticsGlobalsIpv6OutFragReqds, 
+                  luxlIpStatisticsGlobalsIpv6OutFragOKs, 
+                  luxlIpStatisticsGlobalsIpv6OutFragFails, 
+                  luxlIpStatisticsGlobalsIpv6OutFragCreates, 
+                  luxlIpStatisticsGlobalsIpv6OutTransmits, 
+                  luxlIpStatisticsGlobalsIpv6HCOutTransmits, 
+                  luxlIpStatisticsGlobalsIpv6OutOctets, 
+                  luxlIpStatisticsGlobalsIpv6HCOutOctets, 
+                  luxlIpStatisticsGlobalsIpv6InMcastPkts, 
+                  luxlIpStatisticsGlobalsIpv6HCInMcastPkts, 
+                  luxlIpStatisticsGlobalsIpv6InMcastOctets, 
+                  luxlIpStatisticsGlobalsIpv6HCInMcastOctets, 
+                  luxlIpStatisticsGlobalsIpv6OutMcastPkts, 
+                  luxlIpStatisticsGlobalsIpv6HCOutMcastPkts, 
+                  luxlIpStatisticsGlobalsIpv6OutMcastOctets, 
+                  luxlIpStatisticsGlobalsIpv6HCOutMcastOctets, 
+                  luxlIpStatisticsGlobalsIpv6InBcastPkts, 
+                  luxlIpStatisticsGlobalsIpv6HCInBcastPkts, 
+                  luxlIpStatisticsGlobalsIpv6OutBcastPkts, 
+                  luxlIpStatisticsGlobalsIpv6HCOutBcastPkts, 
+                  luxlIpStatisticsGlobalsIpv6DiscontinuityTime, 
+                  luxlIpStatisticsGlobalsIpv6RefreshRate }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 22 }
+
+luxlIpStatisticsInterfacesLinkInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatisticsInterfacesLinkInPackets, 
+                  luxlIpStatisticsInterfacesLinkOutPackets, 
+                  luxlIpStatisticsInterfacesLinkInBytes, 
+                  luxlIpStatisticsInterfacesLinkOutBytes, 
+                  luxlIpStatisticsInterfacesLinkInMulticasts, 
+                  luxlIpStatisticsInterfacesLinkOutMulticasts, 
+                  luxlIpStatisticsInterfacesLinkInBroadcasts, 
+                  luxlIpStatisticsInterfacesLinkOutBroadcasts }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 23 }
+
+luxlIpStatisticsInterfacesIpv4InfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatisticsInterfacesIpv4InReceives, 
+                  luxlIpStatisticsInterfacesIpv4HCInReceives, 
+                  luxlIpStatisticsInterfacesIpv4InOctets, 
+                  luxlIpStatisticsInterfacesIpv4HCInOctets, 
+                  luxlIpStatisticsInterfacesIpv4InHdrErrors, 
+                  luxlIpStatisticsInterfacesIpv4InNoRoutes, 
+                  luxlIpStatisticsInterfacesIpv4InAddrErrors, 
+                  luxlIpStatisticsInterfacesIpv4InUnknownProtos, 
+                  luxlIpStatisticsInterfacesIpv4InTruncatedPkts, 
+                  luxlIpStatisticsInterfacesIpv4InForwDatagrams, 
+                  luxlIpStatisticsInterfacesIpv4HCInForwDatagrams, 
+                  luxlIpStatisticsInterfacesIpv4ReasmReqds, 
+                  luxlIpStatisticsInterfacesIpv4ReasmOKs, 
+                  luxlIpStatisticsInterfacesIpv4ReasmFails, 
+                  luxlIpStatisticsInterfacesIpv4InDiscards, 
+                  luxlIpStatisticsInterfacesIpv4InDelivers, 
+                  luxlIpStatisticsInterfacesIpv4HCInDelivers, 
+                  luxlIpStatisticsInterfacesIpv4OutRequests, 
+                  luxlIpStatisticsInterfacesIpv4HCOutRequests, 
+                  luxlIpStatisticsInterfacesIpv4OutNoRoutes, 
+                  luxlIpStatisticsInterfacesIpv4OutForwDatagrams, 
+                  luxlIpStatisticsInterfacesIpv4HCOutForwDatagrams, 
+                  luxlIpStatisticsInterfacesIpv4OutDiscards, 
+                  luxlIpStatisticsInterfacesIpv4OutFragReqds, 
+                  luxlIpStatisticsInterfacesIpv4OutFragOKs, 
+                  luxlIpStatisticsInterfacesIpv4OutFragFails, 
+                  luxlIpStatisticsInterfacesIpv4OutFragCreates, 
+                  luxlIpStatisticsInterfacesIpv4OutTransmits, 
+                  luxlIpStatisticsInterfacesIpv4HCOutTransmits, 
+                  luxlIpStatisticsInterfacesIpv4OutOctets, 
+                  luxlIpStatisticsInterfacesIpv4HCOutOctets, 
+                  luxlIpStatisticsInterfacesIpv4InMcastPkts, 
+                  luxlIpStatisticsInterfacesIpv4HCInMcastPkts, 
+                  luxlIpStatisticsInterfacesIpv4InMcastOctets, 
+                  luxlIpStatisticsInterfacesIpv4HCInMcastOctets, 
+                  luxlIpStatisticsInterfacesIpv4OutMcastPkts, 
+                  luxlIpStatisticsInterfacesIpv4HCOutMcastPkts, 
+                  luxlIpStatisticsInterfacesIpv4OutMcastOctets, 
+                  luxlIpStatisticsInterfacesIpv4HCOutMcastOctets, 
+                  luxlIpStatisticsInterfacesIpv4InBcastPkts, 
+                  luxlIpStatisticsInterfacesIpv4HCInBcastPkts, 
+                  luxlIpStatisticsInterfacesIpv4OutBcastPkts, 
+                  luxlIpStatisticsInterfacesIpv4HCOutBcastPkts, 
+                  luxlIpStatisticsInterfacesIpv4DiscontinuityTime, 
+                  luxlIpStatisticsInterfacesIpv4RefreshRate }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 24 }
+
+luxlIpStatisticsInterfacesIpv6InfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpStatisticsInterfacesIpv6InReceives, 
+                  luxlIpStatisticsInterfacesIpv6HCInReceives, 
+                  luxlIpStatisticsInterfacesIpv6InOctets, 
+                  luxlIpStatisticsInterfacesIpv6HCInOctets, 
+                  luxlIpStatisticsInterfacesIpv6InHdrErrors, 
+                  luxlIpStatisticsInterfacesIpv6InNoRoutes, 
+                  luxlIpStatisticsInterfacesIpv6InAddrErrors, 
+                  luxlIpStatisticsInterfacesIpv6InUnknownProtos, 
+                  luxlIpStatisticsInterfacesIpv6InTruncatedPkts, 
+                  luxlIpStatisticsInterfacesIpv6InForwDatagrams, 
+                  luxlIpStatisticsInterfacesIpv6HCInForwDatagrams, 
+                  luxlIpStatisticsInterfacesIpv6ReasmReqds, 
+                  luxlIpStatisticsInterfacesIpv6ReasmOKs, 
+                  luxlIpStatisticsInterfacesIpv6ReasmFails, 
+                  luxlIpStatisticsInterfacesIpv6InDiscards, 
+                  luxlIpStatisticsInterfacesIpv6InDelivers, 
+                  luxlIpStatisticsInterfacesIpv6HCInDelivers, 
+                  luxlIpStatisticsInterfacesIpv6OutRequests, 
+                  luxlIpStatisticsInterfacesIpv6HCOutRequests, 
+                  luxlIpStatisticsInterfacesIpv6OutNoRoutes, 
+                  luxlIpStatisticsInterfacesIpv6OutForwDatagrams, 
+                  luxlIpStatisticsInterfacesIpv6HCOutForwDatagrams, 
+                  luxlIpStatisticsInterfacesIpv6OutDiscards, 
+                  luxlIpStatisticsInterfacesIpv6OutFragReqds, 
+                  luxlIpStatisticsInterfacesIpv6OutFragOKs, 
+                  luxlIpStatisticsInterfacesIpv6OutFragFails, 
+                  luxlIpStatisticsInterfacesIpv6OutFragCreates, 
+                  luxlIpStatisticsInterfacesIpv6OutTransmits, 
+                  luxlIpStatisticsInterfacesIpv6HCOutTransmits, 
+                  luxlIpStatisticsInterfacesIpv6OutOctets, 
+                  luxlIpStatisticsInterfacesIpv6HCOutOctets, 
+                  luxlIpStatisticsInterfacesIpv6InMcastPkts, 
+                  luxlIpStatisticsInterfacesIpv6HCInMcastPkts, 
+                  luxlIpStatisticsInterfacesIpv6InMcastOctets, 
+                  luxlIpStatisticsInterfacesIpv6HCInMcastOctets, 
+                  luxlIpStatisticsInterfacesIpv6OutMcastPkts, 
+                  luxlIpStatisticsInterfacesIpv6HCOutMcastPkts, 
+                  luxlIpStatisticsInterfacesIpv6OutMcastOctets, 
+                  luxlIpStatisticsInterfacesIpv6HCOutMcastOctets, 
+                  luxlIpStatisticsInterfacesIpv6InBcastPkts, 
+                  luxlIpStatisticsInterfacesIpv6HCInBcastPkts, 
+                  luxlIpStatisticsInterfacesIpv6OutBcastPkts, 
+                  luxlIpStatisticsInterfacesIpv6HCOutBcastPkts, 
+                  luxlIpStatisticsInterfacesIpv6DiscontinuityTime, 
+                  luxlIpStatisticsInterfacesIpv6RefreshRate }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpMibGroups 25 }
+
+luxlIpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlIpCapabilitiesInfoGroup, 
+                  luxlIpConfigGlobalsMainInfoGroup, 
+                  luxlIpConfigInterfacesTableInfoGroup, 
+                  luxlIpConfigInterfacesTableRowEditorInfoGroup, 
+                  luxlIpConfigInterfacesIpv4TableInfoGroup, 
+                  luxlIpConfigInterfacesIpv6TableInfoGroup, 
+                  luxlIpConfigRoutesIpv4TableInfoGroup, 
+                  luxlIpConfigRoutesIpv4RowEditorInfoGroup, 
+                  luxlIpConfigRoutesIpv6TableInfoGroup, 
+                  luxlIpConfigRoutesIpv6RowEditorInfoGroup, 
+                  luxlIpStatusGlobalsIpv4NeighbourInfoGroup, 
+                  luxlIpStatusGlobalsIpv6NeighbourInfoGroup, 
+                  luxlIpStatusInterfacesLinkInfoGroup, 
+                  luxlIpStatusInterfacesIpv4InfoGroup, 
+                  luxlIpStatusInterfacesDhcpClientV4InfoGroup, 
+                  luxlIpStatusInterfacesIpv6InfoGroup, 
+                  luxlIpStatusRoutesIpv4InfoGroup, 
+                  luxlIpStatusRoutesIpv6InfoGroup, luxlIpControlGlobalsInfoGroup, 
+                  luxlIpControlInterfaceDhcpClientInfoGroup, 
+                  luxlIpStatisticsGlobalsIpv4InfoGroup, 
+                  luxlIpStatisticsGlobalsIpv6InfoGroup, 
+                  luxlIpStatisticsInterfacesLinkInfoGroup, 
+                  luxlIpStatisticsInterfacesIpv4InfoGroup, 
+                  luxlIpStatisticsInterfacesIpv6InfoGroup }
+
+    ::= { luxlIpMibCompliances 1 }
+
+END

@@ -1,0 +1,249 @@
+-- *****************************************************************
+-- PVLAN-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-PVLAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    ;
+
+luxlPvlanMib MODULE-IDENTITY
+    LAST-UPDATED "201407160000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the Private VLAN MIB"
+    REVISION    "201407160000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 23 }
+
+
+luxlPvlanMibObjects OBJECT IDENTIFIER
+    ::= { luxlPvlanMib 1 }
+
+luxlPvlanCapabilities OBJECT IDENTIFIER
+    ::= { luxlPvlanMibObjects 1 }
+
+luxlPvlanCapabilitiesHasVlanMembershipMgmt OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The capability to support PVLAN membership configuration by the device."
+    ::= { luxlPvlanCapabilities 1 }
+
+luxlPvlanCapabilitiesVlanIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum VLAN ID of PVLAN membership configuration supported by the
+         device."
+    ::= { luxlPvlanCapabilities 2 }
+
+luxlPvlanCapabilitiesVlanIdMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum VLAN ID of PVLAN membership configuration supported by the
+         device."
+    ::= { luxlPvlanCapabilities 3 }
+
+luxlPvlanConfig OBJECT IDENTIFIER
+    ::= { luxlPvlanMibObjects 2 }
+
+luxlPvlanConfigInterface OBJECT IDENTIFIER
+    ::= { luxlPvlanConfig 1 }
+
+luxlPvlanConfigInterfaceVlanMembershipTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPvlanConfigInterfaceVlanMembershipEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing Private VLAN VLAN membership entries."
+    ::= { luxlPvlanConfigInterface 1 }
+
+luxlPvlanConfigInterfaceVlanMembershipEntry OBJECT-TYPE
+    SYNTAX      LUXLPvlanConfigInterfaceVlanMembershipEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlPvlanConfigInterfaceVlanMembershipPvlanIndex }
+    ::= { luxlPvlanConfigInterfaceVlanMembershipTable 1 }
+
+LUXLPvlanConfigInterfaceVlanMembershipEntry ::= SEQUENCE {
+    luxlPvlanConfigInterfaceVlanMembershipPvlanIndex    Unsigned32,
+    luxlPvlanConfigInterfaceVlanMembershipPortList      LUXLPortList,
+    luxlPvlanConfigInterfaceVlanMembershipAction    LUXLRowEditorState
+}
+
+luxlPvlanConfigInterfaceVlanMembershipPvlanIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Configuration index of the Private VLAN membership table."
+    ::= { luxlPvlanConfigInterfaceVlanMembershipEntry 1 }
+
+luxlPvlanConfigInterfaceVlanMembershipPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the memberships of the specific Private VLAN
+         configuration."
+    ::= { luxlPvlanConfigInterfaceVlanMembershipEntry 2 }
+
+luxlPvlanConfigInterfaceVlanMembershipAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlPvlanConfigInterfaceVlanMembershipEntry 100 }
+
+luxlPvlanConfigInterfaceVlanMembershipTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlPvlanConfigInterface 2 }
+
+luxlPvlanConfigInterfaceVlanMembershipTableRowEditorPvlanIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Configuration index of the Private VLAN membership table."
+    ::= { luxlPvlanConfigInterfaceVlanMembershipTableRowEditor 1 }
+
+luxlPvlanConfigInterfaceVlanMembershipTableRowEditorPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the memberships of the specific Private VLAN
+         configuration."
+    ::= { luxlPvlanConfigInterfaceVlanMembershipTableRowEditor 2 }
+
+luxlPvlanConfigInterfaceVlanMembershipTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlPvlanConfigInterfaceVlanMembershipTableRowEditor 100 }
+
+luxlPvlanConfigInterfacePortIsolatationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPvlanConfigInterfacePortIsolatationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing Private VLAN port isolation entries."
+    ::= { luxlPvlanConfigInterface 3 }
+
+luxlPvlanConfigInterfacePortIsolatationEntry OBJECT-TYPE
+    SYNTAX      LUXLPvlanConfigInterfacePortIsolatationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlPvlanConfigInterfacePortIsolatationPortIndex }
+    ::= { luxlPvlanConfigInterfacePortIsolatationTable 1 }
+
+LUXLPvlanConfigInterfacePortIsolatationEntry ::= SEQUENCE {
+    luxlPvlanConfigInterfacePortIsolatationPortIndex    LUXLInterfaceIndex,
+    luxlPvlanConfigInterfacePortIsolatationEnabled      TruthValue
+}
+
+luxlPvlanConfigInterfacePortIsolatationPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the Private VLAN port isolation."
+    ::= { luxlPvlanConfigInterfacePortIsolatationEntry 1 }
+
+luxlPvlanConfigInterfacePortIsolatationEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the Private VLAN isolation functionality."
+    ::= { luxlPvlanConfigInterfacePortIsolatationEntry 2 }
+
+luxlPvlanMibConformance OBJECT IDENTIFIER
+    ::= { luxlPvlanMib 2 }
+
+luxlPvlanMibCompliances OBJECT IDENTIFIER
+    ::= { luxlPvlanMibConformance 1 }
+
+luxlPvlanMibGroups OBJECT IDENTIFIER
+    ::= { luxlPvlanMibConformance 2 }
+
+luxlPvlanCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPvlanCapabilitiesHasVlanMembershipMgmt, 
+                  luxlPvlanCapabilitiesVlanIdMax, luxlPvlanCapabilitiesVlanIdMin }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPvlanMibGroups 1 }
+
+luxlPvlanConfigInterfaceVlanMembershipTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPvlanConfigInterfaceVlanMembershipPortList, 
+                  luxlPvlanConfigInterfaceVlanMembershipAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPvlanMibGroups 2 }
+
+luxlPvlanConfigInterfaceVlanMembershipTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { 
+                  luxlPvlanConfigInterfaceVlanMembershipTableRowEditorPvlanIndex, 
+                  luxlPvlanConfigInterfaceVlanMembershipTableRowEditorPortList, 
+                  luxlPvlanConfigInterfaceVlanMembershipTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPvlanMibGroups 3 }
+
+luxlPvlanConfigInterfacePortIsolatationTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPvlanConfigInterfacePortIsolatationEnabled }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPvlanMibGroups 4 }
+
+luxlPvlanMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlPvlanCapabilitiesInfoGroup, 
+                  luxlPvlanConfigInterfaceVlanMembershipTableInfoGroup, 
+                  luxlPvlanConfigInterfaceVlanMembershipTableRowEditorInfoGroup, 
+                  luxlPvlanConfigInterfacePortIsolatationTableInfoGroup }
+
+    ::= { luxlPvlanMibCompliances 1 }
+
+END

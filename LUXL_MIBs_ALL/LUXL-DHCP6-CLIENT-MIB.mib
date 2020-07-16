@@ -1,0 +1,541 @@
+-- *****************************************************************
+-- DHCP6-CLIENT-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-DHCP6-CLIENT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Counter64 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    ;
+
+luxlDhcp6ClientMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the DHCPv6 Client MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 126 }
+
+
+luxlDhcp6ClientMibObjects OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientMib 1 }
+
+luxlDhcp6ClientCapabilities OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientMibObjects 1 }
+
+luxlDhcp6ClientCapabilitiesMaxNumberOfInterfaces OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum number of DHCPv6 client interfaces supported by the device."
+    ::= { luxlDhcp6ClientCapabilities 1 }
+
+luxlDhcp6ClientConfig OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientMibObjects 2 }
+
+luxlDhcp6ClientConfigInterface OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientConfig 1 }
+
+luxlDhcp6ClientConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcp6ClientConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing DHCPv6 client interface entries."
+    ::= { luxlDhcp6ClientConfigInterface 1 }
+
+luxlDhcp6ClientConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcp6ClientConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlDhcp6ClientConfigInterfaceIfIndex }
+    ::= { luxlDhcp6ClientConfigInterfaceTable 1 }
+
+LUXLDhcp6ClientConfigInterfaceEntry ::= SEQUENCE {
+    luxlDhcp6ClientConfigInterfaceIfIndex   LUXLInterfaceIndex,
+    luxlDhcp6ClientConfigInterfaceRapidCommit   TruthValue,
+    luxlDhcp6ClientConfigInterfaceAction    LUXLRowEditorState
+}
+
+luxlDhcp6ClientConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlDhcp6ClientConfigInterfaceEntry 1 }
+
+luxlDhcp6ClientConfigInterfaceRapidCommit OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the rapid-commit capability in DHCPv6 message exchanges."
+    ::= { luxlDhcp6ClientConfigInterfaceEntry 2 }
+
+luxlDhcp6ClientConfigInterfaceAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlDhcp6ClientConfigInterfaceEntry 100 }
+
+luxlDhcp6ClientConfigInterfaceTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientConfigInterface 2 }
+
+luxlDhcp6ClientConfigInterfaceTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlDhcp6ClientConfigInterfaceTableRowEditor 1 }
+
+luxlDhcp6ClientConfigInterfaceTableRowEditorRapidCommit OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the rapid-commit capability in DHCPv6 message exchanges."
+    ::= { luxlDhcp6ClientConfigInterfaceTableRowEditor 2 }
+
+luxlDhcp6ClientConfigInterfaceTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlDhcp6ClientConfigInterfaceTableRowEditor 100 }
+
+luxlDhcp6ClientStatus OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientMibObjects 3 }
+
+luxlDhcp6ClientStatusInterface OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientStatus 1 }
+
+luxlDhcp6ClientStatusInterfaceInformationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcp6ClientStatusInterfaceInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying per DHCPv6 client interface information
+         derived from DHCPv6 server."
+    ::= { luxlDhcp6ClientStatusInterface 1 }
+
+luxlDhcp6ClientStatusInterfaceInformationEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcp6ClientStatusInterfaceInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlDhcp6ClientStatusInterfaceInformationIfIndex }
+    ::= { luxlDhcp6ClientStatusInterfaceInformationTable 1 }
+
+LUXLDhcp6ClientStatusInterfaceInformationEntry ::= SEQUENCE {
+    luxlDhcp6ClientStatusInterfaceInformationIfIndex    LUXLInterfaceIndex,
+    luxlDhcp6ClientStatusInterfaceInformationAddress    InetAddressIPv6,
+    luxlDhcp6ClientStatusInterfaceInformationServerAddress      InetAddressIPv6,
+    luxlDhcp6ClientStatusInterfaceInformationDnsServerAddress   InetAddressIPv6,
+    luxlDhcp6ClientStatusInterfaceInformationPreferredLifetime      Counter64,
+    luxlDhcp6ClientStatusInterfaceInformationValidLifetime      Counter64,
+    luxlDhcp6ClientStatusInterfaceInformationT1     Counter64,
+    luxlDhcp6ClientStatusInterfaceInformationT2     Counter64
+}
+
+luxlDhcp6ClientStatusInterfaceInformationIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlDhcp6ClientStatusInterfaceInformationEntry 1 }
+
+luxlDhcp6ClientStatusInterfaceInformationAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 address determined from DHCPv6 for this interface."
+    ::= { luxlDhcp6ClientStatusInterfaceInformationEntry 2 }
+
+luxlDhcp6ClientStatusInterfaceInformationServerAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 address of the bounded DHCPv6 server for this interface."
+    ::= { luxlDhcp6ClientStatusInterfaceInformationEntry 3 }
+
+luxlDhcp6ClientStatusInterfaceInformationDnsServerAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The DNS server address retrieved from DHCPv6."
+    ::= { luxlDhcp6ClientStatusInterfaceInformationEntry 4 }
+
+luxlDhcp6ClientStatusInterfaceInformationPreferredLifetime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The recorded Preferred-Lifetime for the DHCPv6 client interface. From
+         RFC-4862 and RFC-3315: It is the preferred lifetime for the IPv6
+         address, expressed in units of seconds. When the preferred lifetime
+         expires, the address becomes deprecated."
+    ::= { luxlDhcp6ClientStatusInterfaceInformationEntry 5 }
+
+luxlDhcp6ClientStatusInterfaceInformationValidLifetime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The recorded Valid-Lifetime for the DHCPv6 client interface. From
+         RFC-4862 and RFC-3315: It is the valid lifetime for the IPv6 address,
+         expressed in units of seconds. The valid lifetime must be greater than
+         or equal to the preferred lifetime. When the valid lifetime expires,
+         the address becomes invalid."
+    ::= { luxlDhcp6ClientStatusInterfaceInformationEntry 6 }
+
+luxlDhcp6ClientStatusInterfaceInformationT1 OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The recorded T1 for the DHCPv6 client interface. From RFC-3315: It is
+         the time at which the client contacts the server from which the address
+         is obtained to extend the lifetimes of the non-temporary address
+         assigned; T1 is a time duration relative to the current time expressed
+         in units of seconds."
+    ::= { luxlDhcp6ClientStatusInterfaceInformationEntry 7 }
+
+luxlDhcp6ClientStatusInterfaceInformationT2 OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The recorded T2 for the DHCPv6 client interface. From RFC-3315: It is
+         the time at which the client contacts any available server to extend
+         the lifetimes of the non-temporary address assigned; T2 is a time
+         duration relative to the current time expressed in units of seconds."
+    ::= { luxlDhcp6ClientStatusInterfaceInformationEntry 8 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcp6ClientStatusInterfaceStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying per DHCPv6 client interface control
+         message statistics in DHCPv6 message exchanges."
+    ::= { luxlDhcp6ClientStatusInterface 2 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcp6ClientStatusInterfaceStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of counters."
+    INDEX       { luxlDhcp6ClientStatusInterfaceStatisticsIfIndex }
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsTable 1 }
+
+LUXLDhcp6ClientStatusInterfaceStatisticsEntry ::= SEQUENCE {
+    luxlDhcp6ClientStatusInterfaceStatisticsIfIndex     LUXLInterfaceIndex,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxSolicit   Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxRequest   Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxConfirm   Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxRenew     Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxRebind    Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxRelease   Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxDecline   Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxInfoRequest   Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxError     Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxDrop      Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsTxUnknown   Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsRxAdvertise     Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsRxReply     Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsRxReconfigure   Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsRxError     Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsRxDrop      Unsigned32,
+    luxlDhcp6ClientStatusInterfaceStatisticsRxUnknown   Unsigned32
+}
+
+luxlDhcp6ClientStatusInterfaceStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 1 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxSolicit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 SOLICIT message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 2 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxRequest OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 REQUEST message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 3 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxConfirm OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 CONFIRM message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 4 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxRenew OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 RENEW message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 5 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxRebind OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 REBIND message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 6 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxRelease OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 RELEASE message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 7 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxDecline OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 DECLINE message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 8 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxInfoRequest OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 INFORMATION-REQUEST message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 9 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxError OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 message error count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 10 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxDrop OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 message drop count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 11 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTxUnknown OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DHCPv6 unknown message type count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 12 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsRxAdvertise OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DHCPv6 ADVERTISE message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 13 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsRxReply OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DHCPv6 REPLY message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 14 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsRxReconfigure OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DHCPv6 RECONFIGURE message count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 15 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsRxError OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DHCPv6 message error count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 16 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsRxDrop OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DHCPv6 message drop count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 17 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsRxUnknown OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DHCPv6 unknown message type count."
+    ::= { luxlDhcp6ClientStatusInterfaceStatisticsEntry 18 }
+
+luxlDhcp6ClientControl OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientMibObjects 4 }
+
+luxlDhcp6ClientControlInterface OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientControl 1 }
+
+luxlDhcp6ClientControlInterfaceRestart OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientControlInterface 1 }
+
+luxlDhcp6ClientControlInterfaceRestartIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlDhcp6ClientControlInterfaceRestart 1 }
+
+luxlDhcp6ClientMibConformance OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientMib 2 }
+
+luxlDhcp6ClientMibCompliances OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientMibConformance 1 }
+
+luxlDhcp6ClientMibGroups OBJECT IDENTIFIER
+    ::= { luxlDhcp6ClientMibConformance 2 }
+
+luxlDhcp6ClientCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcp6ClientCapabilitiesMaxNumberOfInterfaces }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcp6ClientMibGroups 1 }
+
+luxlDhcp6ClientConfigInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcp6ClientConfigInterfaceRapidCommit, 
+                  luxlDhcp6ClientConfigInterfaceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcp6ClientMibGroups 2 }
+
+luxlDhcp6ClientConfigInterfaceTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcp6ClientConfigInterfaceTableRowEditorIfIndex, 
+                  luxlDhcp6ClientConfigInterfaceTableRowEditorRapidCommit, 
+                  luxlDhcp6ClientConfigInterfaceTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcp6ClientMibGroups 3 }
+
+luxlDhcp6ClientStatusInterfaceInformationTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcp6ClientStatusInterfaceInformationAddress, 
+                  luxlDhcp6ClientStatusInterfaceInformationServerAddress, 
+                  luxlDhcp6ClientStatusInterfaceInformationDnsServerAddress, 
+                  luxlDhcp6ClientStatusInterfaceInformationPreferredLifetime, 
+                  luxlDhcp6ClientStatusInterfaceInformationValidLifetime, 
+                  luxlDhcp6ClientStatusInterfaceInformationT1, 
+                  luxlDhcp6ClientStatusInterfaceInformationT2 }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcp6ClientMibGroups 4 }
+
+luxlDhcp6ClientStatusInterfaceStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcp6ClientStatusInterfaceStatisticsTxSolicit, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTxRequest, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTxConfirm, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTxRenew, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTxRebind, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTxRelease, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTxDecline, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTxInfoRequest, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTxError, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTxDrop, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTxUnknown, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsRxAdvertise, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsRxReply, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsRxReconfigure, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsRxError, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsRxDrop, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsRxUnknown }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcp6ClientMibGroups 5 }
+
+luxlDhcp6ClientControlInterfaceRestartInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcp6ClientControlInterfaceRestartIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcp6ClientMibGroups 6 }
+
+luxlDhcp6ClientMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlDhcp6ClientCapabilitiesInfoGroup, 
+                  luxlDhcp6ClientConfigInterfaceTableInfoGroup, 
+                  luxlDhcp6ClientConfigInterfaceTableRowEditorInfoGroup, 
+                  luxlDhcp6ClientStatusInterfaceInformationTableInfoGroup, 
+                  luxlDhcp6ClientStatusInterfaceStatisticsTableInfoGroup, 
+                  luxlDhcp6ClientControlInterfaceRestartInfoGroup }
+
+    ::= { luxlDhcp6ClientMibCompliances 1 }
+
+END

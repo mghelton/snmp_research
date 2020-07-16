@@ -1,0 +1,831 @@
+-- *****************************************************************
+-- SNMP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-SNMP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    ;
+
+luxlSnmpMib MODULE-IDENTITY
+    LAST-UPDATED "201407180000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of SNMP"
+    REVISION    "201407180000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 36 }
+
+
+LUXLSnmpAuthProtocl ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP authentication protocol"
+    SYNTAX      INTEGER { snmpNoAuthProtocol(0), snmpMD5AuthProtocol(1), snmpSHAAuthProtocol(2) }
+
+LUXLSnmpPrivProtocl ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP privacy protocol"
+    SYNTAX      INTEGER { snmpNoPrivProtocol(0), snmpDESPrivProtocol(1), snmpAESPrivProtocol(2) }
+
+LUXLSnmpSecurityLevel ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP authentication protocol"
+    SYNTAX      INTEGER { snmpNoAuthNoPriv(1), snmpAuthNoPriv(2), snmpAuthPriv(3) }
+
+LUXLSnmpSecurityModel ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP security model"
+    SYNTAX      INTEGER { any(0), v1(1), v2c(2), usm(3) }
+
+LUXLSnmpVersion ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The version of SNMP"
+    SYNTAX      INTEGER { snmpV1(0), snmpV2c(1), snmpV3(2) }
+
+LUXLSnmpViewType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP view type"
+    SYNTAX      INTEGER { included(0), excluded(1) }
+
+luxlSnmpMibObjects OBJECT IDENTIFIER
+    ::= { luxlSnmpMib 1 }
+
+luxlSnmpConfig OBJECT IDENTIFIER
+    ::= { luxlSnmpMibObjects 2 }
+
+luxlSnmpConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlSnmpConfig 1 }
+
+luxlSnmpConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global mode of SNMP."
+    ::= { luxlSnmpConfigGlobals 1 }
+
+luxlSnmpConfigGlobalsVersion OBJECT-TYPE
+    SYNTAX      LUXLSnmpVersion
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "SNMP Version. The supported versions are snmpV1, snmpV2c, snmpV3."
+    ::= { luxlSnmpConfigGlobals 2 }
+
+luxlSnmpConfigGlobalsReadCommunity OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The community read access string to permit access to SNMP agent."
+    ::= { luxlSnmpConfigGlobals 3 }
+
+luxlSnmpConfigGlobalsWriteCommunity OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The community write access string to permit access to SNMP agent."
+    ::= { luxlSnmpConfigGlobals 4 }
+
+luxlSnmpConfigGlobalsEngineId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(5..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "SNMPv3 engine ID. The size of Engine ID is between 5 ~ 32 bytes.But
+         all-zeros and all-'F's are not allowed. Change of the Engine ID will
+         clear all original local users."
+    ::= { luxlSnmpConfigGlobals 5 }
+
+luxlSnmpConfigCommunityTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSnmpConfigCommunityEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for configuring SNMPv3 communities."
+    ::= { luxlSnmpConfig 2 }
+
+luxlSnmpConfigCommunityEntry OBJECT-TYPE
+    SYNTAX      LUXLSnmpConfigCommunityEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The entry index key is community."
+    INDEX       { luxlSnmpConfigCommunityName, luxlSnmpConfigCommunitySourceIP, luxlSnmpConfigCommunitySourceIPPrefixSize }
+    ::= { luxlSnmpConfigCommunityTable 1 }
+
+LUXLSnmpConfigCommunityEntry ::= SEQUENCE {
+    luxlSnmpConfigCommunityName     LUXLDisplayString,
+    luxlSnmpConfigCommunitySourceIP     IpAddress,
+    luxlSnmpConfigCommunitySourceIPPrefixSize   Integer32,
+    luxlSnmpConfigCommunityAction   LUXLRowEditorState
+}
+
+luxlSnmpConfigCommunityName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Name of SNMP community"
+    ::= { luxlSnmpConfigCommunityEntry 1 }
+
+luxlSnmpConfigCommunitySourceIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The SNMP access source IP address"
+    ::= { luxlSnmpConfigCommunityEntry 2 }
+
+luxlSnmpConfigCommunitySourceIPPrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..32)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The SNMP access source IP address mask"
+    ::= { luxlSnmpConfigCommunityEntry 3 }
+
+luxlSnmpConfigCommunityAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlSnmpConfigCommunityEntry 100 }
+
+luxlSnmpConfigCommunityTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlSnmpConfig 3 }
+
+luxlSnmpConfigCommunityTableRowEditorName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Name of SNMP community"
+    ::= { luxlSnmpConfigCommunityTableRowEditor 1 }
+
+luxlSnmpConfigCommunityTableRowEditorSourceIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The SNMP access source IP address"
+    ::= { luxlSnmpConfigCommunityTableRowEditor 2 }
+
+luxlSnmpConfigCommunityTableRowEditorSourceIPPrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..32)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The SNMP access source IP address mask"
+    ::= { luxlSnmpConfigCommunityTableRowEditor 3 }
+
+luxlSnmpConfigCommunityTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlSnmpConfigCommunityTableRowEditor 100 }
+
+luxlSnmpConfigUserTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSnmpConfigUserEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for configuring SNMPv3 users."
+    ::= { luxlSnmpConfig 4 }
+
+luxlSnmpConfigUserEntry OBJECT-TYPE
+    SYNTAX      LUXLSnmpConfigUserEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The entry index keys are engine ID and user name."
+    INDEX       { luxlSnmpConfigUserEngineId, luxlSnmpConfigUserUserName }
+    ::= { luxlSnmpConfigUserTable 1 }
+
+LUXLSnmpConfigUserEntry ::= SEQUENCE {
+    luxlSnmpConfigUserEngineId      OCTET STRING,
+    luxlSnmpConfigUserUserName      LUXLDisplayString,
+    luxlSnmpConfigUserSecurityLevel     LUXLSnmpSecurityLevel,
+    luxlSnmpConfigUserAuthProtocol      LUXLSnmpAuthProtocl,
+    luxlSnmpConfigUserAuthPassword      LUXLDisplayString,
+    luxlSnmpConfigUserPrivProtocol      LUXLSnmpPrivProtocl,
+    luxlSnmpConfigUserPrivPassword      LUXLDisplayString,
+    luxlSnmpConfigUserAction    LUXLRowEditorState
+}
+
+luxlSnmpConfigUserEngineId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(5..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "SNMPv3 engine ID. The length is between 5 ~ 32 bytes. But all-zeros and
+         all-'F's are not allowed. Change of the Engine ID will clear all
+         original local users."
+    ::= { luxlSnmpConfigUserEntry 1 }
+
+luxlSnmpConfigUserUserName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The name of this entry"
+    ::= { luxlSnmpConfigUserEntry 2 }
+
+luxlSnmpConfigUserSecurityLevel OBJECT-TYPE
+    SYNTAX      LUXLSnmpSecurityLevel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The security level of this entry."
+    ::= { luxlSnmpConfigUserEntry 3 }
+
+luxlSnmpConfigUserAuthProtocol OBJECT-TYPE
+    SYNTAX      LUXLSnmpAuthProtocl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The authentication protocol of this entry."
+    ::= { luxlSnmpConfigUserEntry 4 }
+
+luxlSnmpConfigUserAuthPassword OBJECT-TYPE
+    SYNTAX      LUXLDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The authentication password of this entry."
+    ::= { luxlSnmpConfigUserEntry 5 }
+
+luxlSnmpConfigUserPrivProtocol OBJECT-TYPE
+    SYNTAX      LUXLSnmpPrivProtocl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The privacy protocol of this entry."
+    ::= { luxlSnmpConfigUserEntry 6 }
+
+luxlSnmpConfigUserPrivPassword OBJECT-TYPE
+    SYNTAX      LUXLDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The privacy password of this entry."
+    ::= { luxlSnmpConfigUserEntry 7 }
+
+luxlSnmpConfigUserAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlSnmpConfigUserEntry 100 }
+
+luxlSnmpConfigUserTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlSnmpConfig 5 }
+
+luxlSnmpConfigUserTableRowEditorEngineId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(5..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "SNMPv3 engine ID. The length is between 5 ~ 32 bytes. But all-zeros and
+         all-'F's are not allowed. Change of the Engine ID will clear all
+         original local users."
+    ::= { luxlSnmpConfigUserTableRowEditor 1 }
+
+luxlSnmpConfigUserTableRowEditorUserName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of this entry"
+    ::= { luxlSnmpConfigUserTableRowEditor 2 }
+
+luxlSnmpConfigUserTableRowEditorSecurityLevel OBJECT-TYPE
+    SYNTAX      LUXLSnmpSecurityLevel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The security level of this entry."
+    ::= { luxlSnmpConfigUserTableRowEditor 3 }
+
+luxlSnmpConfigUserTableRowEditorAuthProtocol OBJECT-TYPE
+    SYNTAX      LUXLSnmpAuthProtocl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The authentication protocol of this entry."
+    ::= { luxlSnmpConfigUserTableRowEditor 4 }
+
+luxlSnmpConfigUserTableRowEditorAuthPassword OBJECT-TYPE
+    SYNTAX      LUXLDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The authentication password of this entry."
+    ::= { luxlSnmpConfigUserTableRowEditor 5 }
+
+luxlSnmpConfigUserTableRowEditorPrivProtocol OBJECT-TYPE
+    SYNTAX      LUXLSnmpPrivProtocl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The privacy protocol of this entry."
+    ::= { luxlSnmpConfigUserTableRowEditor 6 }
+
+luxlSnmpConfigUserTableRowEditorPrivPassword OBJECT-TYPE
+    SYNTAX      LUXLDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The privacy password of this entry."
+    ::= { luxlSnmpConfigUserTableRowEditor 7 }
+
+luxlSnmpConfigUserTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlSnmpConfigUserTableRowEditor 100 }
+
+luxlSnmpConfigUserToAccessGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSnmpConfigUserToAccessGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for configuring SNMPv3 groups."
+    ::= { luxlSnmpConfig 6 }
+
+luxlSnmpConfigUserToAccessGroupEntry OBJECT-TYPE
+    SYNTAX      LUXLSnmpConfigUserToAccessGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The entry index keys are engine ID and user/community name."
+    INDEX       { luxlSnmpConfigUserToAccessGroupSecurityModel, luxlSnmpConfigUserToAccessGroupUserOrCommunity }
+    ::= { luxlSnmpConfigUserToAccessGroupTable 1 }
+
+LUXLSnmpConfigUserToAccessGroupEntry ::= SEQUENCE {
+    luxlSnmpConfigUserToAccessGroupSecurityModel    LUXLSnmpSecurityModel,
+    luxlSnmpConfigUserToAccessGroupUserOrCommunity      LUXLDisplayString,
+    luxlSnmpConfigUserToAccessGroupAccessGroupName      LUXLDisplayString,
+    luxlSnmpConfigUserToAccessGroupAction   LUXLRowEditorState
+}
+
+luxlSnmpConfigUserToAccessGroupSecurityModel OBJECT-TYPE
+    SYNTAX      LUXLSnmpSecurityModel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The security model of this entry"
+    ::= { luxlSnmpConfigUserToAccessGroupEntry 1 }
+
+luxlSnmpConfigUserToAccessGroupUserOrCommunity OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The user or community name of this entry"
+    ::= { luxlSnmpConfigUserToAccessGroupEntry 2 }
+
+luxlSnmpConfigUserToAccessGroupAccessGroupName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The access group name of this entry."
+    ::= { luxlSnmpConfigUserToAccessGroupEntry 3 }
+
+luxlSnmpConfigUserToAccessGroupAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlSnmpConfigUserToAccessGroupEntry 100 }
+
+luxlSnmpConfigUserToAccessGroupTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlSnmpConfig 7 }
+
+luxlSnmpConfigUserToAccessGroupTableRowEditorSecurityModel OBJECT-TYPE
+    SYNTAX      LUXLSnmpSecurityModel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The security model of this entry"
+    ::= { luxlSnmpConfigUserToAccessGroupTableRowEditor 1 }
+
+luxlSnmpConfigUserToAccessGroupTableRowEditorUserOrCommunity OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The user or community name of this entry"
+    ::= { luxlSnmpConfigUserToAccessGroupTableRowEditor 2 }
+
+luxlSnmpConfigUserToAccessGroupTableRowEditorAccessGroupName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The access group name of this entry."
+    ::= { luxlSnmpConfigUserToAccessGroupTableRowEditor 3 }
+
+luxlSnmpConfigUserToAccessGroupTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlSnmpConfigUserToAccessGroupTableRowEditor 100 }
+
+luxlSnmpConfigAccessGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSnmpConfigAccessGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for configuring SNMPv3 accesse groups."
+    ::= { luxlSnmpConfig 8 }
+
+luxlSnmpConfigAccessGroupEntry OBJECT-TYPE
+    SYNTAX      LUXLSnmpConfigAccessGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The entry index keys are access group name, security model and security
+         level."
+    INDEX       { luxlSnmpConfigAccessGroupAccessGroupName, luxlSnmpConfigAccessGroupSecurityModel, luxlSnmpConfigAccessGroupSecurityLevel }
+    ::= { luxlSnmpConfigAccessGroupTable 1 }
+
+LUXLSnmpConfigAccessGroupEntry ::= SEQUENCE {
+    luxlSnmpConfigAccessGroupAccessGroupName    LUXLDisplayString,
+    luxlSnmpConfigAccessGroupSecurityModel      LUXLSnmpSecurityModel,
+    luxlSnmpConfigAccessGroupSecurityLevel      LUXLSnmpSecurityLevel,
+    luxlSnmpConfigAccessGroupReadViewName   LUXLDisplayString,
+    luxlSnmpConfigAccessGroupWriteViewName      LUXLDisplayString,
+    luxlSnmpConfigAccessGroupAction     LUXLRowEditorState
+}
+
+luxlSnmpConfigAccessGroupAccessGroupName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The access group name of this entry"
+    ::= { luxlSnmpConfigAccessGroupEntry 1 }
+
+luxlSnmpConfigAccessGroupSecurityModel OBJECT-TYPE
+    SYNTAX      LUXLSnmpSecurityModel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The security model of this entry"
+    ::= { luxlSnmpConfigAccessGroupEntry 2 }
+
+luxlSnmpConfigAccessGroupSecurityLevel OBJECT-TYPE
+    SYNTAX      LUXLSnmpSecurityLevel
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The security level of this entry"
+    ::= { luxlSnmpConfigAccessGroupEntry 3 }
+
+luxlSnmpConfigAccessGroupReadViewName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of the MIB view defining the MIB objects for which this
+         request may request the current values."
+    ::= { luxlSnmpConfigAccessGroupEntry 4 }
+
+luxlSnmpConfigAccessGroupWriteViewName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of the MIB view defining the MIB objects for which this
+         request may potentially set new values."
+    ::= { luxlSnmpConfigAccessGroupEntry 5 }
+
+luxlSnmpConfigAccessGroupAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlSnmpConfigAccessGroupEntry 100 }
+
+luxlSnmpConfigAccessGroupTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlSnmpConfig 9 }
+
+luxlSnmpConfigAccessGroupTableRowEditorAccessGroupName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The access group name of this entry"
+    ::= { luxlSnmpConfigAccessGroupTableRowEditor 1 }
+
+luxlSnmpConfigAccessGroupTableRowEditorSecurityModel OBJECT-TYPE
+    SYNTAX      LUXLSnmpSecurityModel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The security model of this entry"
+    ::= { luxlSnmpConfigAccessGroupTableRowEditor 2 }
+
+luxlSnmpConfigAccessGroupTableRowEditorSecurityLevel OBJECT-TYPE
+    SYNTAX      LUXLSnmpSecurityLevel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The security level of this entry"
+    ::= { luxlSnmpConfigAccessGroupTableRowEditor 3 }
+
+luxlSnmpConfigAccessGroupTableRowEditorReadViewName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of the MIB view defining the MIB objects for which this
+         request may request the current values."
+    ::= { luxlSnmpConfigAccessGroupTableRowEditor 4 }
+
+luxlSnmpConfigAccessGroupTableRowEditorWriteViewName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of the MIB view defining the MIB objects for which this
+         request may potentially set new values."
+    ::= { luxlSnmpConfigAccessGroupTableRowEditor 5 }
+
+luxlSnmpConfigAccessGroupTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlSnmpConfigAccessGroupTableRowEditor 100 }
+
+luxlSnmpConfigViewTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSnmpConfigViewEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for configuring SNMPv3 views."
+    ::= { luxlSnmpConfig 10 }
+
+luxlSnmpConfigViewEntry OBJECT-TYPE
+    SYNTAX      LUXLSnmpConfigViewEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The entry index keys are name and subtree."
+    INDEX       { luxlSnmpConfigViewName, luxlSnmpConfigViewSubtree }
+    ::= { luxlSnmpConfigViewTable 1 }
+
+LUXLSnmpConfigViewEntry ::= SEQUENCE {
+    luxlSnmpConfigViewName      LUXLDisplayString,
+    luxlSnmpConfigViewSubtree   LUXLDisplayString,
+    luxlSnmpConfigViewViewType      LUXLSnmpViewType,
+    luxlSnmpConfigViewAction    LUXLRowEditorState
+}
+
+luxlSnmpConfigViewName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The name of this entry"
+    ::= { luxlSnmpConfigViewEntry 1 }
+
+luxlSnmpConfigViewSubtree OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The OID defining the root of the subtree to add to the named view."
+    ::= { luxlSnmpConfigViewEntry 2 }
+
+luxlSnmpConfigViewViewType OBJECT-TYPE
+    SYNTAX      LUXLSnmpViewType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The view name of this entry."
+    ::= { luxlSnmpConfigViewEntry 3 }
+
+luxlSnmpConfigViewAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlSnmpConfigViewEntry 100 }
+
+luxlSnmpConfigViewTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlSnmpConfig 11 }
+
+luxlSnmpConfigViewTableRowEditorName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of this entry"
+    ::= { luxlSnmpConfigViewTableRowEditor 1 }
+
+luxlSnmpConfigViewTableRowEditorSubtree OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The OID defining the root of the subtree to add to the named view."
+    ::= { luxlSnmpConfigViewTableRowEditor 2 }
+
+luxlSnmpConfigViewTableRowEditorViewType OBJECT-TYPE
+    SYNTAX      LUXLSnmpViewType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The view name of this entry."
+    ::= { luxlSnmpConfigViewTableRowEditor 3 }
+
+luxlSnmpConfigViewTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlSnmpConfigViewTableRowEditor 100 }
+
+luxlSnmpMibConformance OBJECT IDENTIFIER
+    ::= { luxlSnmpMib 2 }
+
+luxlSnmpMibCompliances OBJECT IDENTIFIER
+    ::= { luxlSnmpMibConformance 1 }
+
+luxlSnmpMibGroups OBJECT IDENTIFIER
+    ::= { luxlSnmpMibConformance 2 }
+
+luxlSnmpConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigGlobalsMode, luxlSnmpConfigGlobalsVersion, 
+                  luxlSnmpConfigGlobalsReadCommunity, 
+                  luxlSnmpConfigGlobalsWriteCommunity, 
+                  luxlSnmpConfigGlobalsEngineId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 1 }
+
+luxlSnmpConfigCommunityTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigCommunityAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 2 }
+
+luxlSnmpConfigCommunityTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigCommunityTableRowEditorName, 
+                  luxlSnmpConfigCommunityTableRowEditorSourceIP, 
+                  luxlSnmpConfigCommunityTableRowEditorSourceIPPrefixSize, 
+                  luxlSnmpConfigCommunityTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 3 }
+
+luxlSnmpConfigUserTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigUserSecurityLevel, 
+                  luxlSnmpConfigUserAuthProtocol, luxlSnmpConfigUserAuthPassword, 
+                  luxlSnmpConfigUserPrivProtocol, luxlSnmpConfigUserPrivPassword, 
+                  luxlSnmpConfigUserAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 4 }
+
+luxlSnmpConfigUserTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigUserTableRowEditorEngineId, 
+                  luxlSnmpConfigUserTableRowEditorUserName, 
+                  luxlSnmpConfigUserTableRowEditorSecurityLevel, 
+                  luxlSnmpConfigUserTableRowEditorAuthProtocol, 
+                  luxlSnmpConfigUserTableRowEditorAuthPassword, 
+                  luxlSnmpConfigUserTableRowEditorPrivProtocol, 
+                  luxlSnmpConfigUserTableRowEditorPrivPassword, 
+                  luxlSnmpConfigUserTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 5 }
+
+luxlSnmpConfigUserToAccessGroupTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigUserToAccessGroupAccessGroupName, 
+                  luxlSnmpConfigUserToAccessGroupAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 6 }
+
+luxlSnmpConfigUserToAccessGroupTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigUserToAccessGroupTableRowEditorSecurityModel, 
+                  luxlSnmpConfigUserToAccessGroupTableRowEditorUserOrCommunity, 
+                  luxlSnmpConfigUserToAccessGroupTableRowEditorAccessGroupName, 
+                  luxlSnmpConfigUserToAccessGroupTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 7 }
+
+luxlSnmpConfigAccessGroupTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigAccessGroupReadViewName, 
+                  luxlSnmpConfigAccessGroupWriteViewName, 
+                  luxlSnmpConfigAccessGroupAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 8 }
+
+luxlSnmpConfigAccessGroupTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigAccessGroupTableRowEditorAccessGroupName, 
+                  luxlSnmpConfigAccessGroupTableRowEditorSecurityModel, 
+                  luxlSnmpConfigAccessGroupTableRowEditorSecurityLevel, 
+                  luxlSnmpConfigAccessGroupTableRowEditorReadViewName, 
+                  luxlSnmpConfigAccessGroupTableRowEditorWriteViewName, 
+                  luxlSnmpConfigAccessGroupTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 9 }
+
+luxlSnmpConfigViewTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigViewViewType, luxlSnmpConfigViewAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 10 }
+
+luxlSnmpConfigViewTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSnmpConfigViewTableRowEditorName, 
+                  luxlSnmpConfigViewTableRowEditorSubtree, 
+                  luxlSnmpConfigViewTableRowEditorViewType, 
+                  luxlSnmpConfigViewTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSnmpMibGroups 11 }
+
+luxlSnmpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlSnmpConfigGlobalsInfoGroup, 
+                  luxlSnmpConfigCommunityTableInfoGroup, 
+                  luxlSnmpConfigCommunityTableRowEditorInfoGroup, 
+                  luxlSnmpConfigUserTableInfoGroup, 
+                  luxlSnmpConfigUserTableRowEditorInfoGroup, 
+                  luxlSnmpConfigUserToAccessGroupTableInfoGroup, 
+                  luxlSnmpConfigUserToAccessGroupTableRowEditorInfoGroup, 
+                  luxlSnmpConfigAccessGroupTableInfoGroup, 
+                  luxlSnmpConfigAccessGroupTableRowEditorInfoGroup, 
+                  luxlSnmpConfigViewTableInfoGroup, 
+                  luxlSnmpConfigViewTableRowEditorInfoGroup }
+
+    ::= { luxlSnmpMibCompliances 1 }
+
+END

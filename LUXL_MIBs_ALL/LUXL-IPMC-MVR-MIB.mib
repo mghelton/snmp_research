@@ -1,0 +1,1273 @@
+-- *****************************************************************
+-- IPMC-MVR-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-IPMC-MVR-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlIpmcMvrMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the IPMC MVR MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 68 }
+
+
+LUXLIpmcMvrGroupSrcListGroupFilterMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the group filter mode for an IPMC group
+         address."
+    SYNTAX      INTEGER { exclude(0), include(1) }
+
+LUXLIpmcMvrGroupSrcListSourceType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the source filtering type from IPMC."
+    SYNTAX      INTEGER { deny(0), permit(1) }
+
+LUXLIpmcMvrInterfaceQuerierStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the Querier status for MVR VLAN interface."
+    SYNTAX      INTEGER { disabled(-1), initial(0), idle(1), active(2) }
+
+LUXLIpmcMvrVlanInterfaceMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the MVR VLAN interface's operational mode."
+    SYNTAX      INTEGER { dynamic(0), compatible(1) }
+
+LUXLIpmcMvrVlanInterfacePortRole ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the MVR port's operational role."
+    SYNTAX      INTEGER { inactive(0), source(1), receiver(2) }
+
+LUXLIpmcMvrVlanInterfaceTagging ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the VLAN tagging for IPMC control frames in
+         MVR."
+    SYNTAX      INTEGER { untagged(0), tagging(1) }
+
+luxlIpmcMvrMibObjects OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrMib 1 }
+
+luxlIpmcMvrConfig OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrMibObjects 2 }
+
+luxlIpmcMvrConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrConfig 1 }
+
+luxlIpmcMvrConfigGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the IPMC MVR global functionality."
+    ::= { luxlIpmcMvrConfigGlobals 1 }
+
+luxlIpmcMvrConfigPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcMvrConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing extra MVR helper features per port basis."
+    ::= { luxlIpmcMvrConfig 2 }
+
+luxlIpmcMvrConfigPortEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters."
+    INDEX       { luxlIpmcMvrConfigPortPortIndex }
+    ::= { luxlIpmcMvrConfigPortTable 1 }
+
+LUXLIpmcMvrConfigPortEntry ::= SEQUENCE {
+    luxlIpmcMvrConfigPortPortIndex      LUXLInterfaceIndex,
+    luxlIpmcMvrConfigPortDoImmediateLeave   TruthValue
+}
+
+luxlIpmcMvrConfigPortPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlIpmcMvrConfigPortEntry 1 }
+
+luxlIpmcMvrConfigPortDoImmediateLeave OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the MVR immediate leave functionality."
+    ::= { luxlIpmcMvrConfigPortEntry 2 }
+
+luxlIpmcMvrConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcMvrConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing MVR VLAN interface entries."
+    ::= { luxlIpmcMvrConfig 3 }
+
+luxlIpmcMvrConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlIpmcMvrConfigInterfaceIfIndex }
+    ::= { luxlIpmcMvrConfigInterfaceTable 1 }
+
+LUXLIpmcMvrConfigInterfaceEntry ::= SEQUENCE {
+    luxlIpmcMvrConfigInterfaceIfIndex   LUXLInterfaceIndex,
+    luxlIpmcMvrConfigInterfaceName      LUXLDisplayString,
+    luxlIpmcMvrConfigInterfaceIgmpQuerierAddress    IpAddress,
+    luxlIpmcMvrConfigInterfaceMode      LUXLIpmcMvrVlanInterfaceMode,
+    luxlIpmcMvrConfigInterfaceTagging   LUXLIpmcMvrVlanInterfaceTagging,
+    luxlIpmcMvrConfigInterfacePriority      LUXLUnsigned8,
+    luxlIpmcMvrConfigInterfaceLastListenerQueryInt      Unsigned32,
+    luxlIpmcMvrConfigInterfaceChannelProfile    LUXLDisplayString,
+    luxlIpmcMvrConfigInterfaceAction    LUXLRowEditorState
+}
+
+luxlIpmcMvrConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcMvrConfigInterfaceEntry 1 }
+
+luxlIpmcMvrConfigInterfaceName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MVR Name is an optional attribute to indicate the name of the specific
+         MVR VLAN that user could easily associate the MVR VLAN purpose with its
+         name."
+    ::= { luxlIpmcMvrConfigInterfaceEntry 2 }
+
+luxlIpmcMvrConfigInterfaceIgmpQuerierAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The static IPv4 source address of the specific MVR interface for seding
+         IGMP Query message with respect to IGMP Querier election."
+    ::= { luxlIpmcMvrConfigInterfaceEntry 3 }
+
+luxlIpmcMvrConfigInterfaceMode OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrVlanInterfaceMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "In Dynamic mode, MVR allows dynamic MVR membership reports on source
+         ports. In Compatible mode, MVR membership reports are forbidden on
+         source ports."
+    ::= { luxlIpmcMvrConfigInterfaceEntry 4 }
+
+luxlIpmcMvrConfigInterfaceTagging OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrVlanInterfaceTagging
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify whether the traversed IGMP/MLD control frames will be sent as
+         Untagged or Tagged with MVR VID."
+    ::= { luxlIpmcMvrConfigInterfaceEntry 5 }
+
+luxlIpmcMvrConfigInterfacePriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify how the traversed IGMP/MLD control frames will be sent in
+         prioritized manner in VLAN tag."
+    ::= { luxlIpmcMvrConfigInterfaceEntry 6 }
+
+luxlIpmcMvrConfigInterfaceLastListenerQueryInt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Last Listener/Member Query Interval is used to control
+         IGMP protocol stack for fast aging mechanism. It defines the maximum
+         time to wait for IGMP/MLD report memberships on a port before removing
+         the port from multicast group membership. The value is in units of
+         tenths of a seconds. The range is from 0 to 31744."
+    ::= { luxlIpmcMvrConfigInterfaceEntry 7 }
+
+luxlIpmcMvrConfigInterfaceChannelProfile OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The profile used for the channel filtering condition in the specific
+         MVR VLAN. Profile selected for designated interface channel is not
+         allowed to have overlapped permit group address by comparing with other
+         MVR VLAN interface's channel."
+    ::= { luxlIpmcMvrConfigInterfaceEntry 8 }
+
+luxlIpmcMvrConfigInterfaceAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcMvrConfigInterfaceEntry 100 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrConfig 4 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcMvrConfigInterfaceTableRowEditor 1 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditorName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MVR Name is an optional attribute to indicate the name of the specific
+         MVR VLAN that user could easily associate the MVR VLAN purpose with its
+         name."
+    ::= { luxlIpmcMvrConfigInterfaceTableRowEditor 2 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditorIgmpQuerierAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The static IPv4 source address of the specific MVR interface for seding
+         IGMP Query message with respect to IGMP Querier election."
+    ::= { luxlIpmcMvrConfigInterfaceTableRowEditor 3 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditorMode OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrVlanInterfaceMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "In Dynamic mode, MVR allows dynamic MVR membership reports on source
+         ports. In Compatible mode, MVR membership reports are forbidden on
+         source ports."
+    ::= { luxlIpmcMvrConfigInterfaceTableRowEditor 4 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditorTagging OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrVlanInterfaceTagging
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify whether the traversed IGMP/MLD control frames will be sent as
+         Untagged or Tagged with MVR VID."
+    ::= { luxlIpmcMvrConfigInterfaceTableRowEditor 5 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditorPriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify how the traversed IGMP/MLD control frames will be sent in
+         prioritized manner in VLAN tag."
+    ::= { luxlIpmcMvrConfigInterfaceTableRowEditor 6 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditorLastListenerQueryInt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Last Listener/Member Query Interval is used to control
+         IGMP protocol stack for fast aging mechanism. It defines the maximum
+         time to wait for IGMP/MLD report memberships on a port before removing
+         the port from multicast group membership. The value is in units of
+         tenths of a seconds. The range is from 0 to 31744."
+    ::= { luxlIpmcMvrConfigInterfaceTableRowEditor 7 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditorChannelProfile OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The profile used for the channel filtering condition in the specific
+         MVR VLAN. Profile selected for designated interface channel is not
+         allowed to have overlapped permit group address by comparing with other
+         MVR VLAN interface's channel."
+    ::= { luxlIpmcMvrConfigInterfaceTableRowEditor 8 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcMvrConfigInterfaceTableRowEditor 100 }
+
+luxlIpmcMvrConfigVlanPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcMvrConfigVlanPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing MVR port roles of a specific MVR VLAN
+         interface."
+    ::= { luxlIpmcMvrConfig 5 }
+
+luxlIpmcMvrConfigVlanPortEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrConfigVlanPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters."
+    INDEX       { luxlIpmcMvrConfigVlanPortIfIndex, luxlIpmcMvrConfigVlanPortPortIndex }
+    ::= { luxlIpmcMvrConfigVlanPortTable 1 }
+
+LUXLIpmcMvrConfigVlanPortEntry ::= SEQUENCE {
+    luxlIpmcMvrConfigVlanPortIfIndex    LUXLInterfaceIndex,
+    luxlIpmcMvrConfigVlanPortPortIndex      LUXLInterfaceIndex,
+    luxlIpmcMvrConfigVlanPortRole   LUXLIpmcMvrVlanInterfacePortRole
+}
+
+luxlIpmcMvrConfigVlanPortIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcMvrConfigVlanPortEntry 1 }
+
+luxlIpmcMvrConfigVlanPortPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlIpmcMvrConfigVlanPortEntry 2 }
+
+luxlIpmcMvrConfigVlanPortRole OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrVlanInterfacePortRole
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Configure a MVR port of the designated MVR VLAN as one of the following
+         roles: Inactive, Source or Receiver. An inactive port does not
+         participate MVR operations. Configure uplink ports that receive and
+         send multicast data as a source port, and multicast subscribers cannot
+         be directly connected to source ports. Configure a port as a receiver
+         port if it is a subscriber port and should only receive multicast data,
+         and a receiver port does not receive data unless it becomes a member of
+         the multicast group by issuing IGMP/MLD control messages. Be Caution:
+         MVR source ports are not recommended to be overlapped with management
+         VLAN ports."
+    ::= { luxlIpmcMvrConfigVlanPortEntry 3 }
+
+luxlIpmcMvrStatus OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrMibObjects 3 }
+
+luxlIpmcMvrStatusGroupAddressCount OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrStatus 1 }
+
+luxlIpmcMvrStatusGroupAddressCountFromIgmp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the total number of registered multicast group
+         address from IGMP learning in MVR."
+    ::= { luxlIpmcMvrStatusGroupAddressCount 1 }
+
+luxlIpmcMvrStatusGroupAddressCountFromMld OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the total number of registered multicast group
+         address from MLD learning in MVR."
+    ::= { luxlIpmcMvrStatusGroupAddressCount 2 }
+
+luxlIpmcMvrStatusIgmpVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcMvrStatusIgmpVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the per VLAN interface status in MVR
+         from IGMP protocol."
+    ::= { luxlIpmcMvrStatus 2 }
+
+luxlIpmcMvrStatusIgmpVlanEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrStatusIgmpVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcMvrStatusIgmpVlanIfIndex }
+    ::= { luxlIpmcMvrStatusIgmpVlanTable 1 }
+
+LUXLIpmcMvrStatusIgmpVlanEntry ::= SEQUENCE {
+    luxlIpmcMvrStatusIgmpVlanIfIndex    LUXLInterfaceIndex,
+    luxlIpmcMvrStatusIgmpVlanQuerierStatus      LUXLIpmcMvrInterfaceQuerierStatus,
+    luxlIpmcMvrStatusIgmpVlanActiveQuerierAddress   IpAddress,
+    luxlIpmcMvrStatusIgmpVlanQuerierUptime      Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanQueryInterval      Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanStartupQueryCount      Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanQuerierExpiryTime      Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanCounterTxQuery     Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanCounterTxSpecificQuery     Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanCounterRxQuery     Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanCounterRxV1Join    Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanCounterRxV2Join    Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanCounterRxV2Leave   Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanCounterRxV3Join    Unsigned32,
+    luxlIpmcMvrStatusIgmpVlanCounterRxErrors    Unsigned32
+}
+
+luxlIpmcMvrStatusIgmpVlanIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 1 }
+
+luxlIpmcMvrStatusIgmpVlanQuerierStatus OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrInterfaceQuerierStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The IGMP Querier status of the specific VLAN interface."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 2 }
+
+luxlIpmcMvrStatusIgmpVlanActiveQuerierAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The active IGMP Querier address on the specific VLAN interface."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 3 }
+
+luxlIpmcMvrStatusIgmpVlanQuerierUptime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the in operation timer for the specific interface act as a
+         IGMP Querier."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 4 }
+
+luxlIpmcMvrStatusIgmpVlanQueryInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.2."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 5 }
+
+luxlIpmcMvrStatusIgmpVlanStartupQueryCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.7."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 6 }
+
+luxlIpmcMvrStatusIgmpVlanQuerierExpiryTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.5."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 7 }
+
+luxlIpmcMvrStatusIgmpVlanCounterTxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         transmitting IGMP Query control frames."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 8 }
+
+luxlIpmcMvrStatusIgmpVlanCounterTxSpecificQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         transmitting IGMP Specific Query control frames."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 9 }
+
+luxlIpmcMvrStatusIgmpVlanCounterRxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMP Query control frames."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 10 }
+
+luxlIpmcMvrStatusIgmpVlanCounterRxV1Join OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv1 Join control frames."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 11 }
+
+luxlIpmcMvrStatusIgmpVlanCounterRxV2Join OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv2 Join control frames."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 12 }
+
+luxlIpmcMvrStatusIgmpVlanCounterRxV2Leave OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv2 Leave control frames."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 13 }
+
+luxlIpmcMvrStatusIgmpVlanCounterRxV3Join OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv3 Join control frames."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 14 }
+
+luxlIpmcMvrStatusIgmpVlanCounterRxErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving invalid IGMP control frames."
+    ::= { luxlIpmcMvrStatusIgmpVlanEntry 15 }
+
+luxlIpmcMvrStatusIgmpGroupAddressTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcMvrStatusIgmpGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the registered IPv4 multicast group
+         address status in IGMP from MVR."
+    ::= { luxlIpmcMvrStatus 3 }
+
+luxlIpmcMvrStatusIgmpGroupAddressEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrStatusIgmpGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcMvrStatusIgmpGroupAddressIfIndex, luxlIpmcMvrStatusIgmpGroupAddressGroupAddress }
+    ::= { luxlIpmcMvrStatusIgmpGroupAddressTable 1 }
+
+LUXLIpmcMvrStatusIgmpGroupAddressEntry ::= SEQUENCE {
+    luxlIpmcMvrStatusIgmpGroupAddressIfIndex    LUXLInterfaceIndex,
+    luxlIpmcMvrStatusIgmpGroupAddressGroupAddress   IpAddress,
+    luxlIpmcMvrStatusIgmpGroupAddressMemberPorts    LUXLPortList,
+    luxlIpmcMvrStatusIgmpGroupAddressHardwareSwitch     TruthValue
+}
+
+luxlIpmcMvrStatusIgmpGroupAddressIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcMvrStatusIgmpGroupAddressEntry 1 }
+
+luxlIpmcMvrStatusIgmpGroupAddressGroupAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv4 multicast address."
+    ::= { luxlIpmcMvrStatusIgmpGroupAddressEntry 2 }
+
+luxlIpmcMvrStatusIgmpGroupAddressMemberPorts OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the memberships of the registered multicast group
+         address from MVR."
+    ::= { luxlIpmcMvrStatusIgmpGroupAddressEntry 3 }
+
+luxlIpmcMvrStatusIgmpGroupAddressHardwareSwitch OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote whether the multicast traffic destined to the
+         registered group address could be forwarding by switch hardware or not."
+    ::= { luxlIpmcMvrStatusIgmpGroupAddressEntry 4 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcMvrStatusIgmpGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the address SFM (a.k.a Source List
+         Multicast) status in source list of the registered IPv4 multicast group
+         in IGMP from MVR."
+    ::= { luxlIpmcMvrStatus 4 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrStatusIgmpGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcMvrStatusIgmpGroupSrcListIfIndex, luxlIpmcMvrStatusIgmpGroupSrcListGroupAddress, luxlIpmcMvrStatusIgmpGroupSrcListPortIndex, luxlIpmcMvrStatusIgmpGroupSrcListHostAddress }
+    ::= { luxlIpmcMvrStatusIgmpGroupSrcListTable 1 }
+
+LUXLIpmcMvrStatusIgmpGroupSrcListEntry ::= SEQUENCE {
+    luxlIpmcMvrStatusIgmpGroupSrcListIfIndex    LUXLInterfaceIndex,
+    luxlIpmcMvrStatusIgmpGroupSrcListGroupAddress   IpAddress,
+    luxlIpmcMvrStatusIgmpGroupSrcListPortIndex      LUXLInterfaceIndex,
+    luxlIpmcMvrStatusIgmpGroupSrcListHostAddress    IpAddress,
+    luxlIpmcMvrStatusIgmpGroupSrcListGroupFilterMode    LUXLIpmcMvrGroupSrcListGroupFilterMode,
+    luxlIpmcMvrStatusIgmpGroupSrcListFilterTimer    Unsigned32,
+    luxlIpmcMvrStatusIgmpGroupSrcListSourceType     LUXLIpmcMvrGroupSrcListSourceType,
+    luxlIpmcMvrStatusIgmpGroupSrcListSourceTimer    Unsigned32,
+    luxlIpmcMvrStatusIgmpGroupSrcListHardwareFilter     TruthValue
+}
+
+luxlIpmcMvrStatusIgmpGroupSrcListIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcMvrStatusIgmpGroupSrcListEntry 1 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListGroupAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv4 multicast address."
+    ::= { luxlIpmcMvrStatusIgmpGroupSrcListEntry 2 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlIpmcMvrStatusIgmpGroupSrcListEntry 3 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListHostAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv4 source address."
+    ::= { luxlIpmcMvrStatusIgmpGroupSrcListEntry 4 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListGroupFilterMode OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrGroupSrcListGroupFilterMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the source filtering mode of the specific
+         registered multicast group address from MVR."
+    ::= { luxlIpmcMvrStatusIgmpGroupSrcListEntry 5 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListFilterTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to count down the timer for the specific multicast group's
+         filtering mode transition."
+    ::= { luxlIpmcMvrStatusIgmpGroupSrcListEntry 6 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListSourceType OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrGroupSrcListSourceType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the filtering type of the specific source address
+         in multicasting to the registered group address."
+    ::= { luxlIpmcMvrStatusIgmpGroupSrcListEntry 7 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListSourceTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to count down the timer for purging the specific source
+         address from the registered multicast group's source list."
+    ::= { luxlIpmcMvrStatusIgmpGroupSrcListEntry 8 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListHardwareFilter OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote whether the traffic destined to the multicast
+         group address from the specific source address could be forwarding by
+         switch hardware or not."
+    ::= { luxlIpmcMvrStatusIgmpGroupSrcListEntry 9 }
+
+luxlIpmcMvrStatusMldVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcMvrStatusMldVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the per VLAN interface status in MVR
+         from MLD protocol."
+    ::= { luxlIpmcMvrStatus 5 }
+
+luxlIpmcMvrStatusMldVlanEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrStatusMldVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcMvrStatusMldVlanIfIndex }
+    ::= { luxlIpmcMvrStatusMldVlanTable 1 }
+
+LUXLIpmcMvrStatusMldVlanEntry ::= SEQUENCE {
+    luxlIpmcMvrStatusMldVlanIfIndex     LUXLInterfaceIndex,
+    luxlIpmcMvrStatusMldVlanQuerierStatus   LUXLIpmcMvrInterfaceQuerierStatus,
+    luxlIpmcMvrStatusMldVlanActiveQuerierAddress    InetAddressIPv6,
+    luxlIpmcMvrStatusMldVlanQuerierUptime   Unsigned32,
+    luxlIpmcMvrStatusMldVlanQueryInterval   Unsigned32,
+    luxlIpmcMvrStatusMldVlanStartupQueryCount   Unsigned32,
+    luxlIpmcMvrStatusMldVlanQuerierExpiryTime   Unsigned32,
+    luxlIpmcMvrStatusMldVlanCounterTxQuery      Unsigned32,
+    luxlIpmcMvrStatusMldVlanCounterTxSpecificQuery      Unsigned32,
+    luxlIpmcMvrStatusMldVlanCounterRxQuery      Unsigned32,
+    luxlIpmcMvrStatusMldVlanCounterRxV1Report   Unsigned32,
+    luxlIpmcMvrStatusMldVlanCounterRxV1Done     Unsigned32,
+    luxlIpmcMvrStatusMldVlanCounterRxV2Report   Unsigned32,
+    luxlIpmcMvrStatusMldVlanCounterRxErrors     Unsigned32
+}
+
+luxlIpmcMvrStatusMldVlanIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 1 }
+
+luxlIpmcMvrStatusMldVlanQuerierStatus OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrInterfaceQuerierStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The MLD Querier status of the specific VLAN interface."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 2 }
+
+luxlIpmcMvrStatusMldVlanActiveQuerierAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The active MLD Querier address on the specific VLAN interface."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 3 }
+
+luxlIpmcMvrStatusMldVlanQuerierUptime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the in operation timer for the specific interface act as a
+         MLD Querier."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 4 }
+
+luxlIpmcMvrStatusMldVlanQueryInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.2."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 5 }
+
+luxlIpmcMvrStatusMldVlanStartupQueryCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.7."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 6 }
+
+luxlIpmcMvrStatusMldVlanQuerierExpiryTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.5."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 7 }
+
+luxlIpmcMvrStatusMldVlanCounterTxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         transmitting MLD Query control frames."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 8 }
+
+luxlIpmcMvrStatusMldVlanCounterTxSpecificQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         transmitting MLD Specific Query control frames."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 9 }
+
+luxlIpmcMvrStatusMldVlanCounterRxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLD Query control frames."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 10 }
+
+luxlIpmcMvrStatusMldVlanCounterRxV1Report OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLDv1 Report control frames."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 11 }
+
+luxlIpmcMvrStatusMldVlanCounterRxV1Done OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLDv1 Done control frames."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 12 }
+
+luxlIpmcMvrStatusMldVlanCounterRxV2Report OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLDv2 Report control frames."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 13 }
+
+luxlIpmcMvrStatusMldVlanCounterRxErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         receiving invalid MLD control frames."
+    ::= { luxlIpmcMvrStatusMldVlanEntry 14 }
+
+luxlIpmcMvrStatusMldGroupAddressTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcMvrStatusMldGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the registered IPv6 multicast group
+         address status in MLD from MVR."
+    ::= { luxlIpmcMvrStatus 6 }
+
+luxlIpmcMvrStatusMldGroupAddressEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrStatusMldGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcMvrStatusMldGroupAddressIfIndex, luxlIpmcMvrStatusMldGroupAddressGroupAddress }
+    ::= { luxlIpmcMvrStatusMldGroupAddressTable 1 }
+
+LUXLIpmcMvrStatusMldGroupAddressEntry ::= SEQUENCE {
+    luxlIpmcMvrStatusMldGroupAddressIfIndex     LUXLInterfaceIndex,
+    luxlIpmcMvrStatusMldGroupAddressGroupAddress    InetAddressIPv6,
+    luxlIpmcMvrStatusMldGroupAddressMemberPorts     LUXLPortList,
+    luxlIpmcMvrStatusMldGroupAddressHardwareSwitch      TruthValue
+}
+
+luxlIpmcMvrStatusMldGroupAddressIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcMvrStatusMldGroupAddressEntry 1 }
+
+luxlIpmcMvrStatusMldGroupAddressGroupAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv6 multicast address."
+    ::= { luxlIpmcMvrStatusMldGroupAddressEntry 2 }
+
+luxlIpmcMvrStatusMldGroupAddressMemberPorts OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the memberships of the registered multicast group
+         address from MVR."
+    ::= { luxlIpmcMvrStatusMldGroupAddressEntry 3 }
+
+luxlIpmcMvrStatusMldGroupAddressHardwareSwitch OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote whether the multicast traffic destined to the
+         registered group address could be forwarding by switch hardware or not."
+    ::= { luxlIpmcMvrStatusMldGroupAddressEntry 4 }
+
+luxlIpmcMvrStatusMldGroupSrcListTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcMvrStatusMldGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the address SFM (a.k.a Source List
+         Multicast) status in source list of the registered IPv6 multicast group
+         in MLD from MVR."
+    ::= { luxlIpmcMvrStatus 7 }
+
+luxlIpmcMvrStatusMldGroupSrcListEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrStatusMldGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcMvrStatusMldGroupSrcListIfIndex, luxlIpmcMvrStatusMldGroupSrcListGroupAddress, luxlIpmcMvrStatusMldGroupSrcListPortIndex, luxlIpmcMvrStatusMldGroupSrcListHostAddress }
+    ::= { luxlIpmcMvrStatusMldGroupSrcListTable 1 }
+
+LUXLIpmcMvrStatusMldGroupSrcListEntry ::= SEQUENCE {
+    luxlIpmcMvrStatusMldGroupSrcListIfIndex     LUXLInterfaceIndex,
+    luxlIpmcMvrStatusMldGroupSrcListGroupAddress    InetAddressIPv6,
+    luxlIpmcMvrStatusMldGroupSrcListPortIndex   LUXLInterfaceIndex,
+    luxlIpmcMvrStatusMldGroupSrcListHostAddress     InetAddressIPv6,
+    luxlIpmcMvrStatusMldGroupSrcListGroupFilterMode     LUXLIpmcMvrGroupSrcListGroupFilterMode,
+    luxlIpmcMvrStatusMldGroupSrcListFilterTimer     Unsigned32,
+    luxlIpmcMvrStatusMldGroupSrcListSourceType      LUXLIpmcMvrGroupSrcListSourceType,
+    luxlIpmcMvrStatusMldGroupSrcListSourceTimer     Unsigned32,
+    luxlIpmcMvrStatusMldGroupSrcListHardwareFilter      TruthValue
+}
+
+luxlIpmcMvrStatusMldGroupSrcListIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcMvrStatusMldGroupSrcListEntry 1 }
+
+luxlIpmcMvrStatusMldGroupSrcListGroupAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv6 multicast address."
+    ::= { luxlIpmcMvrStatusMldGroupSrcListEntry 2 }
+
+luxlIpmcMvrStatusMldGroupSrcListPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlIpmcMvrStatusMldGroupSrcListEntry 3 }
+
+luxlIpmcMvrStatusMldGroupSrcListHostAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv6 source address."
+    ::= { luxlIpmcMvrStatusMldGroupSrcListEntry 4 }
+
+luxlIpmcMvrStatusMldGroupSrcListGroupFilterMode OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrGroupSrcListGroupFilterMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the source filtering mode of the specific
+         registered multicast group address from MVR."
+    ::= { luxlIpmcMvrStatusMldGroupSrcListEntry 5 }
+
+luxlIpmcMvrStatusMldGroupSrcListFilterTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to count down the timer for the specific multicast group's
+         filtering mode transition."
+    ::= { luxlIpmcMvrStatusMldGroupSrcListEntry 6 }
+
+luxlIpmcMvrStatusMldGroupSrcListSourceType OBJECT-TYPE
+    SYNTAX      LUXLIpmcMvrGroupSrcListSourceType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the filtering type of the specific source address
+         in multicasting to the registered group address."
+    ::= { luxlIpmcMvrStatusMldGroupSrcListEntry 7 }
+
+luxlIpmcMvrStatusMldGroupSrcListSourceTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to count down the timer for purging the specific source
+         address from the registered multicast group's source list."
+    ::= { luxlIpmcMvrStatusMldGroupSrcListEntry 8 }
+
+luxlIpmcMvrStatusMldGroupSrcListHardwareFilter OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote whether the traffic destined to the multicast
+         group address from the specific source address could be forwarding by
+         switch hardware or not."
+    ::= { luxlIpmcMvrStatusMldGroupSrcListEntry 9 }
+
+luxlIpmcMvrControl OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrMibObjects 4 }
+
+luxlIpmcMvrControlStatisticsClear OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrControl 1 }
+
+luxlIpmcMvrControlStatisticsClearIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcMvrControlStatisticsClear 1 }
+
+luxlIpmcMvrMibConformance OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrMib 2 }
+
+luxlIpmcMvrMibCompliances OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrMibConformance 1 }
+
+luxlIpmcMvrMibGroups OBJECT IDENTIFIER
+    ::= { luxlIpmcMvrMibConformance 2 }
+
+luxlIpmcMvrConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrConfigGlobalsAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 1 }
+
+luxlIpmcMvrConfigPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrConfigPortDoImmediateLeave }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 2 }
+
+luxlIpmcMvrConfigInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrConfigInterfaceName, 
+                  luxlIpmcMvrConfigInterfaceIgmpQuerierAddress, 
+                  luxlIpmcMvrConfigInterfaceMode, 
+                  luxlIpmcMvrConfigInterfaceTagging, 
+                  luxlIpmcMvrConfigInterfacePriority, 
+                  luxlIpmcMvrConfigInterfaceLastListenerQueryInt, 
+                  luxlIpmcMvrConfigInterfaceChannelProfile, 
+                  luxlIpmcMvrConfigInterfaceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 3 }
+
+luxlIpmcMvrConfigInterfaceTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrConfigInterfaceTableRowEditorIfIndex, 
+                  luxlIpmcMvrConfigInterfaceTableRowEditorName, 
+                  luxlIpmcMvrConfigInterfaceTableRowEditorIgmpQuerierAddress, 
+                  luxlIpmcMvrConfigInterfaceTableRowEditorMode, 
+                  luxlIpmcMvrConfigInterfaceTableRowEditorTagging, 
+                  luxlIpmcMvrConfigInterfaceTableRowEditorPriority, 
+                  luxlIpmcMvrConfigInterfaceTableRowEditorLastListenerQueryInt, 
+                  luxlIpmcMvrConfigInterfaceTableRowEditorChannelProfile, 
+                  luxlIpmcMvrConfigInterfaceTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 4 }
+
+luxlIpmcMvrConfigVlanPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrConfigVlanPortRole }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 5 }
+
+luxlIpmcMvrStatusGroupAddressCountInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrStatusGroupAddressCountFromIgmp, 
+                  luxlIpmcMvrStatusGroupAddressCountFromMld }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 6 }
+
+luxlIpmcMvrStatusIgmpVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrStatusIgmpVlanQuerierStatus, 
+                  luxlIpmcMvrStatusIgmpVlanActiveQuerierAddress, 
+                  luxlIpmcMvrStatusIgmpVlanQuerierUptime, 
+                  luxlIpmcMvrStatusIgmpVlanQueryInterval, 
+                  luxlIpmcMvrStatusIgmpVlanStartupQueryCount, 
+                  luxlIpmcMvrStatusIgmpVlanQuerierExpiryTime, 
+                  luxlIpmcMvrStatusIgmpVlanCounterTxQuery, 
+                  luxlIpmcMvrStatusIgmpVlanCounterTxSpecificQuery, 
+                  luxlIpmcMvrStatusIgmpVlanCounterRxQuery, 
+                  luxlIpmcMvrStatusIgmpVlanCounterRxV1Join, 
+                  luxlIpmcMvrStatusIgmpVlanCounterRxV2Join, 
+                  luxlIpmcMvrStatusIgmpVlanCounterRxV2Leave, 
+                  luxlIpmcMvrStatusIgmpVlanCounterRxV3Join, 
+                  luxlIpmcMvrStatusIgmpVlanCounterRxErrors }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 7 }
+
+luxlIpmcMvrStatusIgmpGroupAddressTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrStatusIgmpGroupAddressMemberPorts, 
+                  luxlIpmcMvrStatusIgmpGroupAddressHardwareSwitch }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 8 }
+
+luxlIpmcMvrStatusIgmpGroupSrcListTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrStatusIgmpGroupSrcListGroupFilterMode, 
+                  luxlIpmcMvrStatusIgmpGroupSrcListFilterTimer, 
+                  luxlIpmcMvrStatusIgmpGroupSrcListSourceType, 
+                  luxlIpmcMvrStatusIgmpGroupSrcListSourceTimer, 
+                  luxlIpmcMvrStatusIgmpGroupSrcListHardwareFilter }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 9 }
+
+luxlIpmcMvrStatusMldVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrStatusMldVlanQuerierStatus, 
+                  luxlIpmcMvrStatusMldVlanActiveQuerierAddress, 
+                  luxlIpmcMvrStatusMldVlanQuerierUptime, 
+                  luxlIpmcMvrStatusMldVlanQueryInterval, 
+                  luxlIpmcMvrStatusMldVlanStartupQueryCount, 
+                  luxlIpmcMvrStatusMldVlanQuerierExpiryTime, 
+                  luxlIpmcMvrStatusMldVlanCounterTxQuery, 
+                  luxlIpmcMvrStatusMldVlanCounterTxSpecificQuery, 
+                  luxlIpmcMvrStatusMldVlanCounterRxQuery, 
+                  luxlIpmcMvrStatusMldVlanCounterRxV1Report, 
+                  luxlIpmcMvrStatusMldVlanCounterRxV1Done, 
+                  luxlIpmcMvrStatusMldVlanCounterRxV2Report, 
+                  luxlIpmcMvrStatusMldVlanCounterRxErrors }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 10 }
+
+luxlIpmcMvrStatusMldGroupAddressTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrStatusMldGroupAddressMemberPorts, 
+                  luxlIpmcMvrStatusMldGroupAddressHardwareSwitch }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 11 }
+
+luxlIpmcMvrStatusMldGroupSrcListTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrStatusMldGroupSrcListGroupFilterMode, 
+                  luxlIpmcMvrStatusMldGroupSrcListFilterTimer, 
+                  luxlIpmcMvrStatusMldGroupSrcListSourceType, 
+                  luxlIpmcMvrStatusMldGroupSrcListSourceTimer, 
+                  luxlIpmcMvrStatusMldGroupSrcListHardwareFilter }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 12 }
+
+luxlIpmcMvrControlStatisticsClearInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcMvrControlStatisticsClearIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcMvrMibGroups 13 }
+
+luxlIpmcMvrMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlIpmcMvrConfigGlobalsInfoGroup, 
+                  luxlIpmcMvrConfigPortTableInfoGroup, 
+                  luxlIpmcMvrConfigInterfaceTableInfoGroup, 
+                  luxlIpmcMvrConfigInterfaceTableRowEditorInfoGroup, 
+                  luxlIpmcMvrConfigVlanPortTableInfoGroup, 
+                  luxlIpmcMvrStatusGroupAddressCountInfoGroup, 
+                  luxlIpmcMvrStatusIgmpVlanTableInfoGroup, 
+                  luxlIpmcMvrStatusIgmpGroupAddressTableInfoGroup, 
+                  luxlIpmcMvrStatusIgmpGroupSrcListTableInfoGroup, 
+                  luxlIpmcMvrStatusMldVlanTableInfoGroup, 
+                  luxlIpmcMvrStatusMldGroupAddressTableInfoGroup, 
+                  luxlIpmcMvrStatusMldGroupSrcListTableInfoGroup, 
+                  luxlIpmcMvrControlStatisticsClearInfoGroup }
+
+    ::= { luxlIpmcMvrMibCompliances 1 }
+
+END

@@ -1,0 +1,497 @@
+-- *****************************************************************
+-- ARP-INSPECTION-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-ARP-INSPECTION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    ;
+
+luxlArpInspectionMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the ARP Inspection MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 63 }
+
+
+LUXLArpInspectionLogType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the ARP entry log type."
+    SYNTAX      INTEGER { none(0), deny(1), permit(2), all(3) }
+
+LUXLArpInspectionRegisterStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the ARP entry registration type."
+    SYNTAX      INTEGER { static(0), dynamic(1) }
+
+luxlArpInspectionMibObjects OBJECT IDENTIFIER
+    ::= { luxlArpInspectionMib 1 }
+
+luxlArpInspectionConfig OBJECT IDENTIFIER
+    ::= { luxlArpInspectionMibObjects 2 }
+
+luxlArpInspectionConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlArpInspectionConfig 1 }
+
+luxlArpInspectionConfigGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the ARP Inspection global functionality."
+    ::= { luxlArpInspectionConfigGlobals 1 }
+
+luxlArpInspectionConfigPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLArpInspectionConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing ARP Inspection per port basis"
+    ::= { luxlArpInspectionConfig 2 }
+
+luxlArpInspectionConfigPortEntry OBJECT-TYPE
+    SYNTAX      LUXLArpInspectionConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters"
+    INDEX       { luxlArpInspectionConfigPortIfIndex }
+    ::= { luxlArpInspectionConfigPortTable 1 }
+
+LUXLArpInspectionConfigPortEntry ::= SEQUENCE {
+    luxlArpInspectionConfigPortIfIndex      LUXLInterfaceIndex,
+    luxlArpInspectionConfigPortMode     TruthValue,
+    luxlArpInspectionConfigPortCheckVlan    TruthValue,
+    luxlArpInspectionConfigPortLogType      LUXLArpInspectionLogType
+}
+
+luxlArpInspectionConfigPortIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlArpInspectionConfigPortEntry 1 }
+
+luxlArpInspectionConfigPortMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the ARP Inspection per-port functionality. Only when
+         both Global Mode and Port Mode on a given port are enabled, ARP
+         Inspection is enabled on this given port."
+    ::= { luxlArpInspectionConfigPortEntry 2 }
+
+luxlArpInspectionConfigPortCheckVlan OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable the ARP Inspection VLAN checking will log the inspected entries
+         by referring to arpInspectionVlanConfigTable setting. Disable the ARP
+         Inspection VLAN checking will log the inspected entries by referring to
+         arpInspectionPortConfigTable setting."
+    ::= { luxlArpInspectionConfigPortEntry 3 }
+
+luxlArpInspectionConfigPortLogType OBJECT-TYPE
+    SYNTAX      LUXLArpInspectionLogType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The capability to log the inspected entries per port basis. none(0)
+         will log nothing. deny(1) will log the denied entries. permit(2) will
+         log the permitted entries. all(3) will log all kinds of inspected
+         entries."
+    ::= { luxlArpInspectionConfigPortEntry 4 }
+
+luxlArpInspectionConfigVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLArpInspectionConfigVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing ARP Inspection per VLAN basis"
+    ::= { luxlArpInspectionConfig 3 }
+
+luxlArpInspectionConfigVlanEntry OBJECT-TYPE
+    SYNTAX      LUXLArpInspectionConfigVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each VLAN has a set of parameters"
+    INDEX       { luxlArpInspectionConfigVlanVlanId }
+    ::= { luxlArpInspectionConfigVlanTable 1 }
+
+LUXLArpInspectionConfigVlanEntry ::= SEQUENCE {
+    luxlArpInspectionConfigVlanVlanId   Integer32,
+    luxlArpInspectionConfigVlanLogType      LUXLArpInspectionLogType,
+    luxlArpInspectionConfigVlanAction   LUXLRowEditorState
+}
+
+luxlArpInspectionConfigVlanVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The VID of the VLAN."
+    ::= { luxlArpInspectionConfigVlanEntry 1 }
+
+luxlArpInspectionConfigVlanLogType OBJECT-TYPE
+    SYNTAX      LUXLArpInspectionLogType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The capability to log the inspected entries per VLAN basis. none(0)
+         will log nothing. deny(1) will log the denied entries. permit(2) will
+         log the permitted entries. all(3) will log all kinds of inspected
+         entries."
+    ::= { luxlArpInspectionConfigVlanEntry 2 }
+
+luxlArpInspectionConfigVlanAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlArpInspectionConfigVlanEntry 100 }
+
+luxlArpInspectionConfigVlanTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlArpInspectionConfig 4 }
+
+luxlArpInspectionConfigVlanTableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VID of the VLAN."
+    ::= { luxlArpInspectionConfigVlanTableRowEditor 1 }
+
+luxlArpInspectionConfigVlanTableRowEditorLogType OBJECT-TYPE
+    SYNTAX      LUXLArpInspectionLogType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The capability to log the inspected entries per VLAN basis. none(0)
+         will log nothing. deny(1) will log the denied entries. permit(2) will
+         log the permitted entries. all(3) will log all kinds of inspected
+         entries."
+    ::= { luxlArpInspectionConfigVlanTableRowEditor 2 }
+
+luxlArpInspectionConfigVlanTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlArpInspectionConfigVlanTableRowEditor 100 }
+
+luxlArpInspectionConfigStaticTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLArpInspectionConfigStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing static ARP Inspection configuration"
+    ::= { luxlArpInspectionConfig 5 }
+
+luxlArpInspectionConfigStaticEntry OBJECT-TYPE
+    SYNTAX      LUXLArpInspectionConfigStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlArpInspectionConfigStaticIfIndex, luxlArpInspectionConfigStaticVlanId, luxlArpInspectionConfigStaticMacAddress, luxlArpInspectionConfigStaticIpAddress }
+    ::= { luxlArpInspectionConfigStaticTable 1 }
+
+LUXLArpInspectionConfigStaticEntry ::= SEQUENCE {
+    luxlArpInspectionConfigStaticIfIndex    LUXLInterfaceIndex,
+    luxlArpInspectionConfigStaticVlanId     Integer32,
+    luxlArpInspectionConfigStaticMacAddress     MacAddress,
+    luxlArpInspectionConfigStaticIpAddress      IpAddress,
+    luxlArpInspectionConfigStaticAction     LUXLRowEditorState
+}
+
+luxlArpInspectionConfigStaticIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlArpInspectionConfigStaticEntry 1 }
+
+luxlArpInspectionConfigStaticVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The VID of the VLAN."
+    ::= { luxlArpInspectionConfigStaticEntry 2 }
+
+luxlArpInspectionConfigStaticMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned MAC address."
+    ::= { luxlArpInspectionConfigStaticEntry 3 }
+
+luxlArpInspectionConfigStaticIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv4 address."
+    ::= { luxlArpInspectionConfigStaticEntry 4 }
+
+luxlArpInspectionConfigStaticAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlArpInspectionConfigStaticEntry 100 }
+
+luxlArpInspectionConfigStaticTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlArpInspectionConfig 6 }
+
+luxlArpInspectionConfigStaticTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlArpInspectionConfigStaticTableRowEditor 1 }
+
+luxlArpInspectionConfigStaticTableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VID of the VLAN."
+    ::= { luxlArpInspectionConfigStaticTableRowEditor 2 }
+
+luxlArpInspectionConfigStaticTableRowEditorMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Assigned MAC address."
+    ::= { luxlArpInspectionConfigStaticTableRowEditor 3 }
+
+luxlArpInspectionConfigStaticTableRowEditorIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv4 address."
+    ::= { luxlArpInspectionConfigStaticTableRowEditor 4 }
+
+luxlArpInspectionConfigStaticTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlArpInspectionConfigStaticTableRowEditor 100 }
+
+luxlArpInspectionStatus OBJECT IDENTIFIER
+    ::= { luxlArpInspectionMibObjects 3 }
+
+luxlArpInspectionStatusDynamicAddressTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLArpInspectionStatusDynamicAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying all ARP Inspection entries"
+    ::= { luxlArpInspectionStatus 1 }
+
+luxlArpInspectionStatusDynamicAddressEntry OBJECT-TYPE
+    SYNTAX      LUXLArpInspectionStatusDynamicAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlArpInspectionStatusDynamicAddressIfIndex, luxlArpInspectionStatusDynamicAddressVlanId, luxlArpInspectionStatusDynamicAddressMacAddress, luxlArpInspectionStatusDynamicAddressIpAddress }
+    ::= { luxlArpInspectionStatusDynamicAddressTable 1 }
+
+LUXLArpInspectionStatusDynamicAddressEntry ::= SEQUENCE {
+    luxlArpInspectionStatusDynamicAddressIfIndex    LUXLInterfaceIndex,
+    luxlArpInspectionStatusDynamicAddressVlanId     Integer32,
+    luxlArpInspectionStatusDynamicAddressMacAddress     MacAddress,
+    luxlArpInspectionStatusDynamicAddressIpAddress      IpAddress,
+    luxlArpInspectionStatusDynamicAddressType   LUXLArpInspectionRegisterStatus
+}
+
+luxlArpInspectionStatusDynamicAddressIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlArpInspectionStatusDynamicAddressEntry 1 }
+
+luxlArpInspectionStatusDynamicAddressVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The VID of the VLAN."
+    ::= { luxlArpInspectionStatusDynamicAddressEntry 2 }
+
+luxlArpInspectionStatusDynamicAddressMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned MAC address."
+    ::= { luxlArpInspectionStatusDynamicAddressEntry 3 }
+
+luxlArpInspectionStatusDynamicAddressIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv4 address."
+    ::= { luxlArpInspectionStatusDynamicAddressEntry 4 }
+
+luxlArpInspectionStatusDynamicAddressType OBJECT-TYPE
+    SYNTAX      LUXLArpInspectionRegisterStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Either static(0) or dynamic(1) for the specific ARP entry."
+    ::= { luxlArpInspectionStatusDynamicAddressEntry 5 }
+
+luxlArpInspectionControl OBJECT IDENTIFIER
+    ::= { luxlArpInspectionMibObjects 4 }
+
+luxlArpInspectionControlGlobals OBJECT IDENTIFIER
+    ::= { luxlArpInspectionControl 1 }
+
+luxlArpInspectionControlGlobalsTranslateDynamicToStatic OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "To trigger the control action (only) when TRUE."
+    ::= { luxlArpInspectionControlGlobals 1 }
+
+luxlArpInspectionMibConformance OBJECT IDENTIFIER
+    ::= { luxlArpInspectionMib 2 }
+
+luxlArpInspectionMibCompliances OBJECT IDENTIFIER
+    ::= { luxlArpInspectionMibConformance 1 }
+
+luxlArpInspectionMibGroups OBJECT IDENTIFIER
+    ::= { luxlArpInspectionMibConformance 2 }
+
+luxlArpInspectionConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlArpInspectionConfigGlobalsAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlArpInspectionMibGroups 1 }
+
+luxlArpInspectionConfigPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlArpInspectionConfigPortMode, 
+                  luxlArpInspectionConfigPortCheckVlan, 
+                  luxlArpInspectionConfigPortLogType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlArpInspectionMibGroups 2 }
+
+luxlArpInspectionConfigVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlArpInspectionConfigVlanLogType, 
+                  luxlArpInspectionConfigVlanAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlArpInspectionMibGroups 3 }
+
+luxlArpInspectionConfigVlanTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlArpInspectionConfigVlanTableRowEditorVlanId, 
+                  luxlArpInspectionConfigVlanTableRowEditorLogType, 
+                  luxlArpInspectionConfigVlanTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlArpInspectionMibGroups 4 }
+
+luxlArpInspectionConfigStaticTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlArpInspectionConfigStaticAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlArpInspectionMibGroups 5 }
+
+luxlArpInspectionConfigStaticTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlArpInspectionConfigStaticTableRowEditorIfIndex, 
+                  luxlArpInspectionConfigStaticTableRowEditorVlanId, 
+                  luxlArpInspectionConfigStaticTableRowEditorMacAddress, 
+                  luxlArpInspectionConfigStaticTableRowEditorIpAddress, 
+                  luxlArpInspectionConfigStaticTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlArpInspectionMibGroups 6 }
+
+luxlArpInspectionStatusDynamicAddressTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlArpInspectionStatusDynamicAddressType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlArpInspectionMibGroups 7 }
+
+luxlArpInspectionControlGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlArpInspectionControlGlobalsTranslateDynamicToStatic }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlArpInspectionMibGroups 8 }
+
+luxlArpInspectionMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlArpInspectionConfigGlobalsInfoGroup, 
+                  luxlArpInspectionConfigPortTableInfoGroup, 
+                  luxlArpInspectionConfigVlanTableInfoGroup, 
+                  luxlArpInspectionConfigVlanTableRowEditorInfoGroup, 
+                  luxlArpInspectionConfigStaticTableInfoGroup, 
+                  luxlArpInspectionConfigStaticTableRowEditorInfoGroup, 
+                  luxlArpInspectionStatusDynamicAddressTableInfoGroup, 
+                  luxlArpInspectionControlGlobalsInfoGroup }
+
+    ::= { luxlArpInspectionMibCompliances 1 }
+
+END

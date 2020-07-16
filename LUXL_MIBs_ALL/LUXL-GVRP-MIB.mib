@@ -1,0 +1,169 @@
+-- *****************************************************************
+-- GVRP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-GVRP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+luxlGvrpMib MODULE-IDENTITY
+    LAST-UPDATED "201408220000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "Private GVRP MIB."
+    REVISION    "201408220000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 89 }
+
+
+luxlGvrpMibObjects OBJECT IDENTIFIER
+    ::= { luxlGvrpMib 1 }
+
+luxlGvrpCapabilities OBJECT IDENTIFIER
+    ::= { luxlGvrpMibObjects 1 }
+
+luxlGvrpConfig OBJECT IDENTIFIER
+    ::= { luxlGvrpMibObjects 2 }
+
+luxlGvrpConfigGlobal OBJECT IDENTIFIER
+    ::= { luxlGvrpConfig 1 }
+
+luxlGvrpConfigGlobalGlobalEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global enabling of GVRP protocol."
+    ::= { luxlGvrpConfigGlobal 1 }
+
+luxlGvrpConfigGlobalJoinTimer OBJECT-TYPE
+    SYNTAX      Integer32 (1..20)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Join-time protocol parameter. Range [1,20] centi seconds."
+    ::= { luxlGvrpConfigGlobal 2 }
+
+luxlGvrpConfigGlobalLeaveTimer OBJECT-TYPE
+    SYNTAX      Integer32 (60..300)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Leave-time protocol parameter. Range [60,300] centi seconds."
+    ::= { luxlGvrpConfigGlobal 3 }
+
+luxlGvrpConfigGlobalLeaveAllTimer OBJECT-TYPE
+    SYNTAX      Integer32 (1000..5000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Leave-all-time protocol parameter. Range [1000,5000] centi seconds."
+    ::= { luxlGvrpConfigGlobal 4 }
+
+luxlGvrpConfigGlobalMaxVlans OBJECT-TYPE
+    SYNTAX      Integer32 (1..4094)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Maximum of VLANs simultaniously supported by GVRP. Range [1,4094].
+         Setting this attribute will fail, if GVRP is globally enabled *and* the
+         new value is less than what is actually in use."
+    ::= { luxlGvrpConfigGlobal 5 }
+
+luxlGvrpConfigPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLGvrpConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the configurable part of GVRP ports."
+    ::= { luxlGvrpConfig 2 }
+
+luxlGvrpConfigPortEntry OBJECT-TYPE
+    SYNTAX      LUXLGvrpConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The portId index must be a value must be a value from 1 up to the
+         number of ports."
+    INDEX       { luxlGvrpConfigPortPortId }
+    ::= { luxlGvrpConfigPortTable 1 }
+
+LUXLGvrpConfigPortEntry ::= SEQUENCE {
+    luxlGvrpConfigPortPortId    Integer32,
+    luxlGvrpConfigPortPortEnable    TruthValue
+}
+
+luxlGvrpConfigPortPortId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlGvrpConfigPortEntry 1 }
+
+luxlGvrpConfigPortPortEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The GVRP enable state of port."
+    ::= { luxlGvrpConfigPortEntry 2 }
+
+luxlGvrpMibConformance OBJECT IDENTIFIER
+    ::= { luxlGvrpMib 2 }
+
+luxlGvrpMibCompliances OBJECT IDENTIFIER
+    ::= { luxlGvrpMibConformance 1 }
+
+luxlGvrpMibGroups OBJECT IDENTIFIER
+    ::= { luxlGvrpMibConformance 2 }
+
+luxlGvrpConfigGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlGvrpConfigGlobalGlobalEnable, 
+                  luxlGvrpConfigGlobalJoinTimer, luxlGvrpConfigGlobalLeaveTimer, 
+                  luxlGvrpConfigGlobalLeaveAllTimer, 
+                  luxlGvrpConfigGlobalMaxVlans }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlGvrpMibGroups 1 }
+
+luxlGvrpConfigPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlGvrpConfigPortPortEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlGvrpMibGroups 2 }
+
+luxlGvrpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlGvrpConfigGlobalInfoGroup, 
+                  luxlGvrpConfigPortTableInfoGroup }
+
+    ::= { luxlGvrpMibCompliances 1 }
+
+END

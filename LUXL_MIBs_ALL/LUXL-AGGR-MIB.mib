@@ -1,0 +1,297 @@
+-- *****************************************************************
+-- AGGR-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-AGGR-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    ;
+
+luxlAggrMib MODULE-IDENTITY
+    LAST-UPDATED "201411180000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private mib of static aggregation"
+    REVISION    "201411180000Z"
+    DESCRIPTION
+        "Added aggregation group status table"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 19 }
+
+
+LUXLAggrLinkSpeedStatusEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enum represents the link speed."
+    SYNTAX      INTEGER { undefined(0), s10M(1), s100M(2), s1G(3), s2500M(4), s5G(5), s10G(6), s12G(7) }
+
+luxlAggrMibObjects OBJECT IDENTIFIER
+    ::= { luxlAggrMib 1 }
+
+luxlAggrConfig OBJECT IDENTIFIER
+    ::= { luxlAggrMibObjects 2 }
+
+luxlAggrConfigModeGlobals OBJECT IDENTIFIER
+    ::= { luxlAggrConfig 1 }
+
+luxlAggrConfigModeGlobalsSmacAddr OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to true to enable the use of the Source MAC address, or false to
+         disable. By default, Source MAC Address is enabled."
+    ::= { luxlAggrConfigModeGlobals 1 }
+
+luxlAggrConfigModeGlobalsDmacAddr OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to true to enable the use of the Destination MAC address, or false
+         to disable. By default, Destination MAC Address is disabled."
+    ::= { luxlAggrConfigModeGlobals 2 }
+
+luxlAggrConfigModeGlobalsSourceAndDestinationIpAddr OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to true to enable the use of the IP address, or false to disable.
+         By default, Destination MAC Address is enabled."
+    ::= { luxlAggrConfigModeGlobals 3 }
+
+luxlAggrConfigModeGlobalsTcpOrUdpSportAndDportNo OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to true to enable the use of the TCP/UDP Port Number, or false to
+         disable. By default, TCP/UDP Port Number is enabled."
+    ::= { luxlAggrConfigModeGlobals 4 }
+
+luxlAggrConfigGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAggrConfigGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The table is static Link Aggregation Group configuration table. The
+         index is Aggregration Group Identifier."
+    ::= { luxlAggrConfig 2 }
+
+luxlAggrConfigGroupEntry OBJECT-TYPE
+    SYNTAX      LUXLAggrConfigGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlAggrConfigGroupAggrIndexNo }
+    ::= { luxlAggrConfigGroupTable 1 }
+
+LUXLAggrConfigGroupEntry ::= SEQUENCE {
+    luxlAggrConfigGroupAggrIndexNo      LUXLInterfaceIndex,
+    luxlAggrConfigGroupPortMembers      LUXLPortList,
+    luxlAggrConfigGroupAction   LUXLRowEditorState
+}
+
+luxlAggrConfigGroupAggrIndexNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Link Aggregation Group Identifier."
+    ::= { luxlAggrConfigGroupEntry 1 }
+
+luxlAggrConfigGroupPortMembers OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The list of port members for this Link Aggregation Group."
+    ::= { luxlAggrConfigGroupEntry 2 }
+
+luxlAggrConfigGroupAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlAggrConfigGroupEntry 100 }
+
+luxlAggrConfigGroupTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlAggrConfig 3 }
+
+luxlAggrConfigGroupTableRowEditorAggrIndexNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Link Aggregation Group Identifier."
+    ::= { luxlAggrConfigGroupTableRowEditor 1 }
+
+luxlAggrConfigGroupTableRowEditorPortMembers OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The list of port members for this Link Aggregation Group."
+    ::= { luxlAggrConfigGroupTableRowEditor 2 }
+
+luxlAggrConfigGroupTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlAggrConfigGroupTableRowEditor 100 }
+
+luxlAggrStatus OBJECT IDENTIFIER
+    ::= { luxlAggrMibObjects 3 }
+
+luxlAggrStatusGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAggrStatusGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The table is Aggregation Group status table. The index is Aggregration
+         Group Identifier."
+    ::= { luxlAggrStatus 1 }
+
+luxlAggrStatusGroupEntry OBJECT-TYPE
+    SYNTAX      LUXLAggrStatusGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlAggrStatusGroupAggrIndexNo }
+    ::= { luxlAggrStatusGroupTable 1 }
+
+LUXLAggrStatusGroupEntry ::= SEQUENCE {
+    luxlAggrStatusGroupAggrIndexNo      LUXLInterfaceIndex,
+    luxlAggrStatusGroupConfiguredPorts      LUXLPortList,
+    luxlAggrStatusGroupAggregatedPorts      LUXLPortList,
+    luxlAggrStatusGroupSpeed    LUXLAggrLinkSpeedStatusEnum,
+    luxlAggrStatusGroupType     LUXLDisplayString
+}
+
+luxlAggrStatusGroupAggrIndexNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Link Aggregation Group Identifier."
+    ::= { luxlAggrStatusGroupEntry 1 }
+
+luxlAggrStatusGroupConfiguredPorts OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Configured member ports of the aggregation Group."
+    ::= { luxlAggrStatusGroupEntry 2 }
+
+luxlAggrStatusGroupAggregatedPorts OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Aggregated member ports of the aggregation Group."
+    ::= { luxlAggrStatusGroupEntry 3 }
+
+luxlAggrStatusGroupSpeed OBJECT-TYPE
+    SYNTAX      LUXLAggrLinkSpeedStatusEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Speed of the Aggregation Group."
+    ::= { luxlAggrStatusGroupEntry 4 }
+
+luxlAggrStatusGroupType OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..6))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Type of the Aggregation Group."
+    ::= { luxlAggrStatusGroupEntry 5 }
+
+luxlAggrMibConformance OBJECT IDENTIFIER
+    ::= { luxlAggrMib 2 }
+
+luxlAggrMibCompliances OBJECT IDENTIFIER
+    ::= { luxlAggrMibConformance 1 }
+
+luxlAggrMibGroups OBJECT IDENTIFIER
+    ::= { luxlAggrMibConformance 2 }
+
+luxlAggrConfigModeGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAggrConfigModeGlobalsSmacAddr, 
+                  luxlAggrConfigModeGlobalsDmacAddr, 
+                  luxlAggrConfigModeGlobalsSourceAndDestinationIpAddr, 
+                  luxlAggrConfigModeGlobalsTcpOrUdpSportAndDportNo }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAggrMibGroups 1 }
+
+luxlAggrConfigGroupTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAggrConfigGroupPortMembers, luxlAggrConfigGroupAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAggrMibGroups 2 }
+
+luxlAggrConfigGroupTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAggrConfigGroupTableRowEditorAggrIndexNo, 
+                  luxlAggrConfigGroupTableRowEditorPortMembers, 
+                  luxlAggrConfigGroupTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAggrMibGroups 3 }
+
+luxlAggrStatusGroupTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAggrStatusGroupConfiguredPorts, 
+                  luxlAggrStatusGroupAggregatedPorts, luxlAggrStatusGroupSpeed, 
+                  luxlAggrStatusGroupType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAggrMibGroups 4 }
+
+luxlAggrMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlAggrConfigModeGlobalsInfoGroup, 
+                  luxlAggrConfigGroupTableInfoGroup, 
+                  luxlAggrConfigGroupTableRowEditorInfoGroup, 
+                  luxlAggrStatusGroupTableInfoGroup }
+
+    ::= { luxlAggrMibCompliances 1 }
+
+END

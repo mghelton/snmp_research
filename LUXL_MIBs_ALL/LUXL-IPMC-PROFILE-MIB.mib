@@ -1,0 +1,679 @@
+-- *****************************************************************
+-- IPMC-PROFILE-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-IPMC-PROFILE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    ;
+
+luxlIpmcProfileMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the IPMC Profile MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 38 }
+
+
+LUXLIpmcProfileRuleActionType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the configured action type for IPMC profile
+         rule."
+    SYNTAX      INTEGER { deny(0), permit(1) }
+
+luxlIpmcProfileMibObjects OBJECT IDENTIFIER
+    ::= { luxlIpmcProfileMib 1 }
+
+luxlIpmcProfileConfig OBJECT IDENTIFIER
+    ::= { luxlIpmcProfileMibObjects 2 }
+
+luxlIpmcProfileConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlIpmcProfileConfig 1 }
+
+luxlIpmcProfileConfigGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the IPMC Profile global functionality."
+    ::= { luxlIpmcProfileConfigGlobals 1 }
+
+luxlIpmcProfileConfigManagementTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcProfileConfigManagementEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing IPMC profile entries."
+    ::= { luxlIpmcProfileConfig 2 }
+
+luxlIpmcProfileConfigManagementEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcProfileConfigManagementEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlIpmcProfileConfigManagementProfileName }
+    ::= { luxlIpmcProfileConfigManagementTable 1 }
+
+LUXLIpmcProfileConfigManagementEntry ::= SEQUENCE {
+    luxlIpmcProfileConfigManagementProfileName      LUXLDisplayString,
+    luxlIpmcProfileConfigManagementProfileDescription   LUXLDisplayString,
+    luxlIpmcProfileConfigManagementAction   LUXLRowEditorState
+}
+
+luxlIpmcProfileConfigManagementProfileName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile management entry."
+    ::= { luxlIpmcProfileConfigManagementEntry 1 }
+
+luxlIpmcProfileConfigManagementProfileDescription OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The description of the IPMC Profile management entry."
+    ::= { luxlIpmcProfileConfigManagementEntry 2 }
+
+luxlIpmcProfileConfigManagementAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcProfileConfigManagementEntry 100 }
+
+luxlIpmcProfileConfigManagementTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlIpmcProfileConfig 3 }
+
+luxlIpmcProfileConfigManagementTableRowEditorProfileName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile management entry."
+    ::= { luxlIpmcProfileConfigManagementTableRowEditor 1 }
+
+luxlIpmcProfileConfigManagementTableRowEditorProfileDescription OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The description of the IPMC Profile management entry."
+    ::= { luxlIpmcProfileConfigManagementTableRowEditor 2 }
+
+luxlIpmcProfileConfigManagementTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcProfileConfigManagementTableRowEditor 100 }
+
+luxlIpmcProfileConfigIpv4AddressRangeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcProfileConfigIpv4AddressRangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing the IPv4 address range entries that will
+         be applied for IPMC profile(s)."
+    ::= { luxlIpmcProfileConfig 4 }
+
+luxlIpmcProfileConfigIpv4AddressRangeEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcProfileConfigIpv4AddressRangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlIpmcProfileConfigIpv4AddressRangeRangeName }
+    ::= { luxlIpmcProfileConfigIpv4AddressRangeTable 1 }
+
+LUXLIpmcProfileConfigIpv4AddressRangeEntry ::= SEQUENCE {
+    luxlIpmcProfileConfigIpv4AddressRangeRangeName      LUXLDisplayString,
+    luxlIpmcProfileConfigIpv4AddressRangeStartAddress   IpAddress,
+    luxlIpmcProfileConfigIpv4AddressRangeEndAddress     IpAddress,
+    luxlIpmcProfileConfigIpv4AddressRangeAction     LUXLRowEditorState
+}
+
+luxlIpmcProfileConfigIpv4AddressRangeRangeName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile address range entry."
+    ::= { luxlIpmcProfileConfigIpv4AddressRangeEntry 1 }
+
+luxlIpmcProfileConfigIpv4AddressRangeStartAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The starting IPv4 address of the range that IPMC Profile performs
+         checking."
+    ::= { luxlIpmcProfileConfigIpv4AddressRangeEntry 2 }
+
+luxlIpmcProfileConfigIpv4AddressRangeEndAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ending IPv4 address of the range that IPMC Profile performs
+         checking."
+    ::= { luxlIpmcProfileConfigIpv4AddressRangeEntry 3 }
+
+luxlIpmcProfileConfigIpv4AddressRangeAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcProfileConfigIpv4AddressRangeEntry 100 }
+
+luxlIpmcProfileConfigIpv4AddressRangeTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlIpmcProfileConfig 5 }
+
+luxlIpmcProfileConfigIpv4AddressRangeTableRowEditorRangeName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile address range entry."
+    ::= { luxlIpmcProfileConfigIpv4AddressRangeTableRowEditor 1 }
+
+luxlIpmcProfileConfigIpv4AddressRangeTableRowEditorStartAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The starting IPv4 address of the range that IPMC Profile performs
+         checking."
+    ::= { luxlIpmcProfileConfigIpv4AddressRangeTableRowEditor 2 }
+
+luxlIpmcProfileConfigIpv4AddressRangeTableRowEditorEndAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ending IPv4 address of the range that IPMC Profile performs
+         checking."
+    ::= { luxlIpmcProfileConfigIpv4AddressRangeTableRowEditor 3 }
+
+luxlIpmcProfileConfigIpv4AddressRangeTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcProfileConfigIpv4AddressRangeTableRowEditor 100 }
+
+luxlIpmcProfileConfigIpv6AddressRangeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcProfileConfigIpv6AddressRangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing the IPv6 address range entries that will
+         be applied for IPMC profile(s)."
+    ::= { luxlIpmcProfileConfig 6 }
+
+luxlIpmcProfileConfigIpv6AddressRangeEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcProfileConfigIpv6AddressRangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlIpmcProfileConfigIpv6AddressRangeRangeName }
+    ::= { luxlIpmcProfileConfigIpv6AddressRangeTable 1 }
+
+LUXLIpmcProfileConfigIpv6AddressRangeEntry ::= SEQUENCE {
+    luxlIpmcProfileConfigIpv6AddressRangeRangeName      LUXLDisplayString,
+    luxlIpmcProfileConfigIpv6AddressRangeStartAddress   InetAddressIPv6,
+    luxlIpmcProfileConfigIpv6AddressRangeEndAddress     InetAddressIPv6,
+    luxlIpmcProfileConfigIpv6AddressRangeAction     LUXLRowEditorState
+}
+
+luxlIpmcProfileConfigIpv6AddressRangeRangeName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile address range entry."
+    ::= { luxlIpmcProfileConfigIpv6AddressRangeEntry 1 }
+
+luxlIpmcProfileConfigIpv6AddressRangeStartAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The starting IPv6 address of the range that IPMC Profile performs
+         checking."
+    ::= { luxlIpmcProfileConfigIpv6AddressRangeEntry 2 }
+
+luxlIpmcProfileConfigIpv6AddressRangeEndAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ending IPv6 address of the range that IPMC Profile performs
+         checking."
+    ::= { luxlIpmcProfileConfigIpv6AddressRangeEntry 3 }
+
+luxlIpmcProfileConfigIpv6AddressRangeAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcProfileConfigIpv6AddressRangeEntry 100 }
+
+luxlIpmcProfileConfigIpv6AddressRangeTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlIpmcProfileConfig 7 }
+
+luxlIpmcProfileConfigIpv6AddressRangeTableRowEditorRangeName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile address range entry."
+    ::= { luxlIpmcProfileConfigIpv6AddressRangeTableRowEditor 1 }
+
+luxlIpmcProfileConfigIpv6AddressRangeTableRowEditorStartAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The starting IPv6 address of the range that IPMC Profile performs
+         checking."
+    ::= { luxlIpmcProfileConfigIpv6AddressRangeTableRowEditor 2 }
+
+luxlIpmcProfileConfigIpv6AddressRangeTableRowEditorEndAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ending IPv6 address of the range that IPMC Profile performs
+         checking."
+    ::= { luxlIpmcProfileConfigIpv6AddressRangeTableRowEditor 3 }
+
+luxlIpmcProfileConfigIpv6AddressRangeTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcProfileConfigIpv6AddressRangeTableRowEditor 100 }
+
+luxlIpmcProfileConfigRuleTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcProfileConfigRuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing the filtering rules with respect to a set
+         of address range used in a specific IPMC profile management entry."
+    ::= { luxlIpmcProfileConfig 8 }
+
+luxlIpmcProfileConfigRuleEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcProfileConfigRuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlIpmcProfileConfigRuleProfileName, luxlIpmcProfileConfigRuleRuleRange }
+    ::= { luxlIpmcProfileConfigRuleTable 1 }
+
+LUXLIpmcProfileConfigRuleEntry ::= SEQUENCE {
+    luxlIpmcProfileConfigRuleProfileName    LUXLDisplayString,
+    luxlIpmcProfileConfigRuleRuleRange      LUXLDisplayString,
+    luxlIpmcProfileConfigRuleNextRuleRange      LUXLDisplayString,
+    luxlIpmcProfileConfigRuleRuleAction     LUXLIpmcProfileRuleActionType,
+    luxlIpmcProfileConfigRuleRuleLog    TruthValue,
+    luxlIpmcProfileConfigRuleAction     LUXLRowEditorState
+}
+
+luxlIpmcProfileConfigRuleProfileName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile management entry."
+    ::= { luxlIpmcProfileConfigRuleEntry 1 }
+
+luxlIpmcProfileConfigRuleRuleRange OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile address range used as a rule."
+    ::= { luxlIpmcProfileConfigRuleEntry 2 }
+
+luxlIpmcProfileConfigRuleNextRuleRange OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The next rule's address range name that this IPMC Profile management
+         entry performs checking."
+    ::= { luxlIpmcProfileConfigRuleEntry 3 }
+
+luxlIpmcProfileConfigRuleRuleAction OBJECT-TYPE
+    SYNTAX      LUXLIpmcProfileRuleActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The filtering action while this IPMC Profile management entry performs
+         checking. deny(0) will prohibit the IPMC control frames destined to
+         protocol stack. permit(1) will pass the IPMC control frames destined to
+         protocol stack."
+    ::= { luxlIpmcProfileConfigRuleEntry 4 }
+
+luxlIpmcProfileConfigRuleRuleLog OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable the IPMC Profile will log matched group address that is filtered
+         by this rule with the corresponding action (deny or permit). Disable
+         the IPMC Profile will not log any action for any group address whether
+         or not to be filtered by this rule."
+    ::= { luxlIpmcProfileConfigRuleEntry 5 }
+
+luxlIpmcProfileConfigRuleAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcProfileConfigRuleEntry 100 }
+
+luxlIpmcProfileConfigRuleTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlIpmcProfileConfig 9 }
+
+luxlIpmcProfileConfigRuleTableRowEditorProfileName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile management entry."
+    ::= { luxlIpmcProfileConfigRuleTableRowEditor 1 }
+
+luxlIpmcProfileConfigRuleTableRowEditorRuleRange OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile address range used as a rule."
+    ::= { luxlIpmcProfileConfigRuleTableRowEditor 2 }
+
+luxlIpmcProfileConfigRuleTableRowEditorNextRuleRange OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The next rule's address range name that this IPMC Profile management
+         entry performs checking."
+    ::= { luxlIpmcProfileConfigRuleTableRowEditor 3 }
+
+luxlIpmcProfileConfigRuleTableRowEditorRuleAction OBJECT-TYPE
+    SYNTAX      LUXLIpmcProfileRuleActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The filtering action while this IPMC Profile management entry performs
+         checking. deny(0) will prohibit the IPMC control frames destined to
+         protocol stack. permit(1) will pass the IPMC control frames destined to
+         protocol stack."
+    ::= { luxlIpmcProfileConfigRuleTableRowEditor 4 }
+
+luxlIpmcProfileConfigRuleTableRowEditorRuleLog OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable the IPMC Profile will log matched group address that is filtered
+         by this rule with the corresponding action (deny or permit). Disable
+         the IPMC Profile will not log any action for any group address whether
+         or not to be filtered by this rule."
+    ::= { luxlIpmcProfileConfigRuleTableRowEditor 5 }
+
+luxlIpmcProfileConfigRuleTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcProfileConfigRuleTableRowEditor 100 }
+
+luxlIpmcProfileConfigPrecedenceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcProfileConfigPrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the rule entries of a specific IPMC
+         profile in precedence order."
+    ::= { luxlIpmcProfileConfig 10 }
+
+luxlIpmcProfileConfigPrecedenceEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcProfileConfigPrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcProfileConfigPrecedenceProfileName, luxlIpmcProfileConfigPrecedenceRulePrecedence }
+    ::= { luxlIpmcProfileConfigPrecedenceTable 1 }
+
+LUXLIpmcProfileConfigPrecedenceEntry ::= SEQUENCE {
+    luxlIpmcProfileConfigPrecedenceProfileName      LUXLDisplayString,
+    luxlIpmcProfileConfigPrecedenceRulePrecedence   Integer32,
+    luxlIpmcProfileConfigPrecedenceRuleRange    LUXLDisplayString,
+    luxlIpmcProfileConfigPrecedenceNextRuleRange    LUXLDisplayString,
+    luxlIpmcProfileConfigPrecedenceRuleAction   LUXLIpmcProfileRuleActionType,
+    luxlIpmcProfileConfigPrecedenceRuleLog      TruthValue
+}
+
+luxlIpmcProfileConfigPrecedenceProfileName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile management entry."
+    ::= { luxlIpmcProfileConfigPrecedenceEntry 1 }
+
+luxlIpmcProfileConfigPrecedenceRulePrecedence OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The precedence of the IPMC profile rule entry."
+    ::= { luxlIpmcProfileConfigPrecedenceEntry 2 }
+
+luxlIpmcProfileConfigPrecedenceRuleRange OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The name of the IPMC profile address range used as a rule."
+    ::= { luxlIpmcProfileConfigPrecedenceEntry 3 }
+
+luxlIpmcProfileConfigPrecedenceNextRuleRange OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The next rule's address range name that this IPMC Profile management
+         entry performs checking."
+    ::= { luxlIpmcProfileConfigPrecedenceEntry 4 }
+
+luxlIpmcProfileConfigPrecedenceRuleAction OBJECT-TYPE
+    SYNTAX      LUXLIpmcProfileRuleActionType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The filtering action while this IPMC Profile management entry performs
+         checking. deny(0) will prohibit the IPMC control frames destined to
+         protocol stack. permit(1) will pass the IPMC control frames destined to
+         protocol stack."
+    ::= { luxlIpmcProfileConfigPrecedenceEntry 5 }
+
+luxlIpmcProfileConfigPrecedenceRuleLog OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Enable the IPMC Profile will log matched group address that is filtered
+         by this rule with the corresponding action (deny or permit). Disable
+         the IPMC Profile will not log any action for any group address whether
+         or not to be filtered by this rule."
+    ::= { luxlIpmcProfileConfigPrecedenceEntry 6 }
+
+luxlIpmcProfileMibConformance OBJECT IDENTIFIER
+    ::= { luxlIpmcProfileMib 2 }
+
+luxlIpmcProfileMibCompliances OBJECT IDENTIFIER
+    ::= { luxlIpmcProfileMibConformance 1 }
+
+luxlIpmcProfileMibGroups OBJECT IDENTIFIER
+    ::= { luxlIpmcProfileMibConformance 2 }
+
+luxlIpmcProfileConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcProfileConfigGlobalsAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcProfileMibGroups 1 }
+
+luxlIpmcProfileConfigManagementTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcProfileConfigManagementProfileDescription, 
+                  luxlIpmcProfileConfigManagementAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcProfileMibGroups 2 }
+
+luxlIpmcProfileConfigManagementTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcProfileConfigManagementTableRowEditorProfileName, 
+                  luxlIpmcProfileConfigManagementTableRowEditorProfileDescription, 
+                  luxlIpmcProfileConfigManagementTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcProfileMibGroups 3 }
+
+luxlIpmcProfileConfigIpv4AddressRangeTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcProfileConfigIpv4AddressRangeStartAddress, 
+                  luxlIpmcProfileConfigIpv4AddressRangeEndAddress, 
+                  luxlIpmcProfileConfigIpv4AddressRangeAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcProfileMibGroups 4 }
+
+luxlIpmcProfileConfigIpv4AddressRangeTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { 
+                  luxlIpmcProfileConfigIpv4AddressRangeTableRowEditorRangeName, 
+                  luxlIpmcProfileConfigIpv4AddressRangeTableRowEditorStartAddress, 
+                  luxlIpmcProfileConfigIpv4AddressRangeTableRowEditorEndAddress, 
+                  luxlIpmcProfileConfigIpv4AddressRangeTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcProfileMibGroups 5 }
+
+luxlIpmcProfileConfigIpv6AddressRangeTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcProfileConfigIpv6AddressRangeStartAddress, 
+                  luxlIpmcProfileConfigIpv6AddressRangeEndAddress, 
+                  luxlIpmcProfileConfigIpv6AddressRangeAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcProfileMibGroups 6 }
+
+luxlIpmcProfileConfigIpv6AddressRangeTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { 
+                  luxlIpmcProfileConfigIpv6AddressRangeTableRowEditorRangeName, 
+                  luxlIpmcProfileConfigIpv6AddressRangeTableRowEditorStartAddress, 
+                  luxlIpmcProfileConfigIpv6AddressRangeTableRowEditorEndAddress, 
+                  luxlIpmcProfileConfigIpv6AddressRangeTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcProfileMibGroups 7 }
+
+luxlIpmcProfileConfigRuleTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcProfileConfigRuleNextRuleRange, 
+                  luxlIpmcProfileConfigRuleRuleAction, 
+                  luxlIpmcProfileConfigRuleRuleLog, 
+                  luxlIpmcProfileConfigRuleAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcProfileMibGroups 8 }
+
+luxlIpmcProfileConfigRuleTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcProfileConfigRuleTableRowEditorProfileName, 
+                  luxlIpmcProfileConfigRuleTableRowEditorRuleRange, 
+                  luxlIpmcProfileConfigRuleTableRowEditorNextRuleRange, 
+                  luxlIpmcProfileConfigRuleTableRowEditorRuleAction, 
+                  luxlIpmcProfileConfigRuleTableRowEditorRuleLog, 
+                  luxlIpmcProfileConfigRuleTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcProfileMibGroups 9 }
+
+luxlIpmcProfileConfigPrecedenceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcProfileConfigPrecedenceRuleRange, 
+                  luxlIpmcProfileConfigPrecedenceNextRuleRange, 
+                  luxlIpmcProfileConfigPrecedenceRuleAction, 
+                  luxlIpmcProfileConfigPrecedenceRuleLog }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcProfileMibGroups 10 }
+
+luxlIpmcProfileMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlIpmcProfileConfigGlobalsInfoGroup, 
+                  luxlIpmcProfileConfigManagementTableInfoGroup, 
+                  luxlIpmcProfileConfigManagementTableRowEditorInfoGroup, 
+                  luxlIpmcProfileConfigIpv4AddressRangeTableInfoGroup, 
+                  luxlIpmcProfileConfigIpv4AddressRangeTableRowEditorInfoGroup, 
+                  luxlIpmcProfileConfigIpv6AddressRangeTableInfoGroup, 
+                  luxlIpmcProfileConfigIpv6AddressRangeTableRowEditorInfoGroup, 
+                  luxlIpmcProfileConfigRuleTableInfoGroup, 
+                  luxlIpmcProfileConfigRuleTableRowEditorInfoGroup, 
+                  luxlIpmcProfileConfigPrecedenceTableInfoGroup }
+
+    ::= { luxlIpmcProfileMibCompliances 1 }
+
+END

@@ -1,0 +1,257 @@
+-- *****************************************************************
+-- SYSLOG-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-SYSLOG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    DateAndTime FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInetAddress FROM LUXL-TC
+    ;
+
+luxlSyslogMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private MIB for Syslog"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 37 }
+
+
+LUXLSyslogLevelType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The syslog severity level."
+    SYNTAX      INTEGER { error(3), warning(4), notice(5), informational(6), all(8) }
+
+luxlSyslogMibObjects OBJECT IDENTIFIER
+    ::= { luxlSyslogMib 1 }
+
+luxlSyslogConfig OBJECT IDENTIFIER
+    ::= { luxlSyslogMibObjects 2 }
+
+luxlSyslogConfigServer OBJECT IDENTIFIER
+    ::= { luxlSyslogConfig 1 }
+
+luxlSyslogConfigServerMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the syslog server mode operation. When the mode operation is
+         enabled, the syslog message will send out to syslog server."
+    ::= { luxlSyslogConfigServer 1 }
+
+luxlSyslogConfigServerAddress OBJECT-TYPE
+    SYNTAX      LUXLInetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The domain name of syslog server."
+    ::= { luxlSyslogConfigServer 2 }
+
+luxlSyslogConfigServerLevel OBJECT-TYPE
+    SYNTAX      LUXLSyslogLevelType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates what level of message will send to syslog server. For
+         example, the error level will send the specific messages which severity
+         code is less or equal than error(3), the warning level will send the
+         specific messages which severity code is less or equal than warning(4),
+         the notice level will send the specific messages which severity code is
+         less or equal than notice(5), the informational level will send the
+         specific messages which severity code is less or equal than
+         informational(6) and the enumeration option of all(8) isn't used in
+         this case."
+    ::= { luxlSyslogConfigServer 3 }
+
+luxlSyslogStatus OBJECT IDENTIFIER
+    ::= { luxlSyslogMibObjects 3 }
+
+luxlSyslogStatusHistoryTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSyslogStatusHistoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The syslog history table."
+    ::= { luxlSyslogStatus 1 }
+
+luxlSyslogStatusHistoryEntry OBJECT-TYPE
+    SYNTAX      LUXLSyslogStatusHistoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains a set of parameters."
+    INDEX       { luxlSyslogStatusHistorySwitchId, luxlSyslogStatusHistoryMsgId }
+    ::= { luxlSyslogStatusHistoryTable 1 }
+
+LUXLSyslogStatusHistoryEntry ::= SEQUENCE {
+    luxlSyslogStatusHistorySwitchId     Integer32,
+    luxlSyslogStatusHistoryMsgId    Integer32,
+    luxlSyslogStatusHistoryMsgLevel     LUXLSyslogLevelType,
+    luxlSyslogStatusHistoryMsgTimeStamp     DateAndTime,
+    luxlSyslogStatusHistoryMsgText      LUXLDisplayString
+}
+
+luxlSyslogStatusHistorySwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The identification of switch. For non-stackable switch, the valid value
+         is limited to 1. "
+    ::= { luxlSyslogStatusHistoryEntry 1 }
+
+luxlSyslogStatusHistoryMsgId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The identification of Syslog message."
+    ::= { luxlSyslogStatusHistoryEntry 2 }
+
+luxlSyslogStatusHistoryMsgLevel OBJECT-TYPE
+    SYNTAX      LUXLSyslogLevelType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The severity level of the system log message. Note that enumeration
+         option of all(8) isn't used in this case."
+    ::= { luxlSyslogStatusHistoryEntry 3 }
+
+luxlSyslogStatusHistoryMsgTimeStamp OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The value of sysUpTime when this message was generated."
+    ::= { luxlSyslogStatusHistoryEntry 4 }
+
+luxlSyslogStatusHistoryMsgText OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The detailed context of the system log message."
+    ::= { luxlSyslogStatusHistoryEntry 5 }
+
+luxlSyslogControl OBJECT IDENTIFIER
+    ::= { luxlSyslogMibObjects 4 }
+
+luxlSyslogControlHistoryTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSyslogControlHistoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The syslog history clear table."
+    ::= { luxlSyslogControl 1 }
+
+luxlSyslogControlHistoryEntry OBJECT-TYPE
+    SYNTAX      LUXLSyslogControlHistoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains a set of parameters."
+    INDEX       { luxlSyslogControlHistorySwitchId, luxlSyslogControlHistoryClearLevel }
+    ::= { luxlSyslogControlHistoryTable 1 }
+
+LUXLSyslogControlHistoryEntry ::= SEQUENCE {
+    luxlSyslogControlHistorySwitchId    Integer32,
+    luxlSyslogControlHistoryClearLevel      LUXLSyslogLevelType,
+    luxlSyslogControlHistoryClear   TruthValue
+}
+
+luxlSyslogControlHistorySwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The identification of switch. For non-stackable switch, the valid value
+         is limited to 1. For stackable switch, value 0 means the action is
+         applied to all switches."
+    ::= { luxlSyslogControlHistoryEntry 1 }
+
+luxlSyslogControlHistoryClearLevel OBJECT-TYPE
+    SYNTAX      LUXLSyslogLevelType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Indicates which level of message want to clear."
+    ::= { luxlSyslogControlHistoryEntry 2 }
+
+luxlSyslogControlHistoryClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear syslog history by setting to true."
+    ::= { luxlSyslogControlHistoryEntry 3 }
+
+luxlSyslogMibConformance OBJECT IDENTIFIER
+    ::= { luxlSyslogMib 2 }
+
+luxlSyslogMibCompliances OBJECT IDENTIFIER
+    ::= { luxlSyslogMibConformance 1 }
+
+luxlSyslogMibGroups OBJECT IDENTIFIER
+    ::= { luxlSyslogMibConformance 2 }
+
+luxlSyslogConfigServerInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSyslogConfigServerMode, luxlSyslogConfigServerAddress, 
+                  luxlSyslogConfigServerLevel }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSyslogMibGroups 1 }
+
+luxlSyslogStatusHistoryTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSyslogStatusHistoryMsgLevel, 
+                  luxlSyslogStatusHistoryMsgTimeStamp, 
+                  luxlSyslogStatusHistoryMsgText }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSyslogMibGroups 2 }
+
+luxlSyslogControlHistoryTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSyslogControlHistoryClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSyslogMibGroups 3 }
+
+luxlSyslogMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlSyslogConfigServerInfoGroup, 
+                  luxlSyslogStatusHistoryTableInfoGroup, 
+                  luxlSyslogControlHistoryTableInfoGroup }
+
+    ::= { luxlSyslogMibCompliances 1 }
+
+END

@@ -1,0 +1,5125 @@
+-- *****************************************************************
+-- QOS-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-QOS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Dscp FROM DIFFSERV-DSCP-TC
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLASRType FROM LUXL-TC
+    LUXLBitType FROM LUXL-TC
+    LUXLDestMacType FROM LUXL-TC
+    LUXLEtherType FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLPercent FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    LUXLVcapKeyType FROM LUXL-TC
+    LUXLVlanTagPriority FROM LUXL-TC
+    LUXLVlanTagType FROM LUXL-TC
+    ;
+
+luxlQosMib MODULE-IDENTITY
+    LAST-UPDATED "201411060000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private MIB for QoS"
+    REVISION    "201411060000Z"
+    DESCRIPTION
+        "Added new WredV3 related objects and adapted WredTable to WredV3."
+    REVISION    "201410080000Z"
+    DESCRIPTION
+        "Removed QosCapabilitiesBitrateMin, QosCapabilitiesBitrateMax,
+         QosCapabilitiesBurstSizeMin and QosCapabilitiesBurstSizeMax.
+         
+         Added policer and shaper specific min/max capabilities objects.
+         
+         Added QosConfigGlobalStormPolicersUnicastFrameRate,
+         QosConfigGlobalStormPolicersMulticastFrameRate and
+         QosConfigGlobalStormPolicersBroadcastFrameRate."
+    REVISION    "201409170000Z"
+    DESCRIPTION
+        "Added QosCapabilitiesHasQueueShapersExcess object."
+    REVISION    "201408120000Z"
+    DESCRIPTION
+        "Updated descriptions when referring to a capability."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 14 }
+
+
+LUXLQosDscpClassify ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates the DSCP classify mode."
+    SYNTAX      INTEGER { none(0), zero(1), selected(2), all(3) }
+
+LUXLQosDscpRemark ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates the DSCP remark mode."
+    SYNTAX      INTEGER { disabled(0), rewrite(1), remap(2), remapDp(3) }
+
+LUXLQosQceFrameType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates the QCE frame type key."
+    SYNTAX      INTEGER { any(0), etype(1), llc(2), snap(3), ipv4(4), ipv6(5) }
+
+LUXLQosQceUserType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates the QCE user type.
+         
+         If the value is zero it indicates a static configuration.
+         
+         If the value is non-zero it indicates a dynamic configuration made by
+         another subsystem."
+    SYNTAX      INTEGER { admin(0), voiceVlan(1) }
+
+LUXLQosTagRemarkingMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates the tag remarking mode."
+    SYNTAX      INTEGER { classified(0), default(2), mapped(3) }
+
+LUXLQosWredMaxSelector ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that selects between 'Maximum Drop Probability' or 'Maximum
+         Fill Level'."
+    SYNTAX      INTEGER { maximumDropProbability(0), maximumFillLevel(1) }
+
+luxlQosMibObjects OBJECT IDENTIFIER
+    ::= { luxlQosMib 1 }
+
+luxlQosCapabilities OBJECT IDENTIFIER
+    ::= { luxlQosMibObjects 1 }
+
+luxlQosCapabilitiesClassMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum allowed QoS class."
+    ::= { luxlQosCapabilities 1 }
+
+luxlQosCapabilitiesClassMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum allowed QoS class."
+    ::= { luxlQosCapabilities 2 }
+
+luxlQosCapabilitiesDplMin OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum allowed drop precedence level."
+    ::= { luxlQosCapabilities 3 }
+
+luxlQosCapabilitiesDplMax OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum allowed drop precedence level."
+    ::= { luxlQosCapabilities 4 }
+
+luxlQosCapabilitiesWredGroupMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum allowed WRED group number."
+    ::= { luxlQosCapabilities 5 }
+
+luxlQosCapabilitiesWredGroupMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum allowed WRED group number."
+    ::= { luxlQosCapabilities 6 }
+
+luxlQosCapabilitiesWredDplMin OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum allowed WRED drop precedence level."
+    ::= { luxlQosCapabilities 7 }
+
+luxlQosCapabilitiesWredDplMax OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum allowed WRED drop precedence level."
+    ::= { luxlQosCapabilities 8 }
+
+luxlQosCapabilitiesQceIdMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum allowed QCE Id."
+    ::= { luxlQosCapabilities 9 }
+
+luxlQosCapabilitiesQceIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum allowed QCE Id."
+    ::= { luxlQosCapabilities 10 }
+
+luxlQosCapabilitiesPortPolicerBitRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported bit rate in kbps for port policers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 11 }
+
+luxlQosCapabilitiesPortPolicerBitRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported bit rate in kbps for port policers using bit rate
+         mode.
+         
+         If zero, the port policers does not support bit rate mode."
+    ::= { luxlQosCapabilities 12 }
+
+luxlQosCapabilitiesPortPolicerBitBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in bytes for port policers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 13 }
+
+luxlQosCapabilitiesPortPolicerBitBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in bytes for port policers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 14 }
+
+luxlQosCapabilitiesPortPolicerFrameRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported frame rate in fps for port policers using frame rate
+         mode."
+    ::= { luxlQosCapabilities 15 }
+
+luxlQosCapabilitiesPortPolicerFrameRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported frame rate in fps for port policers using frame rate
+         mode.
+         
+         If zero, the port policers does not support frame rate mode."
+    ::= { luxlQosCapabilities 16 }
+
+luxlQosCapabilitiesPortPolicerFrameBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in frames for port policers using frame
+         rate mode."
+    ::= { luxlQosCapabilities 17 }
+
+luxlQosCapabilitiesPortPolicerFrameBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in frames for port policers using frame
+         rate mode."
+    ::= { luxlQosCapabilities 18 }
+
+luxlQosCapabilitiesQueuePolicerBitRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported bit rate in kbps for queue policers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 19 }
+
+luxlQosCapabilitiesQueuePolicerBitRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported bit rate in kbps for queue policers using bit rate
+         mode.
+         
+         If zero, the queue policers does not support bit rate mode."
+    ::= { luxlQosCapabilities 20 }
+
+luxlQosCapabilitiesQueuePolicerBitBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in bytes for queue policers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 21 }
+
+luxlQosCapabilitiesQueuePolicerBitBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in bytes for queue policers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 22 }
+
+luxlQosCapabilitiesQueuePolicerFrameRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported frame rate in fps for queue policers using frame rate
+         mode."
+    ::= { luxlQosCapabilities 23 }
+
+luxlQosCapabilitiesQueuePolicerFrameRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported frame rate in fps for queue policers using frame rate
+         mode.
+         
+         If zero, the port policers does not support frame rate mode."
+    ::= { luxlQosCapabilities 24 }
+
+luxlQosCapabilitiesQueuePolicerFrameBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in frames for queue policers using frame
+         rate mode."
+    ::= { luxlQosCapabilities 25 }
+
+luxlQosCapabilitiesQueuePolicerFrameBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in frames for queue policers using frame
+         rate mode."
+    ::= { luxlQosCapabilities 26 }
+
+luxlQosCapabilitiesPortShaperBitRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported bit rate in kbps for port shapers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 27 }
+
+luxlQosCapabilitiesPortShaperBitRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported bit rate in kbps for port shapers using bit rate
+         mode.
+         
+         If zero, the port shapers does not support bit rate mode."
+    ::= { luxlQosCapabilities 28 }
+
+luxlQosCapabilitiesPortShaperBitBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in bytes for port shapers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 29 }
+
+luxlQosCapabilitiesPortShaperBitBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in bytes for port shapers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 30 }
+
+luxlQosCapabilitiesPortShaperFrameRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported frame rate in fps for port shapers using frame rate
+         mode."
+    ::= { luxlQosCapabilities 31 }
+
+luxlQosCapabilitiesPortShaperFrameRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported frame rate in fps for port shapers using frame rate
+         mode.
+         
+         If zero, the port shapers does not support frame rate mode."
+    ::= { luxlQosCapabilities 32 }
+
+luxlQosCapabilitiesPortShaperFrameBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in frames for port shapers using frame
+         rate mode."
+    ::= { luxlQosCapabilities 33 }
+
+luxlQosCapabilitiesPortShaperFrameBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in frames for port shapers using frame
+         rate mode."
+    ::= { luxlQosCapabilities 34 }
+
+luxlQosCapabilitiesQueueShaperBitRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported bit rate in kbps for queue shapers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 35 }
+
+luxlQosCapabilitiesQueueShaperBitRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported bit rate in kbps for queue shapers using bit rate
+         mode.
+         
+         If zero, the queue shapers does not support bit rate mode."
+    ::= { luxlQosCapabilities 36 }
+
+luxlQosCapabilitiesQueueShaperBitBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in bytes for queue shapers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 37 }
+
+luxlQosCapabilitiesQueueShaperBitBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in bytes for queue shapers using bit rate
+         mode."
+    ::= { luxlQosCapabilities 38 }
+
+luxlQosCapabilitiesQueueShaperFrameRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported frame rate in fps for queue shapers using frame rate
+         mode."
+    ::= { luxlQosCapabilities 39 }
+
+luxlQosCapabilitiesQueueShaperFrameRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported frame rate in fps for queue shapers using frame rate
+         mode.
+         
+         If zero, the port shapers does not support frame rate mode."
+    ::= { luxlQosCapabilities 40 }
+
+luxlQosCapabilitiesQueueShaperFrameBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in frames for queue shapers using frame
+         rate mode."
+    ::= { luxlQosCapabilities 41 }
+
+luxlQosCapabilitiesQueueShaperFrameBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in frames for queue shapers using frame
+         rate mode."
+    ::= { luxlQosCapabilities 42 }
+
+luxlQosCapabilitiesGlobalStormBitRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported bit rate in kbps for global storm policers using bit
+         rate mode."
+    ::= { luxlQosCapabilities 43 }
+
+luxlQosCapabilitiesGlobalStormBitRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported bit rate in kbps for global storm policers using bit
+         rate mode.
+         
+         If zero, the global storm policers does not support bit rate mode."
+    ::= { luxlQosCapabilities 44 }
+
+luxlQosCapabilitiesGlobalStormBitBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in bytes for global storm policers using
+         bit rate mode."
+    ::= { luxlQosCapabilities 45 }
+
+luxlQosCapabilitiesGlobalStormBitBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in bytes for global storm policers using
+         bit rate mode."
+    ::= { luxlQosCapabilities 46 }
+
+luxlQosCapabilitiesGlobalStormFrameRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported frame rate in fps for global storm policers using
+         frame rate mode."
+    ::= { luxlQosCapabilities 47 }
+
+luxlQosCapabilitiesGlobalStormFrameRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported frame rate in fps for global storm policers using
+         frame rate mode.
+         
+         If zero, the global storm policers does not support frame rate mode."
+    ::= { luxlQosCapabilities 48 }
+
+luxlQosCapabilitiesGlobalStormFrameBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in frames for global storm policers using
+         frame rate mode."
+    ::= { luxlQosCapabilities 49 }
+
+luxlQosCapabilitiesGlobalStormFrameBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in frames for global storm policers using
+         frame rate mode."
+    ::= { luxlQosCapabilities 50 }
+
+luxlQosCapabilitiesPortStormBitRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported bit rate in kbps for port storm policers using bit
+         rate mode."
+    ::= { luxlQosCapabilities 51 }
+
+luxlQosCapabilitiesPortStormBitRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported bit rate in kbps for port storm policers using bit
+         rate mode.
+         
+         If zero, the port storm policers does not support bit rate mode."
+    ::= { luxlQosCapabilities 52 }
+
+luxlQosCapabilitiesPortStormBitBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in bytes for port storm policers using bit
+         rate mode."
+    ::= { luxlQosCapabilities 53 }
+
+luxlQosCapabilitiesPortStormBitBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in bytes for port storm policers using bit
+         rate mode."
+    ::= { luxlQosCapabilities 54 }
+
+luxlQosCapabilitiesPortStormFrameRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported frame rate in fps for port storm policers using frame
+         rate mode."
+    ::= { luxlQosCapabilities 55 }
+
+luxlQosCapabilitiesPortStormFrameRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported frame rate in fps for port storm policers using frame
+         rate mode.
+         
+         If zero, the port storm policers does not support frame rate mode."
+    ::= { luxlQosCapabilities 56 }
+
+luxlQosCapabilitiesPortStormFrameBurstMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Minimum supported burst size in frames for port storm policers using
+         frame rate mode."
+    ::= { luxlQosCapabilities 57 }
+
+luxlQosCapabilitiesPortStormFrameBurstMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported burst size in frames for port storm policers using
+         frame rate mode."
+    ::= { luxlQosCapabilities 58 }
+
+luxlQosCapabilitiesDwrrCountMask OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "A bitmask used to show allowed values of DwrrCount (zero is always
+         allowed).
+         
+         Example:
+         
+         00100000 (0x20): Allowed values are 0 and 6
+         
+         11111110 (0xFE): Allowed values are 0 and 2..8"
+    ::= { luxlQosCapabilities 101 }
+
+luxlQosCapabilitiesHasGlobalStormPolicers OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports global storm policers."
+    ::= { luxlQosCapabilities 201 }
+
+luxlQosCapabilitiesHasPortStormPolicers OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports per port storm policers."
+    ::= { luxlQosCapabilities 202 }
+
+luxlQosCapabilitiesHasPortQueuePolicers OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports per port queue policers."
+    ::= { luxlQosCapabilities 203 }
+
+luxlQosCapabilitiesHasWredV1 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports WRED version 1."
+    ::= { luxlQosCapabilities 204 }
+
+luxlQosCapabilitiesHasWredV2 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports WRED version 2."
+    ::= { luxlQosCapabilities 205 }
+
+luxlQosCapabilitiesHasFixedTagCosMap OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports fixed tag to cos mapping only."
+    ::= { luxlQosCapabilities 206 }
+
+luxlQosCapabilitiesHasTagClassification OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports using VLAN tag for classification."
+    ::= { luxlQosCapabilities 207 }
+
+luxlQosCapabilitiesHasTagRemarking OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports VLAN tag remarking."
+    ::= { luxlQosCapabilities 208 }
+
+luxlQosCapabilitiesHasDscp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports DSCP translation and remarking."
+    ::= { luxlQosCapabilities 209 }
+
+luxlQosCapabilitiesHasDscpDplClassification OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports DPL based DSCP classification."
+    ::= { luxlQosCapabilities 210 }
+
+luxlQosCapabilitiesHasDscpDplRemarking OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports DPL based DSCP remarking."
+    ::= { luxlQosCapabilities 211 }
+
+luxlQosCapabilitiesHasPortPolicersFc OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports flow control in port policers."
+    ::= { luxlQosCapabilities 212 }
+
+luxlQosCapabilitiesHasQueuePolicersFc OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports flow control in queue policers."
+    ::= { luxlQosCapabilities 213 }
+
+luxlQosCapabilitiesHasPortShapersDlb OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports dual leaky bucket egress port shapers."
+    ::= { luxlQosCapabilities 214 }
+
+luxlQosCapabilitiesHasQueueShapersDlb OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports dual leaky bucket egress queue shapers."
+    ::= { luxlQosCapabilities 215 }
+
+luxlQosCapabilitiesHasQueueShapersExcess OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports excess bandwidth in egress queue
+         shapers."
+    ::= { luxlQosCapabilities 216 }
+
+luxlQosCapabilitiesHasWredV3 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports WRED version 3."
+    ::= { luxlQosCapabilities 217 }
+
+luxlQosCapabilitiesHasQce OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCEs."
+    ::= { luxlQosCapabilities 301 }
+
+luxlQosCapabilitiesHasQceAddressMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCE address mode."
+    ::= { luxlQosCapabilities 302 }
+
+luxlQosCapabilitiesHasQceKeyType OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCE key type."
+    ::= { luxlQosCapabilities 303 }
+
+luxlQosCapabilitiesHasQceMacOui OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCE MAC OUI part only (24 most
+         significant bits)."
+    ::= { luxlQosCapabilities 304 }
+
+luxlQosCapabilitiesHasQceDmac OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCE destination MAC keys."
+    ::= { luxlQosCapabilities 305 }
+
+luxlQosCapabilitiesHasQceDip OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCE destination IP keys."
+    ::= { luxlQosCapabilities 306 }
+
+luxlQosCapabilitiesHasQceCTag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCE VLAN C-TAG keys."
+    ::= { luxlQosCapabilities 307 }
+
+luxlQosCapabilitiesHasQceSTag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCE VLAN S-TAG keys."
+    ::= { luxlQosCapabilities 308 }
+
+luxlQosCapabilitiesHasQceInnerTag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCE inner VLAN tag keys."
+    ::= { luxlQosCapabilities 309 }
+
+luxlQosCapabilitiesHasQceActionPcpDei OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCE PCP and DEI actions."
+    ::= { luxlQosCapabilities 310 }
+
+luxlQosCapabilitiesHasQceActionPolicy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports QCE policy actions."
+    ::= { luxlQosCapabilities 311 }
+
+luxlQosConfig OBJECT IDENTIFIER
+    ::= { luxlQosMibObjects 2 }
+
+luxlQosConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlQosConfig 1 }
+
+luxlQosConfigGlobalsStormPolicers OBJECT IDENTIFIER
+    ::= { luxlQosConfigGlobals 1 }
+
+luxlQosConfigGlobalsStormPolicersUnicast OBJECT IDENTIFIER
+    ::= { luxlQosConfigGlobalsStormPolicers 1 }
+
+luxlQosConfigGlobalsStormPolicersUnicastEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the storm policer is enabled.
+         
+         This object is only valid if QosCapabilitiesHasGlobalStormPolicers is
+         true."
+    ::= { luxlQosConfigGlobalsStormPolicersUnicast 1 }
+
+luxlQosConfigGlobalsStormPolicersUnicastRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Configure the storm policer rate.
+         
+         Valid range is from the smallest value of
+         QosCapabilitiesGlobalStormBitRateMin and
+         QosCapabilitiesGlobalStormFrameRateMin to the largest value of
+         QosCapabilitiesGlobalStormBitRateMax and
+         QosCapabilitiesGlobalStormFrameRateMax.
+         
+         This object is only valid if QosCapabilitiesHasGlobalStormPolicers is
+         true."
+    ::= { luxlQosConfigGlobalsStormPolicersUnicast 2 }
+
+luxlQosConfigGlobalsStormPolicersUnicastFrameRate OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the rate is measured in fps instead of kbps.
+         
+         fps (FrameRate == TRUE) is only valid if
+         QosCapabilitiesGlobalStormFrameRateMax is non-zero.
+         
+         kbps (FrameRate == FALSE) is only valid if
+         QosCapabilitiesGlobalStormBitRateMax is non-zero.
+         
+         This object is only valid if QosCapabilitiesHasGlobalStormPolicers is
+         true."
+    ::= { luxlQosConfigGlobalsStormPolicersUnicast 3 }
+
+luxlQosConfigGlobalsStormPolicersMulticast OBJECT IDENTIFIER
+    ::= { luxlQosConfigGlobalsStormPolicers 2 }
+
+luxlQosConfigGlobalsStormPolicersMulticastEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the storm policer is enabled.
+         
+         This object is only valid if QosCapabilitiesHasGlobalStormPolicers is
+         true."
+    ::= { luxlQosConfigGlobalsStormPolicersMulticast 1 }
+
+luxlQosConfigGlobalsStormPolicersMulticastRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Configure the storm policer rate.
+         
+         Valid range is from the smallest value of
+         QosCapabilitiesGlobalStormBitRateMin and
+         QosCapabilitiesGlobalStormFrameRateMin to the largest value of
+         QosCapabilitiesGlobalStormBitRateMax and
+         QosCapabilitiesGlobalStormFrameRateMax.
+         
+         This object is only valid if QosCapabilitiesHasGlobalStormPolicers is
+         true."
+    ::= { luxlQosConfigGlobalsStormPolicersMulticast 2 }
+
+luxlQosConfigGlobalsStormPolicersMulticastFrameRate OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the rate is measured in fps instead of kbps.
+         
+         fps (FrameRate == TRUE) is only valid if
+         QosCapabilitiesGlobalStormFrameRateMax is non-zero.
+         
+         kbps (FrameRate == FALSE) is only valid if
+         QosCapabilitiesGlobalStormBitRateMax is non-zero.
+         
+         This object is only valid if QosCapabilitiesHasGlobalStormPolicers is
+         true."
+    ::= { luxlQosConfigGlobalsStormPolicersMulticast 3 }
+
+luxlQosConfigGlobalsStormPolicersBroadcast OBJECT IDENTIFIER
+    ::= { luxlQosConfigGlobalsStormPolicers 3 }
+
+luxlQosConfigGlobalsStormPolicersBroadcastEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the storm policer is enabled.
+         
+         This object is only valid if QosCapabilitiesHasGlobalStormPolicers is
+         true."
+    ::= { luxlQosConfigGlobalsStormPolicersBroadcast 1 }
+
+luxlQosConfigGlobalsStormPolicersBroadcastRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Configure the storm policer rate.
+         
+         Valid range is from the smallest value of
+         QosCapabilitiesGlobalStormBitRateMin and
+         QosCapabilitiesGlobalStormFrameRateMin to the largest value of
+         QosCapabilitiesGlobalStormBitRateMax and
+         QosCapabilitiesGlobalStormFrameRateMax.
+         
+         This object is only valid if QosCapabilitiesHasGlobalStormPolicers is
+         true."
+    ::= { luxlQosConfigGlobalsStormPolicersBroadcast 2 }
+
+luxlQosConfigGlobalsStormPolicersBroadcastFrameRate OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the rate is measured in fps instead of kbps.
+         
+         fps (FrameRate == TRUE) is only valid if
+         QosCapabilitiesGlobalStormFrameRateMax is non-zero.
+         
+         kbps (FrameRate == FALSE) is only valid if
+         QosCapabilitiesGlobalStormBitRateMax is non-zero.
+         
+         This object is only valid if QosCapabilitiesHasGlobalStormPolicers is
+         true."
+    ::= { luxlQosConfigGlobalsStormPolicersBroadcast 3 }
+
+luxlQosConfigGlobalsWredTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigGlobalsWredEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the configuration of WRED (Weighted Random Early
+         Discard).
+         
+         This is an optional table and is only present if
+         qosCapabilitiesHasWredV1, qosCapabilitiesHasWredV2 or
+         qosCapabilitiesHasWredV3 is true."
+    ::= { luxlQosConfigGlobals 2 }
+
+luxlQosConfigGlobalsWredEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigGlobalsWredEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific WRED profile"
+    INDEX       { luxlQosConfigGlobalsWredGroup, luxlQosConfigGlobalsWredQueue, luxlQosConfigGlobalsWredDpl }
+    ::= { luxlQosConfigGlobalsWredTable 1 }
+
+LUXLQosConfigGlobalsWredEntry ::= SEQUENCE {
+    luxlQosConfigGlobalsWredGroup   Integer32,
+    luxlQosConfigGlobalsWredQueue   Integer32,
+    luxlQosConfigGlobalsWredDpl     Integer32,
+    luxlQosConfigGlobalsWredEnable      TruthValue,
+    luxlQosConfigGlobalsWredMinimumFillLevel    LUXLPercent,
+    luxlQosConfigGlobalsWredMaximum     LUXLPercent,
+    luxlQosConfigGlobalsWredMaxSelector     LUXLQosWredMaxSelector,
+    luxlQosConfigGlobalsWredMaximumDp1      LUXLPercent,
+    luxlQosConfigGlobalsWredMaximumDp2      LUXLPercent,
+    luxlQosConfigGlobalsWredMaximumDp3      LUXLPercent
+}
+
+luxlQosConfigGlobalsWredGroup OBJECT-TYPE
+    SYNTAX      Integer32 (1..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "WRED group index."
+    ::= { luxlQosConfigGlobalsWredEntry 1 }
+
+luxlQosConfigGlobalsWredQueue OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Queue index."
+    ::= { luxlQosConfigGlobalsWredEntry 2 }
+
+luxlQosConfigGlobalsWredDpl OBJECT-TYPE
+    SYNTAX      Integer32 (0..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "DPL index."
+    ::= { luxlQosConfigGlobalsWredEntry 3 }
+
+luxlQosConfigGlobalsWredEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, RED is enabled for this queue."
+    ::= { luxlQosConfigGlobalsWredEntry 4 }
+
+luxlQosConfigGlobalsWredMinimumFillLevel OBJECT-TYPE
+    SYNTAX      LUXLPercent
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls the lower RED fill level threshold in percent of the whole
+         queue.
+         
+         If the queue filling level is below this threshold, the drop
+         probability is zero.
+         
+         Valid range is 0-100."
+    ::= { luxlQosConfigGlobalsWredEntry 5 }
+
+luxlQosConfigGlobalsWredMaximum OBJECT-TYPE
+    SYNTAX      LUXLPercent
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls the upper RED drop probability or fill level threshold for
+         frames marked with Drop Precedence Level 1 (yellow frames).
+         
+         Valid range is 1-100.
+         
+         This object is only valid if QosCapabilitiesHasWredV2 or
+         QosCapabilitiesHasWredV3 is true."
+    ::= { luxlQosConfigGlobalsWredEntry 6 }
+
+luxlQosConfigGlobalsWredMaxSelector OBJECT-TYPE
+    SYNTAX      LUXLQosWredMaxSelector
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Selects whether 'Maximum' controls 'Maximum Drop Probability' or
+         'Maximum Fill Level'.
+         
+         This object is only valid if QosCapabilitiesHasWredV2 or
+         QosCapabilitiesHasWredV3 is true."
+    ::= { luxlQosConfigGlobalsWredEntry 7 }
+
+luxlQosConfigGlobalsWredMaximumDp1 OBJECT-TYPE
+    SYNTAX      LUXLPercent
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls the upper RED drop probability for frames marked with Drop
+         Precedence Level 1 (yellow frames).
+         
+         Valid range is 0-100.
+         
+         This object is only valid if QosCapabilitiesHasWredV1 is true."
+    ::= { luxlQosConfigGlobalsWredEntry 8 }
+
+luxlQosConfigGlobalsWredMaximumDp2 OBJECT-TYPE
+    SYNTAX      LUXLPercent
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls the upper RED drop probability for frames marked with Drop
+         Precedence Level 2 (yellow frames).
+         
+         Valid range is 0-100.
+         
+         This object is only valid if QosCapabilitiesHasWredV1 is true."
+    ::= { luxlQosConfigGlobalsWredEntry 9 }
+
+luxlQosConfigGlobalsWredMaximumDp3 OBJECT-TYPE
+    SYNTAX      LUXLPercent
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls the upper RED drop probability for frames marked with Drop
+         Precedence Level 3 (yellow frames).
+         
+         Valid range is 0-100.
+         
+         This object is only valid if QosCapabilitiesHasWredV1 is true."
+    ::= { luxlQosConfigGlobalsWredEntry 10 }
+
+luxlQosConfigGlobalsDscpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigGlobalsDscpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table has 64 entries, one for each DSCP value.
+         
+         This is an optional table and is only present if qosCapabilitiesHasDscp
+         is true."
+    ::= { luxlQosConfigGlobals 3 }
+
+luxlQosConfigGlobalsDscpEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigGlobalsDscpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific DSCP"
+    INDEX       { luxlQosConfigGlobalsDscpDscp }
+    ::= { luxlQosConfigGlobalsDscpTable 1 }
+
+LUXLQosConfigGlobalsDscpEntry ::= SEQUENCE {
+    luxlQosConfigGlobalsDscpDscp    Dscp,
+    luxlQosConfigGlobalsDscpTrust   TruthValue,
+    luxlQosConfigGlobalsDscpCos     Unsigned32,
+    luxlQosConfigGlobalsDscpDpl     LUXLUnsigned8,
+    luxlQosConfigGlobalsDscpIngressTranslation      Dscp,
+    luxlQosConfigGlobalsDscpClassify    TruthValue,
+    luxlQosConfigGlobalsDscpEgressTranslation   Dscp,
+    luxlQosConfigGlobalsDscpEgressTranslationDp1    Dscp
+}
+
+luxlQosConfigGlobalsDscpDscp OBJECT-TYPE
+    SYNTAX      Dscp
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "DSCP index."
+    ::= { luxlQosConfigGlobalsDscpEntry 1 }
+
+luxlQosConfigGlobalsDscpTrust OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, this DSCP value is trusted. Packets arriving on interfaces
+         where 'TrustDscp' is enabled will be classified to the corresponding
+         CoS and DPL in this table."
+    ::= { luxlQosConfigGlobalsDscpEntry 2 }
+
+luxlQosConfigGlobalsDscpCos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The CoS value which the DSCP value maps to.
+         
+         Valid range is qosCapabilitiesClassMin-qosCapabilitiesClassMax."
+    ::= { luxlQosConfigGlobalsDscpEntry 3 }
+
+luxlQosConfigGlobalsDscpDpl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DPL (Drop Precedence Level) which the DSCP value maps to.
+         
+         Valid range is qosCapabilitiesDplMin-qosCapabilitiesDplMax."
+    ::= { luxlQosConfigGlobalsDscpEntry 4 }
+
+luxlQosConfigGlobalsDscpIngressTranslation OBJECT-TYPE
+    SYNTAX      Dscp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The new classified DSCP value which the original DSCP value is replaced
+         with if 'DscpTranslate' is enabled on the interface"
+    ::= { luxlQosConfigGlobalsDscpEntry 5 }
+
+luxlQosConfigGlobalsDscpClassify OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, then packets received on interfaces where 'DscpClassify' is
+         set to 'selected' will be classified to a new DSCP value based on the
+         values configured in the qosConfigGlobalsCosToDscpTable."
+    ::= { luxlQosConfigGlobalsDscpEntry 6 }
+
+luxlQosConfigGlobalsDscpEgressTranslation OBJECT-TYPE
+    SYNTAX      Dscp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The new DSCP value that will be written into the packet at egress if
+         'DscpRemark' on the interface is set to 'remap' or 'remap-dp'.
+         
+         If 'remap-dp' is set then only packets classified to Dpl 0 will use
+         this table."
+    ::= { luxlQosConfigGlobalsDscpEntry 7 }
+
+luxlQosConfigGlobalsDscpEgressTranslationDp1 OBJECT-TYPE
+    SYNTAX      Dscp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The new DSCP value that will be written into the packet at egress if
+         'DscpRemark' on the interface is set to 'remap-dp'.
+         
+         Only packets classified to Dpl 1 will use this table.
+         
+         This object is only valid if QosCapabilitiesHasDscpDplRemarking is
+         true."
+    ::= { luxlQosConfigGlobalsDscpEntry 8 }
+
+luxlQosConfigGlobalsCosToDscpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigGlobalsCosToDscpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table has 8 entries, one for each Cos value.
+         
+         This is an optional table and is only present if qosCapabilitiesHasDscp
+         is true."
+    ::= { luxlQosConfigGlobals 4 }
+
+luxlQosConfigGlobalsCosToDscpEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigGlobalsCosToDscpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific Cos"
+    INDEX       { luxlQosConfigGlobalsCosToDscpCos }
+    ::= { luxlQosConfigGlobalsCosToDscpTable 1 }
+
+LUXLQosConfigGlobalsCosToDscpEntry ::= SEQUENCE {
+    luxlQosConfigGlobalsCosToDscpCos    Integer32,
+    luxlQosConfigGlobalsCosToDscpDscp   Dscp,
+    luxlQosConfigGlobalsCosToDscpDscpDp1    Dscp,
+    luxlQosConfigGlobalsCosToDscpDscpDp2    Dscp,
+    luxlQosConfigGlobalsCosToDscpDscpDp3    Dscp
+}
+
+luxlQosConfigGlobalsCosToDscpCos OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "CoS index."
+    ::= { luxlQosConfigGlobalsCosToDscpEntry 1 }
+
+luxlQosConfigGlobalsCosToDscpDscp OBJECT-TYPE
+    SYNTAX      Dscp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If qosCapabilitiesHasDscpDplClassification is true: This is the DSCP
+         value which the classified CoS value maps to when the classified DPL is
+         0.
+         
+         If qosCapabilitiesHasDscpDplClassification is false: This is the DSCP
+         value which the classified CoS value maps to."
+    ::= { luxlQosConfigGlobalsCosToDscpEntry 2 }
+
+luxlQosConfigGlobalsCosToDscpDscpDp1 OBJECT-TYPE
+    SYNTAX      Dscp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value which the classified CoS value maps to when the
+         classified DPL is 1.
+         
+         This object is only valid if QosCapabilitiesHasDscpDplClassification is
+         true."
+    ::= { luxlQosConfigGlobalsCosToDscpEntry 3 }
+
+luxlQosConfigGlobalsCosToDscpDscpDp2 OBJECT-TYPE
+    SYNTAX      Dscp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value which the classified CoS value maps to when the
+         classified DPL is 2.
+         
+         This object is only valid if QosCapabilitiesHasDscpDplClassification is
+         true and QosCapabilitiesDplMax is greater than 1."
+    ::= { luxlQosConfigGlobalsCosToDscpEntry 4 }
+
+luxlQosConfigGlobalsCosToDscpDscpDp3 OBJECT-TYPE
+    SYNTAX      Dscp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value which the classified CoS value maps to when the
+         classified DPL is 3.
+         
+         This object is only valid if QosCapabilitiesHasDscpDplClassification is
+         true and QosCapabilitiesDplMax is greater than 2."
+    ::= { luxlQosConfigGlobalsCosToDscpEntry 5 }
+
+luxlQosConfigInterface OBJECT IDENTIFIER
+    ::= { luxlQosConfig 2 }
+
+luxlQosConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides QoS configuration for QoS manageable interfaces"
+    ::= { luxlQosConfigInterface 1 }
+
+luxlQosConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific interface"
+    INDEX       { luxlQosConfigInterfaceIfIndex }
+    ::= { luxlQosConfigInterfaceTable 1 }
+
+LUXLQosConfigInterfaceEntry ::= SEQUENCE {
+    luxlQosConfigInterfaceIfIndex   LUXLInterfaceIndex,
+    luxlQosConfigInterfaceCos   Unsigned32,
+    luxlQosConfigInterfaceDpl   LUXLUnsigned8,
+    luxlQosConfigInterfacePcp   Unsigned32,
+    luxlQosConfigInterfaceDei   LUXLUnsigned8,
+    luxlQosConfigInterfaceTrustTag      TruthValue,
+    luxlQosConfigInterfaceTrustDscp     TruthValue,
+    luxlQosConfigInterfaceDwrrCount     LUXLUnsigned8,
+    luxlQosConfigInterfaceTagRemarkingMode      LUXLQosTagRemarkingMode,
+    luxlQosConfigInterfaceTagPcp    Unsigned32,
+    luxlQosConfigInterfaceTagDei    LUXLUnsigned8,
+    luxlQosConfigInterfaceDscpTranslate     TruthValue,
+    luxlQosConfigInterfaceDscpClassify      LUXLQosDscpClassify,
+    luxlQosConfigInterfaceDscpRemark    LUXLQosDscpRemark,
+    luxlQosConfigInterfaceQceAddressMode    TruthValue,
+    luxlQosConfigInterfaceQceKeyType    LUXLVcapKeyType,
+    luxlQosConfigInterfaceWredGroup     Unsigned32
+}
+
+luxlQosConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfaceEntry 1 }
+
+luxlQosConfigInterfaceCos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The default CoS value a packet is classified to.
+         
+         Valid range is qosCapabilitiesClassMin-qosCapabilitiesClassMax."
+    ::= { luxlQosConfigInterfaceEntry 2 }
+
+luxlQosConfigInterfaceDpl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The default DPL (Drop Precedence Level) a packet is classified to.
+         
+         Valid range is qosCapabilitiesDplMin-qosCapabilitiesDplMax."
+    ::= { luxlQosConfigInterfaceEntry 3 }
+
+luxlQosConfigInterfacePcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The default PCP value a packet is classified to.
+         
+         Valid range is 0-7.
+         
+         This object is only valid if QosCapabilitiesHasFixedTagCosMap is false."
+    ::= { luxlQosConfigInterfaceEntry 4 }
+
+luxlQosConfigInterfaceDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The default DEI value a packet is classified to.
+         
+         Valid range is 0-1.
+         
+         This object is only valid if QosCapabilitiesHasFixedTagCosMap is false."
+    ::= { luxlQosConfigInterfaceEntry 5 }
+
+luxlQosConfigInterfaceTrustTag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true and the packet is VLAN tagged, then the CoS and DPL assigned to
+         the packet is the PCP and DEI value in the packet mapped to a CoS and
+         DPL value defined in the qosConfigInterfaceTagToCosTable.
+         
+         This object is only valid if QosCapabilitiesHasFixedTagCosMap is false
+         and QosCapabilitiesHasTagClassification is true."
+    ::= { luxlQosConfigInterfaceEntry 6 }
+
+luxlQosConfigInterfaceTrustDscp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true and the packet type is IPv4 or IPv6 and the packet DSCP value
+         is trusted in qosConfigGlobalsDscpTable, then the CoS and DPL assigned
+         to the packet is the DSCP value in the packet mapped to a CoS and DPL
+         value defined in the qosConfigGlobalsDscpTable.
+         
+         This object is only valid if QosCapabilitiesHasDscp is true."
+    ::= { luxlQosConfigInterfaceEntry 7 }
+
+luxlQosConfigInterfaceDwrrCount OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The number of queues that are running Deficit Weighted Round Robin
+         scheduling.
+         
+         This value is restricted to 0 or one of the values defined by
+         qosCapabilitiesDwrrCountMask."
+    ::= { luxlQosConfigInterfaceEntry 8 }
+
+luxlQosConfigInterfaceTagRemarkingMode OBJECT-TYPE
+    SYNTAX      LUXLQosTagRemarkingMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Selects the tag remarking mode for egress. Valid values are:
+         
+         'classified' : Remark the tag with the classified values of PCP and
+         DEI.
+         
+         'default' : Remark the tag with the configured TagPcp and TagDei.
+         
+         'mapped' : Remark the tag with the values from the classified CoS and
+         DPL mapped through the qosConfigInterfaceCosToTagTable.
+         
+         This object is only valid if QosCapabilitiesHasTagRemarking is true."
+    ::= { luxlQosConfigInterfaceEntry 9 }
+
+luxlQosConfigInterfaceTagPcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value to put in the packet if TagRemarkingMode is set to
+         'default'.
+         
+         Valid range is 0-7.
+         
+         This object is only valid if QosCapabilitiesHasTagRemarking is true."
+    ::= { luxlQosConfigInterfaceEntry 10 }
+
+luxlQosConfigInterfaceTagDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value to put in the packet if TagRemarkingMode is set to
+         'default'.
+         
+         Valid range is 0-1.
+         
+         This object is only valid if QosCapabilitiesHasTagRemarking is true."
+    ::= { luxlQosConfigInterfaceEntry 11 }
+
+luxlQosConfigInterfaceDscpTranslate OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true then the classified DSCP value is the DSCP value in the packed
+         mapped to a new DSCP value defined in
+         qosConfigGlobalsDscpTable.IngressTranslation.
+         
+         This object is only valid if QosCapabilitiesHasDscp is true."
+    ::= { luxlQosConfigInterfaceEntry 12 }
+
+luxlQosConfigInterfaceDscpClassify OBJECT-TYPE
+    SYNTAX      LUXLQosDscpClassify
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If qosCapabilitiesHasDscpDplClassification is true: Selects if and how
+         the classified DSCP is based on the classified CoS and DPL for IPv4 and
+         IPv6 packets on ingress.
+         
+         If a packet is selected for being classified to a new DSCP, the
+         classification in based on the classified CoS mapped to a new DSCP
+         value through the qosConfigGlobalsCosToDscpTable. If the classified DPL
+         is 1, the new DSCP value is taken from the DscpDp1 entry, otherwise it
+         is taken from the Dscp entry. Valid values are:
+         
+         'none' : Always classify to the DSCP value in the received packet and
+         ignore the classified CoS and DPL.
+         
+         'zero' : If the DSCP value in the received packet is 0, then classify
+         to a new DSCP value based on the classified CoS and DPL.
+         
+         'selected' : If the DSCP value in the received packet is enabled in
+         qosConfigGlobalsDscpTable.Classify, then classify to a new DSCP value
+         based on the classified CoS and DPL.
+         
+         'all' : Always classify to a new DSCP value based on the classified CoS
+         and DPL.
+         
+         
+         
+         If qosCapabilitiesHasDscpDplClassification is false: Selects if and how
+         the classified DSCP is based on the classified CoS for IPv4 and IPv6
+         packets on ingress.
+         
+         If a packet is selected for being classified to a new DSCP, the
+         classification in based on the classified CoS mapped to a new DSCP
+         value through the qosConfigGlobalsCosToDscpTable.Dscp Valid values are:
+         
+         'none' : Always classify to the DSCP value in the received packet and
+         ignore the classified CoS.
+         
+         'zero' : If the DSCP value in the received packet is 0, then classify
+         to a new DSCP value based on the classified CoS.
+         
+         'selected' : If the DSCP value in the received packet is enabled in
+         qosConfigGlobalsDscpTable.Classify, then classify to a new DSCP value
+         based on the classified CoS.
+         
+         'all' : Always classify to a new DSCP value based on the classified
+         CoS.
+         
+         This object is only valid if QosCapabilitiesHasDscp is true."
+    ::= { luxlQosConfigInterfaceEntry 13 }
+
+luxlQosConfigInterfaceDscpRemark OBJECT-TYPE
+    SYNTAX      LUXLQosDscpRemark
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If qosCapabilitiesHasDscpDplRemarking is true: Selects if and how the
+         classified DSCP is written into the packet at egress. Valid values are:
+         
+         'disabled' : Do not write the classified DSCP into the packet.
+         
+         'rewrite' : Write the classified DSCP into the packet.
+         
+         'remap' : Remap the classified DSCP through qosConfigGlobalsDscpTable,
+         and write the value from EgressTranslation into the packet.
+         
+         'remap-dp' : Remap the classified DSCP through
+         qosConfigGlobalsDscpTable. If the classified DPL is 0 then write the
+         value from EgressTranslation into the packet, otherwise write the value
+         from EgressTranslationDp1 into the packet.
+         
+         If qosCapabilitiesHasDscpDplRemarking is false: Selects if and how the
+         classified DSCP is written into the packet at egress. Valid values are:
+         
+         'disabled' : Do not write the classified DSCP into the packet.
+         
+         'rewrite' : Write the classified DSCP into the packet.
+         
+         'remap' : Remap the classified DSCP through qosConfigGlobalsDscpTable,
+         and write the value from EgressTranslation into the packet.
+         
+         This object is only valid if QosCapabilitiesHasDscp is true."
+    ::= { luxlQosConfigInterfaceEntry 14 }
+
+luxlQosConfigInterfaceQceAddressMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If false, the QCE classification for this interface is based on source
+         (SMAC/SIP) addresses.
+         
+         If true, the QCE classification for this interface is based on
+         destination (DMAC/DIP) addresses.
+         
+         This parameter is only used when QosCapabilitiesHasQceKeyType is false
+         or QceKeyType is normal.
+         
+         This object is only valid if QosCapabilitiesHasQceAddressMode is true."
+    ::= { luxlQosConfigInterfaceEntry 15 }
+
+luxlQosConfigInterfaceQceKeyType OBJECT-TYPE
+    SYNTAX      LUXLVcapKeyType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The key type specifying the key generated for packets received on the
+         interface. Valid values are:
+         
+         'normal' : Half key, match outer tag, SIP and SMAC.
+         
+         'double-tag' : Quarter key, match inner and outer tag.
+         
+         'ip-addr' : Half key, match inner and outer tag, SIP and DIP. For
+         non-IP frames, match outer tag only.
+         
+         'mac-ip-addr' : Full key, match inner and outer tag, SMAC, DMAC, SIP
+         and DIP.
+         
+         Filtering on DMAC type (unicast/multicast/broadcast) is supported for
+         any key type.
+         
+         This object is only valid if QosCapabilitiesHasQceKeyType is true."
+    ::= { luxlQosConfigInterfaceEntry 16 }
+
+luxlQosConfigInterfaceWredGroup OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The WRED group an interface is a member of.
+         
+         This object is only valid if QosCapabilitiesHasWredV3 is true."
+    ::= { luxlQosConfigInterfaceEntry 17 }
+
+luxlQosConfigInterfaceTagToCosTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfaceTagToCosEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the mapping of (interface, PCP, DEI) to (CoS, DPL)
+         values.
+         
+         The mappings given by this table is used for all tagged packets
+         received on an interface if and only if that interface has the value of
+         TrustTag set to 'true'
+         
+         This is an optional table and is only present if
+         QosCapabilitiesHasFixedTagCosMap is false and
+         QosCapabilitiesHasTagClassification is true."
+    ::= { luxlQosConfigInterface 2 }
+
+luxlQosConfigInterfaceTagToCosEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfaceTagToCosEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the mapping from (interface, PCP, DEI) to (CoS, DPL)
+         values."
+    INDEX       { luxlQosConfigInterfaceTagToCosIfIndex, luxlQosConfigInterfaceTagToCosPcp, luxlQosConfigInterfaceTagToCosDei }
+    ::= { luxlQosConfigInterfaceTagToCosTable 1 }
+
+LUXLQosConfigInterfaceTagToCosEntry ::= SEQUENCE {
+    luxlQosConfigInterfaceTagToCosIfIndex   LUXLInterfaceIndex,
+    luxlQosConfigInterfaceTagToCosPcp   Integer32,
+    luxlQosConfigInterfaceTagToCosDei   Integer32,
+    luxlQosConfigInterfaceTagToCosCos   Unsigned32,
+    luxlQosConfigInterfaceTagToCosDpl   LUXLUnsigned8
+}
+
+luxlQosConfigInterfaceTagToCosIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfaceTagToCosEntry 1 }
+
+luxlQosConfigInterfaceTagToCosPcp OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "PCP index."
+    ::= { luxlQosConfigInterfaceTagToCosEntry 2 }
+
+luxlQosConfigInterfaceTagToCosDei OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "DEI index."
+    ::= { luxlQosConfigInterfaceTagToCosEntry 3 }
+
+luxlQosConfigInterfaceTagToCosCos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The CoS value which this entry maps to.
+         
+         Valid range is qosCapabilitiesClassMin-qosCapabilitiesClassMax."
+    ::= { luxlQosConfigInterfaceTagToCosEntry 4 }
+
+luxlQosConfigInterfaceTagToCosDpl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DPL (Drop Precedence Level) value which this entry maps to.
+         
+         Valid range is qosCapabilitiesDplMin-qosCapabilitiesDplMax."
+    ::= { luxlQosConfigInterfaceTagToCosEntry 5 }
+
+luxlQosConfigInterfaceCosToTagTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfaceCosToTagEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the mapping of (interface, CoS, DPL) to (PCP, DEI)
+         values.
+         
+         The mappings given by this table is used for packets transmitted on an
+         interface if and only if that interface has the value of
+         TagRemarkingMode set to 'mapped'
+         
+         This is an optional table and is only present if
+         QosCapabilitiesHasTagRemarking is true."
+    ::= { luxlQosConfigInterface 3 }
+
+luxlQosConfigInterfaceCosToTagEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfaceCosToTagEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the mapping from (interface, CoS, DPL) to (PCP, DEI)
+         values."
+    INDEX       { luxlQosConfigInterfaceCosToTagIfIndex, luxlQosConfigInterfaceCosToTagCos, luxlQosConfigInterfaceCosToTagDpl }
+    ::= { luxlQosConfigInterfaceCosToTagTable 1 }
+
+LUXLQosConfigInterfaceCosToTagEntry ::= SEQUENCE {
+    luxlQosConfigInterfaceCosToTagIfIndex   LUXLInterfaceIndex,
+    luxlQosConfigInterfaceCosToTagCos   Integer32,
+    luxlQosConfigInterfaceCosToTagDpl   Integer32,
+    luxlQosConfigInterfaceCosToTagPcp   Unsigned32,
+    luxlQosConfigInterfaceCosToTagDei   LUXLUnsigned8
+}
+
+luxlQosConfigInterfaceCosToTagIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfaceCosToTagEntry 1 }
+
+luxlQosConfigInterfaceCosToTagCos OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "CoS index."
+    ::= { luxlQosConfigInterfaceCosToTagEntry 2 }
+
+luxlQosConfigInterfaceCosToTagDpl OBJECT-TYPE
+    SYNTAX      Integer32 (0..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "DPL index."
+    ::= { luxlQosConfigInterfaceCosToTagEntry 3 }
+
+luxlQosConfigInterfaceCosToTagPcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value which this entry maps to.
+         
+         Valid range is 0-7."
+    ::= { luxlQosConfigInterfaceCosToTagEntry 4 }
+
+luxlQosConfigInterfaceCosToTagDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value which this entry maps to.
+         
+         Valid range is 0-1."
+    ::= { luxlQosConfigInterfaceCosToTagEntry 5 }
+
+luxlQosConfigInterfacePolicerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfacePolicerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides policer configuration for an interface"
+    ::= { luxlQosConfigInterface 4 }
+
+luxlQosConfigInterfacePolicerEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfacePolicerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific policer"
+    INDEX       { luxlQosConfigInterfacePolicerIfIndex }
+    ::= { luxlQosConfigInterfacePolicerTable 1 }
+
+LUXLQosConfigInterfacePolicerEntry ::= SEQUENCE {
+    luxlQosConfigInterfacePolicerIfIndex    LUXLInterfaceIndex,
+    luxlQosConfigInterfacePolicerEnable     TruthValue,
+    luxlQosConfigInterfacePolicerFrameRate      TruthValue,
+    luxlQosConfigInterfacePolicerFlowControl    TruthValue,
+    luxlQosConfigInterfacePolicerCir    Unsigned32
+}
+
+luxlQosConfigInterfacePolicerIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfacePolicerEntry 1 }
+
+luxlQosConfigInterfacePolicerEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the port policer is enabled."
+    ::= { luxlQosConfigInterfacePolicerEntry 2 }
+
+luxlQosConfigInterfacePolicerFrameRate OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the rate is measured in fps instead of kbps."
+    ::= { luxlQosConfigInterfacePolicerEntry 3 }
+
+luxlQosConfigInterfacePolicerFlowControl OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, and flow control is enabled on the interface, then issue flow
+         control pause frames instead of discarding frames.
+         
+         This object is only valid if QosCapabilitiesHasPortPolicersFc is true."
+    ::= { luxlQosConfigInterfacePolicerEntry 4 }
+
+luxlQosConfigInterfacePolicerCir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Committed Information Rate. Measured in kbps if FrameRate is false and
+         fps if FrameRate is true.
+         
+         Valid range is qosCapabilitiesBitrateMin-qosCapabilitiesBitrateMax"
+    ::= { luxlQosConfigInterfacePolicerEntry 5 }
+
+luxlQosConfigInterfaceQueuePolicerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfaceQueuePolicerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides queue policer configuration for interfaces
+         
+         This is an optional table and is only present if
+         QosCapabilitiesHasPortQueuePolicers is true."
+    ::= { luxlQosConfigInterface 5 }
+
+luxlQosConfigInterfaceQueuePolicerEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfaceQueuePolicerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific queue policer"
+    INDEX       { luxlQosConfigInterfaceQueuePolicerIfIndex, luxlQosConfigInterfaceQueuePolicerQueue }
+    ::= { luxlQosConfigInterfaceQueuePolicerTable 1 }
+
+LUXLQosConfigInterfaceQueuePolicerEntry ::= SEQUENCE {
+    luxlQosConfigInterfaceQueuePolicerIfIndex   LUXLInterfaceIndex,
+    luxlQosConfigInterfaceQueuePolicerQueue     Integer32,
+    luxlQosConfigInterfaceQueuePolicerEnable    TruthValue,
+    luxlQosConfigInterfaceQueuePolicerCir   Unsigned32
+}
+
+luxlQosConfigInterfaceQueuePolicerIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfaceQueuePolicerEntry 1 }
+
+luxlQosConfigInterfaceQueuePolicerQueue OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Queue index."
+    ::= { luxlQosConfigInterfaceQueuePolicerEntry 2 }
+
+luxlQosConfigInterfaceQueuePolicerEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the queue policer is enabled."
+    ::= { luxlQosConfigInterfaceQueuePolicerEntry 3 }
+
+luxlQosConfigInterfaceQueuePolicerCir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Committed Information Rate. Measured in kbps.
+         
+         Valid range is qosCapabilitiesBitrateMin-qosCapabilitiesBitrateMax"
+    ::= { luxlQosConfigInterfaceQueuePolicerEntry 6 }
+
+luxlQosConfigInterfaceShaperTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfaceShaperEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides shaper configuration for an interface"
+    ::= { luxlQosConfigInterface 6 }
+
+luxlQosConfigInterfaceShaperEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfaceShaperEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific shaper"
+    INDEX       { luxlQosConfigInterfaceShaperIfIndex }
+    ::= { luxlQosConfigInterfaceShaperTable 1 }
+
+LUXLQosConfigInterfaceShaperEntry ::= SEQUENCE {
+    luxlQosConfigInterfaceShaperIfIndex     LUXLInterfaceIndex,
+    luxlQosConfigInterfaceShaperEnable      TruthValue,
+    luxlQosConfigInterfaceShaperCir     Unsigned32
+}
+
+luxlQosConfigInterfaceShaperIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfaceShaperEntry 1 }
+
+luxlQosConfigInterfaceShaperEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the port shaper is enabled."
+    ::= { luxlQosConfigInterfaceShaperEntry 2 }
+
+luxlQosConfigInterfaceShaperCir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Committed Information Rate. Measured in kbps.
+         
+         Valid range is qosCapabilitiesBitrateMin-qosCapabilitiesBitrateMax"
+    ::= { luxlQosConfigInterfaceShaperEntry 3 }
+
+luxlQosConfigInterfaceQueueShaperTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfaceQueueShaperEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides queue shaper configuration for interfaces"
+    ::= { luxlQosConfigInterface 7 }
+
+luxlQosConfigInterfaceQueueShaperEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfaceQueueShaperEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific queue shaper"
+    INDEX       { luxlQosConfigInterfaceQueueShaperIfIndex, luxlQosConfigInterfaceQueueShaperQueue }
+    ::= { luxlQosConfigInterfaceQueueShaperTable 1 }
+
+LUXLQosConfigInterfaceQueueShaperEntry ::= SEQUENCE {
+    luxlQosConfigInterfaceQueueShaperIfIndex    LUXLInterfaceIndex,
+    luxlQosConfigInterfaceQueueShaperQueue      Integer32,
+    luxlQosConfigInterfaceQueueShaperEnable     TruthValue,
+    luxlQosConfigInterfaceQueueShaperExcess     TruthValue,
+    luxlQosConfigInterfaceQueueShaperCir    Unsigned32
+}
+
+luxlQosConfigInterfaceQueueShaperIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfaceQueueShaperEntry 1 }
+
+luxlQosConfigInterfaceQueueShaperQueue OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Queue index."
+    ::= { luxlQosConfigInterfaceQueueShaperEntry 2 }
+
+luxlQosConfigInterfaceQueueShaperEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the queue shaper is enabled."
+    ::= { luxlQosConfigInterfaceQueueShaperEntry 3 }
+
+luxlQosConfigInterfaceQueueShaperExcess OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, then allow this queue to get a share of the excess bandwidth.
+         
+         Excess bandwidth is allowed if this shaper is closed and no other
+         queues with open shapers have frames for transmission.
+         
+         This object is only valid if QosCapabilitiesHasQueueShapersExcess is
+         true."
+    ::= { luxlQosConfigInterfaceQueueShaperEntry 4 }
+
+luxlQosConfigInterfaceQueueShaperCir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Committed Information Rate. Measured in kbps.
+         
+         Valid range is qosCapabilitiesBitrateMin-qosCapabilitiesBitrateMax"
+    ::= { luxlQosConfigInterfaceQueueShaperEntry 5 }
+
+luxlQosConfigInterfaceSchedulerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfaceSchedulerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the mapping of (interface, queue) to weight values.
+         
+         The mappings given by this table is used when an interface has the
+         value of DwrrCount greater than 0.
+         
+         Read the qosSchedulerStatusTable in order to get the 'real' weights in
+         percent as used by the hardware."
+    ::= { luxlQosConfigInterface 8 }
+
+luxlQosConfigInterfaceSchedulerEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfaceSchedulerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the scheduler configuration for a specific queue."
+    INDEX       { luxlQosConfigInterfaceSchedulerIfIndex, luxlQosConfigInterfaceSchedulerQueue }
+    ::= { luxlQosConfigInterfaceSchedulerTable 1 }
+
+LUXLQosConfigInterfaceSchedulerEntry ::= SEQUENCE {
+    luxlQosConfigInterfaceSchedulerIfIndex      LUXLInterfaceIndex,
+    luxlQosConfigInterfaceSchedulerQueue    Integer32,
+    luxlQosConfigInterfaceSchedulerWeight   LUXLPercent
+}
+
+luxlQosConfigInterfaceSchedulerIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfaceSchedulerEntry 1 }
+
+luxlQosConfigInterfaceSchedulerQueue OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Queue index."
+    ::= { luxlQosConfigInterfaceSchedulerEntry 2 }
+
+luxlQosConfigInterfaceSchedulerWeight OBJECT-TYPE
+    SYNTAX      LUXLPercent
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The weight for this queue.
+         
+         Valid range is 1-100."
+    ::= { luxlQosConfigInterfaceSchedulerEntry 3 }
+
+luxlQosConfigInterfaceStormPolicerUnicastTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfaceStormPolicerUnicastEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides storm policer configuration for unicast packets
+         received on an interface
+         
+         This is an optional table and is only present if
+         QosCapabilitiesHasPortStormPolicers is true."
+    ::= { luxlQosConfigInterface 9 }
+
+luxlQosConfigInterfaceStormPolicerUnicastEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfaceStormPolicerUnicastEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific storm policer"
+    INDEX       { luxlQosConfigInterfaceStormPolicerUnicastIfIndex }
+    ::= { luxlQosConfigInterfaceStormPolicerUnicastTable 1 }
+
+LUXLQosConfigInterfaceStormPolicerUnicastEntry ::= SEQUENCE {
+    luxlQosConfigInterfaceStormPolicerUnicastIfIndex    LUXLInterfaceIndex,
+    luxlQosConfigInterfaceStormPolicerUnicastEnable     TruthValue,
+    luxlQosConfigInterfaceStormPolicerUnicastFrameRate      TruthValue,
+    luxlQosConfigInterfaceStormPolicerUnicastCir    Unsigned32
+}
+
+luxlQosConfigInterfaceStormPolicerUnicastIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfaceStormPolicerUnicastEntry 1 }
+
+luxlQosConfigInterfaceStormPolicerUnicastEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the storm policer is enabled.
+         
+         This object is only valid if QosCapabilitiesHasPortStormPolicers is
+         true."
+    ::= { luxlQosConfigInterfaceStormPolicerUnicastEntry 2 }
+
+luxlQosConfigInterfaceStormPolicerUnicastFrameRate OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the rate is measured in fps instead of kbps.
+         
+         This object is only valid if QosCapabilitiesHasPortStormPolicers is
+         true."
+    ::= { luxlQosConfigInterfaceStormPolicerUnicastEntry 3 }
+
+luxlQosConfigInterfaceStormPolicerUnicastCir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Committed Information Rate. Measured in kbps if FrameRate is false and
+         fps if FrameRate is true.
+         
+         Valid range is qosCapabilitiesBitrateMin-qosCapabilitiesBitrateMax.
+         
+         This object is only valid if QosCapabilitiesHasPortStormPolicers is
+         true."
+    ::= { luxlQosConfigInterfaceStormPolicerUnicastEntry 4 }
+
+luxlQosConfigInterfaceStormPolicerBroadcastTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfaceStormPolicerBroadcastEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides storm policer configuration for broadcast packets
+         received on an interface
+         
+         This is an optional table and is only present if
+         QosCapabilitiesHasPortStormPolicers is true."
+    ::= { luxlQosConfigInterface 10 }
+
+luxlQosConfigInterfaceStormPolicerBroadcastEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfaceStormPolicerBroadcastEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific storm policer"
+    INDEX       { luxlQosConfigInterfaceStormPolicerBroadcastIfIndex }
+    ::= { luxlQosConfigInterfaceStormPolicerBroadcastTable 1 }
+
+LUXLQosConfigInterfaceStormPolicerBroadcastEntry ::= SEQUENCE {
+    luxlQosConfigInterfaceStormPolicerBroadcastIfIndex      LUXLInterfaceIndex,
+    luxlQosConfigInterfaceStormPolicerBroadcastEnable   TruthValue,
+    luxlQosConfigInterfaceStormPolicerBroadcastFrameRate    TruthValue,
+    luxlQosConfigInterfaceStormPolicerBroadcastCir      Unsigned32
+}
+
+luxlQosConfigInterfaceStormPolicerBroadcastIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfaceStormPolicerBroadcastEntry 1 }
+
+luxlQosConfigInterfaceStormPolicerBroadcastEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the storm policer is enabled.
+         
+         This object is only valid if QosCapabilitiesHasPortStormPolicers is
+         true."
+    ::= { luxlQosConfigInterfaceStormPolicerBroadcastEntry 2 }
+
+luxlQosConfigInterfaceStormPolicerBroadcastFrameRate OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the rate is measured in fps instead of kbps.
+         
+         This object is only valid if QosCapabilitiesHasPortStormPolicers is
+         true."
+    ::= { luxlQosConfigInterfaceStormPolicerBroadcastEntry 3 }
+
+luxlQosConfigInterfaceStormPolicerBroadcastCir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Committed Information Rate. Measured in kbps if FrameRate is false and
+         fps if FrameRate is true.
+         
+         Valid range is qosCapabilitiesBitrateMin-qosCapabilitiesBitrateMax.
+         
+         This object is only valid if QosCapabilitiesHasPortStormPolicers is
+         true."
+    ::= { luxlQosConfigInterfaceStormPolicerBroadcastEntry 4 }
+
+luxlQosConfigInterfaceStormPolicerUnknownTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigInterfaceStormPolicerUnknownEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides storm policer configuration for unknown (flooded)
+         packets received on an interface
+         
+         This is an optional table and is only present if
+         QosCapabilitiesHasPortStormPolicers is true."
+    ::= { luxlQosConfigInterface 11 }
+
+luxlQosConfigInterfaceStormPolicerUnknownEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigInterfaceStormPolicerUnknownEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a specific storm policer"
+    INDEX       { luxlQosConfigInterfaceStormPolicerUnknownIfIndex }
+    ::= { luxlQosConfigInterfaceStormPolicerUnknownTable 1 }
+
+LUXLQosConfigInterfaceStormPolicerUnknownEntry ::= SEQUENCE {
+    luxlQosConfigInterfaceStormPolicerUnknownIfIndex    LUXLInterfaceIndex,
+    luxlQosConfigInterfaceStormPolicerUnknownEnable     TruthValue,
+    luxlQosConfigInterfaceStormPolicerUnknownFrameRate      TruthValue,
+    luxlQosConfigInterfaceStormPolicerUnknownCir    Unsigned32
+}
+
+luxlQosConfigInterfaceStormPolicerUnknownIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosConfigInterfaceStormPolicerUnknownEntry 1 }
+
+luxlQosConfigInterfaceStormPolicerUnknownEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the storm policer is enabled.
+         
+         This object is only valid if QosCapabilitiesHasPortStormPolicers is
+         true."
+    ::= { luxlQosConfigInterfaceStormPolicerUnknownEntry 2 }
+
+luxlQosConfigInterfaceStormPolicerUnknownFrameRate OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the rate is measured in fps instead of kbps.
+         
+         This object is only valid if QosCapabilitiesHasPortStormPolicers is
+         true."
+    ::= { luxlQosConfigInterfaceStormPolicerUnknownEntry 3 }
+
+luxlQosConfigInterfaceStormPolicerUnknownCir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Committed Information Rate. Measured in kbps if FrameRate is false and
+         fps if FrameRate is true.
+         
+         Valid range is qosCapabilitiesBitrateMin-qosCapabilitiesBitrateMax.
+         
+         This object is only valid if QosCapabilitiesHasPortStormPolicers is
+         true."
+    ::= { luxlQosConfigInterfaceStormPolicerUnknownEntry 4 }
+
+luxlQosConfigQce OBJECT IDENTIFIER
+    ::= { luxlQosConfig 3 }
+
+luxlQosConfigQceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigQceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the configuration of QCEs. The index is QceId.
+         
+         This is an optional table and is only present if qosCapabilitiesHasQce
+         is true."
+    ::= { luxlQosConfigQce 1 }
+
+luxlQosConfigQceEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigQceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration of a single QCE."
+    INDEX       { luxlQosConfigQceQceId }
+    ::= { luxlQosConfigQceTable 1 }
+
+LUXLQosConfigQceEntry ::= SEQUENCE {
+    luxlQosConfigQceQceId   Integer32,
+    luxlQosConfigQceNextQceId   Unsigned32,
+    luxlQosConfigQceSwitchId    Unsigned32,
+    luxlQosConfigQcePortList    LUXLPortList,
+    luxlQosConfigQceDestMacType     LUXLDestMacType,
+    luxlQosConfigQceDestMac     MacAddress,
+    luxlQosConfigQceDestMacMask     MacAddress,
+    luxlQosConfigQceSrcMac      MacAddress,
+    luxlQosConfigQceSrcMacMask      MacAddress,
+    luxlQosConfigQceVlanTagType     LUXLVlanTagType,
+    luxlQosConfigQceVlanIdOp    LUXLASRType,
+    luxlQosConfigQceVlanId      LUXLUnsigned16,
+    luxlQosConfigQceVlanIdRange     LUXLUnsigned16,
+    luxlQosConfigQcePcp     LUXLVlanTagPriority,
+    luxlQosConfigQceDei     LUXLBitType,
+    luxlQosConfigQceInnerVlanTagType    LUXLVlanTagType,
+    luxlQosConfigQceInnerVlanIdOp   LUXLASRType,
+    luxlQosConfigQceInnerVlanId     LUXLUnsigned16,
+    luxlQosConfigQceInnerVlanIdRange    LUXLUnsigned16,
+    luxlQosConfigQceInnerPcp    LUXLVlanTagPriority,
+    luxlQosConfigQceInnerDei    LUXLBitType,
+    luxlQosConfigQceFrameType   LUXLQosQceFrameType,
+    luxlQosConfigQceEtype   LUXLEtherType,
+    luxlQosConfigQceLlcDsap     LUXLUnsigned8,
+    luxlQosConfigQceLlcDsapMask     LUXLUnsigned8,
+    luxlQosConfigQceLlcSsap     LUXLUnsigned8,
+    luxlQosConfigQceLlcSsapMask     LUXLUnsigned8,
+    luxlQosConfigQceLlcControl      LUXLUnsigned8,
+    luxlQosConfigQceLlcControlMask      LUXLUnsigned8,
+    luxlQosConfigQceSnapPid     LUXLUnsigned16,
+    luxlQosConfigQceSnapPidMask     LUXLUnsigned16,
+    luxlQosConfigQceIpv4Fragment    LUXLBitType,
+    luxlQosConfigQceIpv4DscpOp      LUXLASRType,
+    luxlQosConfigQceIpv4Dscp    LUXLUnsigned16,
+    luxlQosConfigQceIpv4DscpRange   LUXLUnsigned16,
+    luxlQosConfigQceIpv4Protocol    LUXLUnsigned8,
+    luxlQosConfigQceIpv4ProtocolMask    LUXLUnsigned8,
+    luxlQosConfigQceIpv4SrcIp   IpAddress,
+    luxlQosConfigQceIpv4SrcIpMask   IpAddress,
+    luxlQosConfigQceIpv4DestIp      IpAddress,
+    luxlQosConfigQceIpv4DestIpMask      IpAddress,
+    luxlQosConfigQceIpv4SrcPortOp   LUXLASRType,
+    luxlQosConfigQceIpv4SrcPort     LUXLUnsigned16,
+    luxlQosConfigQceIpv4SrcPortRange    LUXLUnsigned16,
+    luxlQosConfigQceIpv4DestPortOp      LUXLASRType,
+    luxlQosConfigQceIpv4DestPort    LUXLUnsigned16,
+    luxlQosConfigQceIpv4DestPortRange   LUXLUnsigned16,
+    luxlQosConfigQceIpv6DscpOp      LUXLASRType,
+    luxlQosConfigQceIpv6Dscp    LUXLUnsigned16,
+    luxlQosConfigQceIpv6DscpRange   LUXLUnsigned16,
+    luxlQosConfigQceIpv6Protocol    LUXLUnsigned8,
+    luxlQosConfigQceIpv6ProtocolMask    LUXLUnsigned8,
+    luxlQosConfigQceIpv6SrcIp   InetAddressIPv6,
+    luxlQosConfigQceIpv6SrcIpMask   InetAddressIPv6,
+    luxlQosConfigQceIpv6DestIp      InetAddressIPv6,
+    luxlQosConfigQceIpv6DestIpMask      InetAddressIPv6,
+    luxlQosConfigQceIpv6SrcPortOp   LUXLASRType,
+    luxlQosConfigQceIpv6SrcPort     LUXLUnsigned16,
+    luxlQosConfigQceIpv6SrcPortRange    LUXLUnsigned16,
+    luxlQosConfigQceIpv6DestPortOp      LUXLASRType,
+    luxlQosConfigQceIpv6DestPort    LUXLUnsigned16,
+    luxlQosConfigQceIpv6DestPortRange   LUXLUnsigned16,
+    luxlQosConfigQceActionCosEnable     TruthValue,
+    luxlQosConfigQceActionCos   Unsigned32,
+    luxlQosConfigQceActionDplEnable     TruthValue,
+    luxlQosConfigQceActionDpl   LUXLUnsigned8,
+    luxlQosConfigQceActionDscpEnable    TruthValue,
+    luxlQosConfigQceActionDscp      LUXLUnsigned8,
+    luxlQosConfigQceActionPcpDeiEnable      TruthValue,
+    luxlQosConfigQceActionPcp   Unsigned32,
+    luxlQosConfigQceActionDei   LUXLUnsigned8,
+    luxlQosConfigQceActionPolicyEnable      TruthValue,
+    luxlQosConfigQceActionPolicy    Unsigned32,
+    luxlQosConfigQceAction      LUXLRowEditorState
+}
+
+luxlQosConfigQceQceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "QCE Id.
+         
+         Valid range is qosCapabilitiesQceIdMin-qosCapabilitiesQceIdMax or 0.
+         
+         Using a value of 0 when adding a new QCE, will assign the QCE Id in the
+         new QCE to the first unused QCE Id."
+    ::= { luxlQosConfigQceEntry 1 }
+
+luxlQosConfigQceNextQceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "QCE Id of the next QCE. Valid range is
+         qosCapabilitiesQceIdMin-qosCapabilitiesQceIdMax or 0.
+         
+         The value 0, denotes the end of the list."
+    ::= { luxlQosConfigQceEntry 2 }
+
+luxlQosConfigQceSwitchId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the switch on which this QCE is active.Valid range is
+         documented in the Stacking MIB.
+         
+         This object is only valid on stacking platforms."
+    ::= { luxlQosConfigQceEntry 3 }
+
+luxlQosConfigQcePortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of ports that are member of this QCE."
+    ::= { luxlQosConfigQceEntry 4 }
+
+luxlQosConfigQceDestMacType OBJECT-TYPE
+    SYNTAX      LUXLDestMacType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the destination MAC type to match."
+    ::= { luxlQosConfigQceEntry 5 }
+
+luxlQosConfigQceDestMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits destination MAC address.
+         
+         The packets destination address is AND-ed with the value of DestMacMask
+         and then compared against the value of this object.
+         
+         If this object value and the value of DestMacMask is 00-00-00-00-00-00,
+         this entry matches any destination MAC address.
+         
+         This object can only be configured if DestMacType is any(0) and
+         DestMacMask is ff-ff-ff-ff-ff-ff.
+         
+         This object is only valid if QosCapabilitiesHasQceDmac is true."
+    ::= { luxlQosConfigQceEntry 6 }
+
+luxlQosConfigQceDestMacMask OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits destination MAC address mask.
+         
+         Valid values are 00-00-00-00-00-00 or ff-ff-ff-ff-ff-ff.
+         
+         This object is only valid if QosCapabilitiesHasQceDmac is true."
+    ::= { luxlQosConfigQceEntry 7 }
+
+luxlQosConfigQceSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits source MAC address.
+         
+         The packets source address is AND-ed with the value of SrcMacMask and
+         then compared against the value of this object.
+         
+         If this object value and the value of SrcMacMask is 00-00-00-00-00-00,
+         this entry matches any source MAC address.
+         
+         This object can only be configured if SrcMacMask is ff-ff-ff-ff-ff-ff.
+         
+         If the value of qosCapabilitiesHasQceMacOui is true then only the OUI
+         part of the MAC address (24 most significant bits) is used."
+    ::= { luxlQosConfigQceEntry 8 }
+
+luxlQosConfigQceSrcMacMask OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits source MAC address mask.
+         
+         Valid values are 00-00-00-00-00-00 or ff-ff-ff-ff-ff-ff."
+    ::= { luxlQosConfigQceEntry 9 }
+
+luxlQosConfigQceVlanTagType OBJECT-TYPE
+    SYNTAX      LUXLVlanTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the VLAN tag type to match.
+         
+         The value cTagged(3) is only supported if qosCapabilitiesHasCTag is
+         true.
+         
+         The value sTagged(3) is only supported if qosCapabilitiesHasSTag is
+         true."
+    ::= { luxlQosConfigQceEntry 10 }
+
+luxlQosConfigQceVlanIdOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packets's VLAN ID is to be compared."
+    ::= { luxlQosConfigQceEntry 11 }
+
+luxlQosConfigQceVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID to be compared.
+         
+         If the VlanIdOp object in the same row is range(2), this object will be
+         the starting VLAN ID of the range.
+         
+         Valid range is vlanCapabilitiesVlanIdMin-vlanCapabilitiesVlanIdMax.
+         
+         This object can only be configured if VlanIdOp is not any(0)."
+    ::= { luxlQosConfigQceEntry 12 }
+
+luxlQosConfigQceVlanIdRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID to be compared.
+         
+         If the VlanIdOp object in the same row is range(2), this object will be
+         the ending VLAN ID of the range.
+         
+         Valid range is vlanCapabilitiesVlanIdMin-vlanCapabilitiesVlanIdMax.
+         
+         This object can only be configured if VlanIdOp is range(2)."
+    ::= { luxlQosConfigQceEntry 13 }
+
+luxlQosConfigQcePcp OBJECT-TYPE
+    SYNTAX      LUXLVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value(s) to be compared."
+    ::= { luxlQosConfigQceEntry 14 }
+
+luxlQosConfigQceDei OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value to be compared.
+         
+         Valid range is 0-1."
+    ::= { luxlQosConfigQceEntry 15 }
+
+luxlQosConfigQceInnerVlanTagType OBJECT-TYPE
+    SYNTAX      LUXLVlanTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the inner VLAN tag type to match.
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceEntry 16 }
+
+luxlQosConfigQceInnerVlanIdOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packets's inner VLAN ID is to be compared.
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceEntry 17 }
+
+luxlQosConfigQceInnerVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner VLAN ID to be compared.
+         
+         If the InnerVlanIdOp object in the same row is range(2), this object
+         will be the starting VLAN ID of the range.
+         
+         Valid range is vlanCapabilitiesVlanIdMin-vlanCapabilitiesVlanIdMax.
+         
+         This object can only be configured if InnerVlanIdOp is not any(0).
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceEntry 18 }
+
+luxlQosConfigQceInnerVlanIdRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner VLAN ID to be compared.
+         
+         If the InnerVlanIdOp object in the same row is range(2), this object
+         will be the ending VLAN ID of the range.
+         
+         Valid range is vlanCapabilitiesVlanIdMin-vlanCapabilitiesVlanIdMax.
+         
+         This object can only be configured if InnerVlanIdOp is range(2).
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceEntry 19 }
+
+luxlQosConfigQceInnerPcp OBJECT-TYPE
+    SYNTAX      LUXLVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner PCP value(s) to be compared.
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceEntry 20 }
+
+luxlQosConfigQceInnerDei OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner DEI value to be compared.
+         
+         Valid range is 0-1.
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceEntry 21 }
+
+luxlQosConfigQceFrameType OBJECT-TYPE
+    SYNTAX      LUXLQosQceFrameType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packet's frame type.
+         
+         Modifying the frame type on an existing QCE will restore the content of
+         all frame type dependent configuration to default."
+    ::= { luxlQosConfigQceEntry 100 }
+
+luxlQosConfigQceEtype OBJECT-TYPE
+    SYNTAX      LUXLEtherType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packet's 16 bit Ethernet type field.
+         
+         Valid values are: 0(match any), 0x600-0xFFFF but excluding 0x800(IPv4)
+         and 0x86DD(IPv6).
+         
+         This object can only be configured if FrameType is etype(1)."
+    ::= { luxlQosConfigQceEntry 101 }
+
+luxlQosConfigQceLlcDsap OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packets's 8 bit LLC DSAP field.
+         
+         The packets LLC DSAP field is AND-ed with the value of LlcDsapMask and
+         then compared against the value of this object.
+         
+         If this object value and the value of LlcDsapMask is 0x00, this entry
+         matches any LLC DSAP.
+         
+         Valid range is 0x00-0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceEntry 200 }
+
+luxlQosConfigQceLlcDsapMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 8 bit LLC DSAP mask.
+         
+         Valid values are 0x00 or 0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceEntry 201 }
+
+luxlQosConfigQceLlcSsap OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packets's 8 bit LLC SSAP field.
+         
+         The packets LLC SSAP field is AND-ed with the value of LlcSsapMask and
+         then compared against the value of this object.
+         
+         If this object value and the value of LlcSsapMask is 0x00, this entry
+         matches any LLC SSAP.
+         
+         Valid range is 0x00-0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceEntry 202 }
+
+luxlQosConfigQceLlcSsapMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 8 bit LLC SSAP mask.
+         
+         Valid values are 0x00 or 0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceEntry 203 }
+
+luxlQosConfigQceLlcControl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packets's 8 bit LLC Control field.
+         
+         The packets LLC Control field is AND-ed with the value of
+         LlcControlMask and then compared against the value of this object.
+         
+         If this object value and the value of LlcControlMask is 0x00, this
+         entry matches any LLC Control.
+         
+         Valid range is 0x00-0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceEntry 204 }
+
+luxlQosConfigQceLlcControlMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 8 bit LLC Control mask.
+         
+         Valid values are 0x00 or 0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceEntry 205 }
+
+luxlQosConfigQceSnapPid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packet's 16 bit SNAP PID field.
+         
+         The packets SNAP PID field is AND-ed with the value of SnapPidMask and
+         then compared against the value of this object.
+         
+         If this object value and the value of SnapPidMask is 0x0000, this entry
+         matches any ethertype.
+         
+         This object can only be configured if FrameType is snap(3)."
+    ::= { luxlQosConfigQceEntry 302 }
+
+luxlQosConfigQceSnapPidMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 16 bit SNAP PID mask.
+         
+         Valid values are 0x0000 or 0xFFFF.
+         
+         This object can only be configured if FrameType is snap(3)."
+    ::= { luxlQosConfigQceEntry 303 }
+
+luxlQosConfigQceIpv4Fragment OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how an IPv4 fragment bit is to be compared.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceEntry 400 }
+
+luxlQosConfigQceIpv4DscpOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how an IPv4 DSCP field is to be compared.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceEntry 401 }
+
+luxlQosConfigQceIpv4Dscp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value to be compared.
+         
+         If the Ipv4DscpOp object in the same row is range(2), this object will
+         be the starting DSCP value of the range.
+         
+         Valid range is 0-63.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4DscpOp is not any(0)."
+    ::= { luxlQosConfigQceEntry 402 }
+
+luxlQosConfigQceIpv4DscpRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value to be compared.
+         
+         If the Ipv4DscpOp object in the same row is range(2), this object will
+         be the ending DSCP value of the range.
+         
+         Valid range is 0-63.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4DscpOp is range(2)."
+    ::= { luxlQosConfigQceEntry 403 }
+
+luxlQosConfigQceIpv4Protocol OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protocol number field in the IPv4 header used to indicate a higher
+         layer protocol.
+         
+         The packets protocol number field is AND-ed with the value of
+         Ipv4ProtocolMask and then compared with the value of this object.
+         
+         If Ipv4Protocol and Ipv4protocolMask are 0, this entry matches any IPv4
+         protocol.
+         
+         Valid range is 0-255.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceEntry 404 }
+
+luxlQosConfigQceIpv4ProtocolMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv4 protocol number mask.
+         
+         Valid values are 0 or 255.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceEntry 405 }
+
+luxlQosConfigQceIpv4SrcIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv4 source address.
+         
+         The packets source address is AND-ed with the value of Ipv4SrcIpMask
+         and then compared with the value of this object.
+         
+         If Ipv4SrcIP and Ipv4SrcIpMask are 0.0.0.0, this entry matches any IPv4
+         source address.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceEntry 406 }
+
+luxlQosConfigQceIpv4SrcIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv4 source address mask.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceEntry 407 }
+
+luxlQosConfigQceIpv4DestIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv4 destination address.
+         
+         The packets destination address is AND-ed with the value of
+         Ipv4DestIpMask and then compared with the value of this object.
+         
+         If Ipv4DestIP and Ipv4DestIpMask are 0.0.0.0, this entry matches any
+         IPv4 destination address.
+         
+         This object can only be configured if FrameType is ipv4(4).
+         
+         This object is only valid if QosCapabilitiesHasQceDip is true."
+    ::= { luxlQosConfigQceEntry 408 }
+
+luxlQosConfigQceIpv4DestIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv4 destination address mask.
+         
+         This object can only be configured if FrameType is ipv4(4).
+         
+         This object is only valid if QosCapabilitiesHasQceDip is true."
+    ::= { luxlQosConfigQceEntry 409 }
+
+luxlQosConfigQceIpv4SrcPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceEntry 410 }
+
+luxlQosConfigQceIpv4SrcPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv4SrcPortOp object in the same row is range(2), this object
+         will be the starting port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4SrcPortOp is not any(0)."
+    ::= { luxlQosConfigQceEntry 411 }
+
+luxlQosConfigQceIpv4SrcPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv4SrcPortOp object in the same row is range(2), this object
+         will be the ending port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4SrcPortOp is range(2)."
+    ::= { luxlQosConfigQceEntry 412 }
+
+luxlQosConfigQceIpv4DestPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceEntry 413 }
+
+luxlQosConfigQceIpv4DestPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol.
+         
+         If the Ipv4DestPortOp object in the same row is range(2), this object
+         will be the starting port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4DestPortOp is not any(0)."
+    ::= { luxlQosConfigQceEntry 414 }
+
+luxlQosConfigQceIpv4DestPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv4DestPortOp object in the same row is range(2), this object
+         will be the ending port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4DestPortOp is range(2)."
+    ::= { luxlQosConfigQceEntry 415 }
+
+luxlQosConfigQceIpv6DscpOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how an IPv6 DSCP field is to be compared.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceEntry 500 }
+
+luxlQosConfigQceIpv6Dscp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value to be compared.
+         
+         If the Ipv6DscpOp object in the same row is range(2), this object will
+         be the starting DSCP value of the range.
+         
+         Valid range is 0-63.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6DscpOp is not any(0)."
+    ::= { luxlQosConfigQceEntry 501 }
+
+luxlQosConfigQceIpv6DscpRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value to be compared.
+         
+         If the Ipv6DscpOp object in the same row is range(2), this object will
+         be the ending DSCP value of the range.
+         
+         Valid range is 0-63.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6DscpOp is range(2)."
+    ::= { luxlQosConfigQceEntry 502 }
+
+luxlQosConfigQceIpv6Protocol OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protocol number field in the IPv6 header used to indicate a higher
+         layer protocol.
+         
+         The packets protocol number field is AND-ed with the value of
+         Ipv6ProtocolMask and then compared with the value of this object.
+         
+         If Ipv46rotocol and Ipv6protocolMask are 0, this entry matches any IPv6
+         protocol.
+         
+         Valid range is 0-255.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceEntry 503 }
+
+luxlQosConfigQceIpv6ProtocolMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv6 protocol number mask.
+         
+         Valid values are 0 or 255.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceEntry 504 }
+
+luxlQosConfigQceIpv6SrcIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv6 source address.
+         
+         The packets source address is AND-ed with the value of Ipv6SrcIpMask
+         and then compared with the value of this object.
+         
+         If Ipv6SrcIP and Ipv6SrcIpMask are all zeros, this entry matches any
+         IPv6 source address.
+         
+         Only the least significant 32 bits of this object are used.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceEntry 506 }
+
+luxlQosConfigQceIpv6SrcIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv6 source address mask.
+         
+         Only the least significant 32 bits of this object are used.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceEntry 508 }
+
+luxlQosConfigQceIpv6DestIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv6 destination address.
+         
+         The packets destination address is AND-ed with the value of
+         Ipv6DestIpMask and then compared with the value of this object.
+         
+         If Ipv6DestIP and Ipv6DestIpMask are all zeros, this entry matches any
+         IPv6 destination address.
+         
+         Only the least significant 32 bits of this object are used.
+         
+         This object can only be configured if FrameType is ipv6(5).
+         
+         This object is only valid if QosCapabilitiesHasQceDip is true."
+    ::= { luxlQosConfigQceEntry 510 }
+
+luxlQosConfigQceIpv6DestIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv6 destination address mask.
+         
+         Only the least significant 32 bits of this object are used.
+         
+         This object can only be configured if FrameType is ipv6(5).
+         
+         This object is only valid if QosCapabilitiesHasQceDip is true."
+    ::= { luxlQosConfigQceEntry 512 }
+
+luxlQosConfigQceIpv6SrcPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceEntry 513 }
+
+luxlQosConfigQceIpv6SrcPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv6SrcPortOp object in the same row is range(2), this object
+         will be the starting port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6SrcPortOp is not any(0)."
+    ::= { luxlQosConfigQceEntry 514 }
+
+luxlQosConfigQceIpv6SrcPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv6SrcPortOp object in the same row is range(2), this object
+         will be the ending port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6SrcPortOp is range(2)."
+    ::= { luxlQosConfigQceEntry 515 }
+
+luxlQosConfigQceIpv6DestPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceEntry 516 }
+
+luxlQosConfigQceIpv6DestPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol.
+         
+         If the Ipv6DestPortOp object in the same row is range(2), this object
+         will be the starting port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6DestPortOp is not any(0)."
+    ::= { luxlQosConfigQceEntry 517 }
+
+luxlQosConfigQceIpv6DestPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv6DestPortOp object in the same row is range(2), this object
+         will be the ending port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6DestPortOp is range(2)."
+    ::= { luxlQosConfigQceEntry 518 }
+
+luxlQosConfigQceActionCosEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the packet is classified to the CoS value in ActionCos."
+    ::= { luxlQosConfigQceEntry 1000 }
+
+luxlQosConfigQceActionCos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The CoS value used for classification.
+         
+         Valid range is qosCapabilitiesClassMin-qosCapabilitiesClassMax."
+    ::= { luxlQosConfigQceEntry 1001 }
+
+luxlQosConfigQceActionDplEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the packet is classified to the DPL value in ActionDpl."
+    ::= { luxlQosConfigQceEntry 1002 }
+
+luxlQosConfigQceActionDpl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DPL value used for classification.
+         
+         Valid range is qosCapabilitiesDplMin-qosCapabilitiesDplMax."
+    ::= { luxlQosConfigQceEntry 1003 }
+
+luxlQosConfigQceActionDscpEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the packet is classified to the DSCP value in ActionDscp."
+    ::= { luxlQosConfigQceEntry 1004 }
+
+luxlQosConfigQceActionDscp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value used for classification.
+         
+         Valid range is 0-63."
+    ::= { luxlQosConfigQceEntry 1005 }
+
+luxlQosConfigQceActionPcpDeiEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the packet is classified to the PCP value in ActionPcp and the
+         DEI value in ActionDei.
+         
+         This object is only valid if QosCapabilitiesHasQceActionPcpDei is true."
+    ::= { luxlQosConfigQceEntry 1006 }
+
+luxlQosConfigQceActionPcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value used for classification.
+         
+         Valid range is 0-7.
+         
+         This object is only valid if QosCapabilitiesHasQceActionPcpDei is true."
+    ::= { luxlQosConfigQceEntry 1007 }
+
+luxlQosConfigQceActionDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value used for classification.
+         
+         Valid range is 0-1.
+         
+         This object is only valid if QosCapabilitiesHasQceActionPcpDei is true."
+    ::= { luxlQosConfigQceEntry 1008 }
+
+luxlQosConfigQceActionPolicyEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the packet is classified to the policy number in ActionPolicy.
+         
+         This object is only valid if QosCapabilitiesHasQceActionPolicy is true."
+    ::= { luxlQosConfigQceEntry 1009 }
+
+luxlQosConfigQceActionPolicy OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policy number used for classification.
+         
+         Valid range is documented in the ACL MIB.
+         
+         This object is only valid if QosCapabilitiesHasQceActionPcpDei is true."
+    ::= { luxlQosConfigQceEntry 1010 }
+
+luxlQosConfigQceAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlQosConfigQceEntry 10000 }
+
+luxlQosConfigQceTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlQosConfigQce 2 }
+
+luxlQosConfigQceTableRowEditorQceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "QCE Id.
+         
+         Valid range is qosCapabilitiesQceIdMin-qosCapabilitiesQceIdMax or 0.
+         
+         Using a value of 0 when adding a new QCE, will assign the QCE Id in the
+         new QCE to the first unused QCE Id."
+    ::= { luxlQosConfigQceTableRowEditor 1 }
+
+luxlQosConfigQceTableRowEditorNextQceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "QCE Id of the next QCE. Valid range is
+         qosCapabilitiesQceIdMin-qosCapabilitiesQceIdMax or 0.
+         
+         The value 0, denotes the end of the list."
+    ::= { luxlQosConfigQceTableRowEditor 2 }
+
+luxlQosConfigQceTableRowEditorSwitchId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the switch on which this QCE is active.Valid range is
+         documented in the Stacking MIB.
+         
+         This object is only valid on stacking platforms."
+    ::= { luxlQosConfigQceTableRowEditor 3 }
+
+luxlQosConfigQceTableRowEditorPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of ports that are member of this QCE."
+    ::= { luxlQosConfigQceTableRowEditor 4 }
+
+luxlQosConfigQceTableRowEditorDestMacType OBJECT-TYPE
+    SYNTAX      LUXLDestMacType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the destination MAC type to match."
+    ::= { luxlQosConfigQceTableRowEditor 5 }
+
+luxlQosConfigQceTableRowEditorDestMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits destination MAC address.
+         
+         The packets destination address is AND-ed with the value of DestMacMask
+         and then compared against the value of this object.
+         
+         If this object value and the value of DestMacMask is 00-00-00-00-00-00,
+         this entry matches any destination MAC address.
+         
+         This object can only be configured if DestMacType is any(0) and
+         DestMacMask is ff-ff-ff-ff-ff-ff.
+         
+         This object is only valid if QosCapabilitiesHasQceDmac is true."
+    ::= { luxlQosConfigQceTableRowEditor 6 }
+
+luxlQosConfigQceTableRowEditorDestMacMask OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits destination MAC address mask.
+         
+         Valid values are 00-00-00-00-00-00 or ff-ff-ff-ff-ff-ff.
+         
+         This object is only valid if QosCapabilitiesHasQceDmac is true."
+    ::= { luxlQosConfigQceTableRowEditor 7 }
+
+luxlQosConfigQceTableRowEditorSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits source MAC address.
+         
+         The packets source address is AND-ed with the value of SrcMacMask and
+         then compared against the value of this object.
+         
+         If this object value and the value of SrcMacMask is 00-00-00-00-00-00,
+         this entry matches any source MAC address.
+         
+         This object can only be configured if SrcMacMask is ff-ff-ff-ff-ff-ff.
+         
+         If the value of qosCapabilitiesHasQceMacOui is true then only the OUI
+         part of the MAC address (24 most significant bits) is used."
+    ::= { luxlQosConfigQceTableRowEditor 8 }
+
+luxlQosConfigQceTableRowEditorSrcMacMask OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits source MAC address mask.
+         
+         Valid values are 00-00-00-00-00-00 or ff-ff-ff-ff-ff-ff."
+    ::= { luxlQosConfigQceTableRowEditor 9 }
+
+luxlQosConfigQceTableRowEditorVlanTagType OBJECT-TYPE
+    SYNTAX      LUXLVlanTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the VLAN tag type to match.
+         
+         The value cTagged(3) is only supported if qosCapabilitiesHasCTag is
+         true.
+         
+         The value sTagged(3) is only supported if qosCapabilitiesHasSTag is
+         true."
+    ::= { luxlQosConfigQceTableRowEditor 10 }
+
+luxlQosConfigQceTableRowEditorVlanIdOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packets's VLAN ID is to be compared."
+    ::= { luxlQosConfigQceTableRowEditor 11 }
+
+luxlQosConfigQceTableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID to be compared.
+         
+         If the VlanIdOp object in the same row is range(2), this object will be
+         the starting VLAN ID of the range.
+         
+         Valid range is vlanCapabilitiesVlanIdMin-vlanCapabilitiesVlanIdMax.
+         
+         This object can only be configured if VlanIdOp is not any(0)."
+    ::= { luxlQosConfigQceTableRowEditor 12 }
+
+luxlQosConfigQceTableRowEditorVlanIdRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID to be compared.
+         
+         If the VlanIdOp object in the same row is range(2), this object will be
+         the ending VLAN ID of the range.
+         
+         Valid range is vlanCapabilitiesVlanIdMin-vlanCapabilitiesVlanIdMax.
+         
+         This object can only be configured if VlanIdOp is range(2)."
+    ::= { luxlQosConfigQceTableRowEditor 13 }
+
+luxlQosConfigQceTableRowEditorPcp OBJECT-TYPE
+    SYNTAX      LUXLVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value(s) to be compared."
+    ::= { luxlQosConfigQceTableRowEditor 14 }
+
+luxlQosConfigQceTableRowEditorDei OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value to be compared.
+         
+         Valid range is 0-1."
+    ::= { luxlQosConfigQceTableRowEditor 15 }
+
+luxlQosConfigQceTableRowEditorInnerVlanTagType OBJECT-TYPE
+    SYNTAX      LUXLVlanTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the inner VLAN tag type to match.
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceTableRowEditor 16 }
+
+luxlQosConfigQceTableRowEditorInnerVlanIdOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packets's inner VLAN ID is to be compared.
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceTableRowEditor 17 }
+
+luxlQosConfigQceTableRowEditorInnerVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner VLAN ID to be compared.
+         
+         If the InnerVlanIdOp object in the same row is range(2), this object
+         will be the starting VLAN ID of the range.
+         
+         Valid range is vlanCapabilitiesVlanIdMin-vlanCapabilitiesVlanIdMax.
+         
+         This object can only be configured if InnerVlanIdOp is not any(0).
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceTableRowEditor 18 }
+
+luxlQosConfigQceTableRowEditorInnerVlanIdRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner VLAN ID to be compared.
+         
+         If the InnerVlanIdOp object in the same row is range(2), this object
+         will be the ending VLAN ID of the range.
+         
+         Valid range is vlanCapabilitiesVlanIdMin-vlanCapabilitiesVlanIdMax.
+         
+         This object can only be configured if InnerVlanIdOp is range(2).
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceTableRowEditor 19 }
+
+luxlQosConfigQceTableRowEditorInnerPcp OBJECT-TYPE
+    SYNTAX      LUXLVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner PCP value(s) to be compared.
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceTableRowEditor 20 }
+
+luxlQosConfigQceTableRowEditorInnerDei OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner DEI value to be compared.
+         
+         Valid range is 0-1.
+         
+         This object is only valid if QosCapabilitiesHasQceInnerTag is true."
+    ::= { luxlQosConfigQceTableRowEditor 21 }
+
+luxlQosConfigQceTableRowEditorFrameType OBJECT-TYPE
+    SYNTAX      LUXLQosQceFrameType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packet's frame type.
+         
+         Modifying the frame type on an existing QCE will restore the content of
+         all frame type dependent configuration to default."
+    ::= { luxlQosConfigQceTableRowEditor 100 }
+
+luxlQosConfigQceTableRowEditorEtype OBJECT-TYPE
+    SYNTAX      LUXLEtherType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packet's 16 bit Ethernet type field.
+         
+         Valid values are: 0(match any), 0x600-0xFFFF but excluding 0x800(IPv4)
+         and 0x86DD(IPv6).
+         
+         This object can only be configured if FrameType is etype(1)."
+    ::= { luxlQosConfigQceTableRowEditor 101 }
+
+luxlQosConfigQceTableRowEditorLlcDsap OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packets's 8 bit LLC DSAP field.
+         
+         The packets LLC DSAP field is AND-ed with the value of LlcDsapMask and
+         then compared against the value of this object.
+         
+         If this object value and the value of LlcDsapMask is 0x00, this entry
+         matches any LLC DSAP.
+         
+         Valid range is 0x00-0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceTableRowEditor 200 }
+
+luxlQosConfigQceTableRowEditorLlcDsapMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 8 bit LLC DSAP mask.
+         
+         Valid values are 0x00 or 0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceTableRowEditor 201 }
+
+luxlQosConfigQceTableRowEditorLlcSsap OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packets's 8 bit LLC SSAP field.
+         
+         The packets LLC SSAP field is AND-ed with the value of LlcSsapMask and
+         then compared against the value of this object.
+         
+         If this object value and the value of LlcSsapMask is 0x00, this entry
+         matches any LLC SSAP.
+         
+         Valid range is 0x00-0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceTableRowEditor 202 }
+
+luxlQosConfigQceTableRowEditorLlcSsapMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 8 bit LLC SSAP mask.
+         
+         Valid values are 0x00 or 0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceTableRowEditor 203 }
+
+luxlQosConfigQceTableRowEditorLlcControl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packets's 8 bit LLC Control field.
+         
+         The packets LLC Control field is AND-ed with the value of
+         LlcControlMask and then compared against the value of this object.
+         
+         If this object value and the value of LlcControlMask is 0x00, this
+         entry matches any LLC Control.
+         
+         Valid range is 0x00-0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceTableRowEditor 204 }
+
+luxlQosConfigQceTableRowEditorLlcControlMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 8 bit LLC Control mask.
+         
+         Valid values are 0x00 or 0xFF.
+         
+         This object can only be configured if FrameType is llc(2)."
+    ::= { luxlQosConfigQceTableRowEditor 205 }
+
+luxlQosConfigQceTableRowEditorSnapPid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packet's 16 bit SNAP PID field.
+         
+         The packets SNAP PID field is AND-ed with the value of SnapPidMask and
+         then compared against the value of this object.
+         
+         If this object value and the value of SnapPidMask is 0x0000, this entry
+         matches any ethertype.
+         
+         This object can only be configured if FrameType is snap(3)."
+    ::= { luxlQosConfigQceTableRowEditor 302 }
+
+luxlQosConfigQceTableRowEditorSnapPidMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 16 bit SNAP PID mask.
+         
+         Valid values are 0x0000 or 0xFFFF.
+         
+         This object can only be configured if FrameType is snap(3)."
+    ::= { luxlQosConfigQceTableRowEditor 303 }
+
+luxlQosConfigQceTableRowEditorIpv4Fragment OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how an IPv4 fragment bit is to be compared.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceTableRowEditor 400 }
+
+luxlQosConfigQceTableRowEditorIpv4DscpOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how an IPv4 DSCP field is to be compared.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceTableRowEditor 401 }
+
+luxlQosConfigQceTableRowEditorIpv4Dscp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value to be compared.
+         
+         If the Ipv4DscpOp object in the same row is range(2), this object will
+         be the starting DSCP value of the range.
+         
+         Valid range is 0-63.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4DscpOp is not any(0)."
+    ::= { luxlQosConfigQceTableRowEditor 402 }
+
+luxlQosConfigQceTableRowEditorIpv4DscpRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value to be compared.
+         
+         If the Ipv4DscpOp object in the same row is range(2), this object will
+         be the ending DSCP value of the range.
+         
+         Valid range is 0-63.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4DscpOp is range(2)."
+    ::= { luxlQosConfigQceTableRowEditor 403 }
+
+luxlQosConfigQceTableRowEditorIpv4Protocol OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protocol number field in the IPv4 header used to indicate a higher
+         layer protocol.
+         
+         The packets protocol number field is AND-ed with the value of
+         Ipv4ProtocolMask and then compared with the value of this object.
+         
+         If Ipv4Protocol and Ipv4protocolMask are 0, this entry matches any IPv4
+         protocol.
+         
+         Valid range is 0-255.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceTableRowEditor 404 }
+
+luxlQosConfigQceTableRowEditorIpv4ProtocolMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv4 protocol number mask.
+         
+         Valid values are 0 or 255.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceTableRowEditor 405 }
+
+luxlQosConfigQceTableRowEditorIpv4SrcIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv4 source address.
+         
+         The packets source address is AND-ed with the value of Ipv4SrcIpMask
+         and then compared with the value of this object.
+         
+         If Ipv4SrcIP and Ipv4SrcIpMask are 0.0.0.0, this entry matches any IPv4
+         source address.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceTableRowEditor 406 }
+
+luxlQosConfigQceTableRowEditorIpv4SrcIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv4 source address mask.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceTableRowEditor 407 }
+
+luxlQosConfigQceTableRowEditorIpv4DestIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv4 destination address.
+         
+         The packets destination address is AND-ed with the value of
+         Ipv4DestIpMask and then compared with the value of this object.
+         
+         If Ipv4DestIP and Ipv4DestIpMask are 0.0.0.0, this entry matches any
+         IPv4 destination address.
+         
+         This object can only be configured if FrameType is ipv4(4).
+         
+         This object is only valid if QosCapabilitiesHasQceDip is true."
+    ::= { luxlQosConfigQceTableRowEditor 408 }
+
+luxlQosConfigQceTableRowEditorIpv4DestIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv4 destination address mask.
+         
+         This object can only be configured if FrameType is ipv4(4).
+         
+         This object is only valid if QosCapabilitiesHasQceDip is true."
+    ::= { luxlQosConfigQceTableRowEditor 409 }
+
+luxlQosConfigQceTableRowEditorIpv4SrcPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceTableRowEditor 410 }
+
+luxlQosConfigQceTableRowEditorIpv4SrcPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv4SrcPortOp object in the same row is range(2), this object
+         will be the starting port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4SrcPortOp is not any(0)."
+    ::= { luxlQosConfigQceTableRowEditor 411 }
+
+luxlQosConfigQceTableRowEditorIpv4SrcPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv4SrcPortOp object in the same row is range(2), this object
+         will be the ending port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4SrcPortOp is range(2)."
+    ::= { luxlQosConfigQceTableRowEditor 412 }
+
+luxlQosConfigQceTableRowEditorIpv4DestPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared.
+         
+         This object can only be configured if FrameType is ipv4(4)."
+    ::= { luxlQosConfigQceTableRowEditor 413 }
+
+luxlQosConfigQceTableRowEditorIpv4DestPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol.
+         
+         If the Ipv4DestPortOp object in the same row is range(2), this object
+         will be the starting port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4DestPortOp is not any(0)."
+    ::= { luxlQosConfigQceTableRowEditor 414 }
+
+luxlQosConfigQceTableRowEditorIpv4DestPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv4DestPortOp object in the same row is range(2), this object
+         will be the ending port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv4(4) and
+         Ipv4DestPortOp is range(2)."
+    ::= { luxlQosConfigQceTableRowEditor 415 }
+
+luxlQosConfigQceTableRowEditorIpv6DscpOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how an IPv6 DSCP field is to be compared.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceTableRowEditor 500 }
+
+luxlQosConfigQceTableRowEditorIpv6Dscp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value to be compared.
+         
+         If the Ipv6DscpOp object in the same row is range(2), this object will
+         be the starting DSCP value of the range.
+         
+         Valid range is 0-63.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6DscpOp is not any(0)."
+    ::= { luxlQosConfigQceTableRowEditor 501 }
+
+luxlQosConfigQceTableRowEditorIpv6DscpRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value to be compared.
+         
+         If the Ipv6DscpOp object in the same row is range(2), this object will
+         be the ending DSCP value of the range.
+         
+         Valid range is 0-63.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6DscpOp is range(2)."
+    ::= { luxlQosConfigQceTableRowEditor 502 }
+
+luxlQosConfigQceTableRowEditorIpv6Protocol OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protocol number field in the IPv6 header used to indicate a higher
+         layer protocol.
+         
+         The packets protocol number field is AND-ed with the value of
+         Ipv6ProtocolMask and then compared with the value of this object.
+         
+         If Ipv46rotocol and Ipv6protocolMask are 0, this entry matches any IPv6
+         protocol.
+         
+         Valid range is 0-255.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceTableRowEditor 503 }
+
+luxlQosConfigQceTableRowEditorIpv6ProtocolMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv6 protocol number mask.
+         
+         Valid values are 0 or 255.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceTableRowEditor 504 }
+
+luxlQosConfigQceTableRowEditorIpv6SrcIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv6 source address.
+         
+         The packets source address is AND-ed with the value of Ipv6SrcIpMask
+         and then compared with the value of this object.
+         
+         If Ipv6SrcIP and Ipv6SrcIpMask are all zeros, this entry matches any
+         IPv6 source address.
+         
+         Only the least significant 32 bits of this object are used.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceTableRowEditor 506 }
+
+luxlQosConfigQceTableRowEditorIpv6SrcIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv6 source address mask.
+         
+         Only the least significant 32 bits of this object are used.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceTableRowEditor 508 }
+
+luxlQosConfigQceTableRowEditorIpv6DestIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv6 destination address.
+         
+         The packets destination address is AND-ed with the value of
+         Ipv6DestIpMask and then compared with the value of this object.
+         
+         If Ipv6DestIP and Ipv6DestIpMask are all zeros, this entry matches any
+         IPv6 destination address.
+         
+         Only the least significant 32 bits of this object are used.
+         
+         This object can only be configured if FrameType is ipv6(5).
+         
+         This object is only valid if QosCapabilitiesHasQceDip is true."
+    ::= { luxlQosConfigQceTableRowEditor 510 }
+
+luxlQosConfigQceTableRowEditorIpv6DestIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified IPv6 destination address mask.
+         
+         Only the least significant 32 bits of this object are used.
+         
+         This object can only be configured if FrameType is ipv6(5).
+         
+         This object is only valid if QosCapabilitiesHasQceDip is true."
+    ::= { luxlQosConfigQceTableRowEditor 512 }
+
+luxlQosConfigQceTableRowEditorIpv6SrcPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceTableRowEditor 513 }
+
+luxlQosConfigQceTableRowEditorIpv6SrcPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv6SrcPortOp object in the same row is range(2), this object
+         will be the starting port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6SrcPortOp is not any(0)."
+    ::= { luxlQosConfigQceTableRowEditor 514 }
+
+luxlQosConfigQceTableRowEditorIpv6SrcPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv6SrcPortOp object in the same row is range(2), this object
+         will be the ending port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6SrcPortOp is range(2)."
+    ::= { luxlQosConfigQceTableRowEditor 515 }
+
+luxlQosConfigQceTableRowEditorIpv6DestPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared.
+         
+         This object can only be configured if FrameType is ipv6(5)."
+    ::= { luxlQosConfigQceTableRowEditor 516 }
+
+luxlQosConfigQceTableRowEditorIpv6DestPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol.
+         
+         If the Ipv6DestPortOp object in the same row is range(2), this object
+         will be the starting port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6DestPortOp is not any(0)."
+    ::= { luxlQosConfigQceTableRowEditor 517 }
+
+luxlQosConfigQceTableRowEditorIpv6DestPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol.
+         
+         If the Ipv6DestPortOp object in the same row is range(2), this object
+         will be the ending port number of the port range.
+         
+         Valid range is 0-65535.
+         
+         This object can only be configured if FrameType is ipv6(5) and
+         Ipv6DestPortOp is range(2)."
+    ::= { luxlQosConfigQceTableRowEditor 518 }
+
+luxlQosConfigQceTableRowEditorActionCosEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the packet is classified to the CoS value in ActionCos."
+    ::= { luxlQosConfigQceTableRowEditor 1000 }
+
+luxlQosConfigQceTableRowEditorActionCos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The CoS value used for classification.
+         
+         Valid range is qosCapabilitiesClassMin-qosCapabilitiesClassMax."
+    ::= { luxlQosConfigQceTableRowEditor 1001 }
+
+luxlQosConfigQceTableRowEditorActionDplEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the packet is classified to the DPL value in ActionDpl."
+    ::= { luxlQosConfigQceTableRowEditor 1002 }
+
+luxlQosConfigQceTableRowEditorActionDpl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DPL value used for classification.
+         
+         Valid range is qosCapabilitiesDplMin-qosCapabilitiesDplMax."
+    ::= { luxlQosConfigQceTableRowEditor 1003 }
+
+luxlQosConfigQceTableRowEditorActionDscpEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the packet is classified to the DSCP value in ActionDscp."
+    ::= { luxlQosConfigQceTableRowEditor 1004 }
+
+luxlQosConfigQceTableRowEditorActionDscp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DSCP value used for classification.
+         
+         Valid range is 0-63."
+    ::= { luxlQosConfigQceTableRowEditor 1005 }
+
+luxlQosConfigQceTableRowEditorActionPcpDeiEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the packet is classified to the PCP value in ActionPcp and the
+         DEI value in ActionDei.
+         
+         This object is only valid if QosCapabilitiesHasQceActionPcpDei is true."
+    ::= { luxlQosConfigQceTableRowEditor 1006 }
+
+luxlQosConfigQceTableRowEditorActionPcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value used for classification.
+         
+         Valid range is 0-7.
+         
+         This object is only valid if QosCapabilitiesHasQceActionPcpDei is true."
+    ::= { luxlQosConfigQceTableRowEditor 1007 }
+
+luxlQosConfigQceTableRowEditorActionDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value used for classification.
+         
+         Valid range is 0-1.
+         
+         This object is only valid if QosCapabilitiesHasQceActionPcpDei is true."
+    ::= { luxlQosConfigQceTableRowEditor 1008 }
+
+luxlQosConfigQceTableRowEditorActionPolicyEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If true, the packet is classified to the policy number in ActionPolicy.
+         
+         This object is only valid if QosCapabilitiesHasQceActionPolicy is true."
+    ::= { luxlQosConfigQceTableRowEditor 1009 }
+
+luxlQosConfigQceTableRowEditorActionPolicy OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policy number used for classification.
+         
+         Valid range is documented in the ACL MIB.
+         
+         This object is only valid if QosCapabilitiesHasQceActionPcpDei is true."
+    ::= { luxlQosConfigQceTableRowEditor 1010 }
+
+luxlQosConfigQceTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlQosConfigQceTableRowEditor 10000 }
+
+luxlQosConfigQcePrecedenceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosConfigQcePrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the precedence of QCEs ordered by their position in
+         the QCL.
+         
+         This is an optional table and is only present if qosCapabilitiesHasQce
+         is true."
+    ::= { luxlQosConfigQce 3 }
+
+luxlQosConfigQcePrecedenceEntry OBJECT-TYPE
+    SYNTAX      LUXLQosConfigQcePrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the precedence of a single QCE."
+    INDEX       { luxlQosConfigQcePrecedenceIndex }
+    ::= { luxlQosConfigQcePrecedenceTable 1 }
+
+LUXLQosConfigQcePrecedenceEntry ::= SEQUENCE {
+    luxlQosConfigQcePrecedenceIndex     Integer32,
+    luxlQosConfigQcePrecedenceQceId     Unsigned32
+}
+
+luxlQosConfigQcePrecedenceIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "QCE precedence index. Indicates the position in QCL."
+    ::= { luxlQosConfigQcePrecedenceEntry 1 }
+
+luxlQosConfigQcePrecedenceQceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "QCE Id."
+    ::= { luxlQosConfigQcePrecedenceEntry 2 }
+
+luxlQosStatus OBJECT IDENTIFIER
+    ::= { luxlQosMibObjects 3 }
+
+luxlQosStatusInterface OBJECT IDENTIFIER
+    ::= { luxlQosStatus 2 }
+
+luxlQosStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides QoS status for QoS manageable interfaces"
+    ::= { luxlQosStatusInterface 1 }
+
+luxlQosStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLQosStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the status for a specific interface"
+    INDEX       { luxlQosStatusInterfaceIfIndex }
+    ::= { luxlQosStatusInterfaceTable 1 }
+
+LUXLQosStatusInterfaceEntry ::= SEQUENCE {
+    luxlQosStatusInterfaceIfIndex   LUXLInterfaceIndex,
+    luxlQosStatusInterfaceCos   Unsigned32
+}
+
+luxlQosStatusInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosStatusInterfaceEntry 1 }
+
+luxlQosStatusInterfaceCos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Some subsystems are allowed to modify the default CoS value for an
+         interface. This object shows the actual default CoS value a packet is
+         classified to."
+    ::= { luxlQosStatusInterfaceEntry 2 }
+
+luxlQosStatusInterfaceSchedulerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosStatusInterfaceSchedulerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the mapping of (interface, queue) to weight values.
+         
+         The mappings given by this table are the 'real' weights in percent as
+         used by the hardware."
+    ::= { luxlQosStatusInterface 2 }
+
+luxlQosStatusInterfaceSchedulerEntry OBJECT-TYPE
+    SYNTAX      LUXLQosStatusInterfaceSchedulerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the scheduler status for a specific queue."
+    INDEX       { luxlQosStatusInterfaceSchedulerIfIndex, luxlQosStatusInterfaceSchedulerQueue }
+    ::= { luxlQosStatusInterfaceSchedulerTable 1 }
+
+LUXLQosStatusInterfaceSchedulerEntry ::= SEQUENCE {
+    luxlQosStatusInterfaceSchedulerIfIndex      LUXLInterfaceIndex,
+    luxlQosStatusInterfaceSchedulerQueue    Integer32,
+    luxlQosStatusInterfaceSchedulerWeight   LUXLPercent
+}
+
+luxlQosStatusInterfaceSchedulerIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlQosStatusInterfaceSchedulerEntry 1 }
+
+luxlQosStatusInterfaceSchedulerQueue OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Queue index."
+    ::= { luxlQosStatusInterfaceSchedulerEntry 2 }
+
+luxlQosStatusInterfaceSchedulerWeight OBJECT-TYPE
+    SYNTAX      LUXLPercent
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The weight for this queue.
+         
+         Valid range is 1-100."
+    ::= { luxlQosStatusInterfaceSchedulerEntry 3 }
+
+luxlQosStatusQce OBJECT IDENTIFIER
+    ::= { luxlQosStatus 3 }
+
+luxlQosStatusQceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLQosStatusQceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the QCE status in the hardware table.
+         
+         This is an optional table and is only present if QosCapabilitiesHasQce
+         is true."
+    ::= { luxlQosStatusQce 1 }
+
+luxlQosStatusQceEntry OBJECT-TYPE
+    SYNTAX      LUXLQosStatusQceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the status of a single QCE."
+    INDEX       { luxlQosStatusQceSwitchId, luxlQosStatusQceIndex }
+    ::= { luxlQosStatusQceTable 1 }
+
+LUXLQosStatusQceEntry ::= SEQUENCE {
+    luxlQosStatusQceSwitchId    Unsigned32,
+    luxlQosStatusQceIndex   Integer32,
+    luxlQosStatusQceUserId      LUXLQosQceUserType,
+    luxlQosStatusQceQceId   Unsigned32,
+    luxlQosStatusQceConflict    TruthValue
+}
+
+luxlQosStatusQceSwitchId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id index."
+    ::= { luxlQosStatusQceEntry 1 }
+
+luxlQosStatusQceIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "QCE precedence index. Indicates the position in QCL."
+    ::= { luxlQosStatusQceEntry 2 }
+
+luxlQosStatusQceUserId OBJECT-TYPE
+    SYNTAX      LUXLQosQceUserType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "User Id."
+    ::= { luxlQosStatusQceEntry 3 }
+
+luxlQosStatusQceQceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "QCE Id."
+    ::= { luxlQosStatusQceEntry 4 }
+
+luxlQosStatusQceConflict OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, a resource conflict is detected."
+    ::= { luxlQosStatusQceEntry 100 }
+
+luxlQosControl OBJECT IDENTIFIER
+    ::= { luxlQosMibObjects 4 }
+
+luxlQosControlQce OBJECT IDENTIFIER
+    ::= { luxlQosControl 3 }
+
+luxlQosControlQceConflictResolve OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to true to resolve resource conflicts.
+         
+         If different components competes for the same resources in the switch,
+         it is possible that some of resources needed by one or more QCE are not
+         available.
+         
+         These conflicts, if any, are shown in the qosStatusQceTable.
+         
+         To solve these conflicts, you must delete one or more of the competing
+         settings and set ConflictResolve to true. The switch will then reapply
+         the current QCE configuration.
+         
+         This object is only valid if QosCapabilitiesHasQce is true."
+    ::= { luxlQosControlQce 1 }
+
+luxlQosMibConformance OBJECT IDENTIFIER
+    ::= { luxlQosMib 2 }
+
+luxlQosMibCompliances OBJECT IDENTIFIER
+    ::= { luxlQosMibConformance 1 }
+
+luxlQosMibGroups OBJECT IDENTIFIER
+    ::= { luxlQosMibConformance 2 }
+
+luxlQosCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosCapabilitiesClassMin, luxlQosCapabilitiesClassMax, 
+                  luxlQosCapabilitiesDplMin, luxlQosCapabilitiesDplMax, 
+                  luxlQosCapabilitiesWredGroupMin, 
+                  luxlQosCapabilitiesWredGroupMax, luxlQosCapabilitiesWredDplMin, 
+                  luxlQosCapabilitiesWredDplMax, luxlQosCapabilitiesQceIdMin, 
+                  luxlQosCapabilitiesQceIdMax, 
+                  luxlQosCapabilitiesPortPolicerBitRateMin, 
+                  luxlQosCapabilitiesPortPolicerBitRateMax, 
+                  luxlQosCapabilitiesPortPolicerBitBurstMin, 
+                  luxlQosCapabilitiesPortPolicerBitBurstMax, 
+                  luxlQosCapabilitiesPortPolicerFrameRateMin, 
+                  luxlQosCapabilitiesPortPolicerFrameRateMax, 
+                  luxlQosCapabilitiesPortPolicerFrameBurstMin, 
+                  luxlQosCapabilitiesPortPolicerFrameBurstMax, 
+                  luxlQosCapabilitiesQueuePolicerBitRateMin, 
+                  luxlQosCapabilitiesQueuePolicerBitRateMax, 
+                  luxlQosCapabilitiesQueuePolicerBitBurstMin, 
+                  luxlQosCapabilitiesQueuePolicerBitBurstMax, 
+                  luxlQosCapabilitiesQueuePolicerFrameRateMin, 
+                  luxlQosCapabilitiesQueuePolicerFrameRateMax, 
+                  luxlQosCapabilitiesQueuePolicerFrameBurstMin, 
+                  luxlQosCapabilitiesQueuePolicerFrameBurstMax, 
+                  luxlQosCapabilitiesPortShaperBitRateMin, 
+                  luxlQosCapabilitiesPortShaperBitRateMax, 
+                  luxlQosCapabilitiesPortShaperBitBurstMin, 
+                  luxlQosCapabilitiesPortShaperBitBurstMax, 
+                  luxlQosCapabilitiesPortShaperFrameRateMin, 
+                  luxlQosCapabilitiesPortShaperFrameRateMax, 
+                  luxlQosCapabilitiesPortShaperFrameBurstMin, 
+                  luxlQosCapabilitiesPortShaperFrameBurstMax, 
+                  luxlQosCapabilitiesQueueShaperBitRateMin, 
+                  luxlQosCapabilitiesQueueShaperBitRateMax, 
+                  luxlQosCapabilitiesQueueShaperBitBurstMin, 
+                  luxlQosCapabilitiesQueueShaperBitBurstMax, 
+                  luxlQosCapabilitiesQueueShaperFrameRateMin, 
+                  luxlQosCapabilitiesQueueShaperFrameRateMax, 
+                  luxlQosCapabilitiesQueueShaperFrameBurstMin, 
+                  luxlQosCapabilitiesQueueShaperFrameBurstMax, 
+                  luxlQosCapabilitiesGlobalStormBitRateMin, 
+                  luxlQosCapabilitiesGlobalStormBitRateMax, 
+                  luxlQosCapabilitiesGlobalStormBitBurstMin, 
+                  luxlQosCapabilitiesGlobalStormBitBurstMax, 
+                  luxlQosCapabilitiesGlobalStormFrameRateMin, 
+                  luxlQosCapabilitiesGlobalStormFrameRateMax, 
+                  luxlQosCapabilitiesGlobalStormFrameBurstMin, 
+                  luxlQosCapabilitiesGlobalStormFrameBurstMax, 
+                  luxlQosCapabilitiesPortStormBitRateMin, 
+                  luxlQosCapabilitiesPortStormBitRateMax, 
+                  luxlQosCapabilitiesPortStormBitBurstMin, 
+                  luxlQosCapabilitiesPortStormBitBurstMax, 
+                  luxlQosCapabilitiesPortStormFrameRateMin, 
+                  luxlQosCapabilitiesPortStormFrameRateMax, 
+                  luxlQosCapabilitiesPortStormFrameBurstMin, 
+                  luxlQosCapabilitiesPortStormFrameBurstMax, 
+                  luxlQosCapabilitiesDwrrCountMask, 
+                  luxlQosCapabilitiesHasGlobalStormPolicers, 
+                  luxlQosCapabilitiesHasPortStormPolicers, 
+                  luxlQosCapabilitiesHasPortQueuePolicers, 
+                  luxlQosCapabilitiesHasWredV1, luxlQosCapabilitiesHasWredV2, 
+                  luxlQosCapabilitiesHasFixedTagCosMap, 
+                  luxlQosCapabilitiesHasTagClassification, 
+                  luxlQosCapabilitiesHasTagRemarking, luxlQosCapabilitiesHasDscp, 
+                  luxlQosCapabilitiesHasDscpDplClassification, 
+                  luxlQosCapabilitiesHasDscpDplRemarking, 
+                  luxlQosCapabilitiesHasPortPolicersFc, 
+                  luxlQosCapabilitiesHasQueuePolicersFc, 
+                  luxlQosCapabilitiesHasPortShapersDlb, 
+                  luxlQosCapabilitiesHasQueueShapersDlb, 
+                  luxlQosCapabilitiesHasQueueShapersExcess, 
+                  luxlQosCapabilitiesHasWredV3, luxlQosCapabilitiesHasQce, 
+                  luxlQosCapabilitiesHasQceAddressMode, 
+                  luxlQosCapabilitiesHasQceKeyType, 
+                  luxlQosCapabilitiesHasQceMacOui, luxlQosCapabilitiesHasQceDmac, 
+                  luxlQosCapabilitiesHasQceDip, luxlQosCapabilitiesHasQceCTag, 
+                  luxlQosCapabilitiesHasQceSTag, 
+                  luxlQosCapabilitiesHasQceInnerTag, 
+                  luxlQosCapabilitiesHasQceActionPcpDei, 
+                  luxlQosCapabilitiesHasQceActionPolicy }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 1 }
+
+luxlQosConfigGlobalsStormPolicersUnicastInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigGlobalsStormPolicersUnicastEnable, 
+                  luxlQosConfigGlobalsStormPolicersUnicastRate, 
+                  luxlQosConfigGlobalsStormPolicersUnicastFrameRate }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 2 }
+
+luxlQosConfigGlobalsStormPolicersMulticastInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigGlobalsStormPolicersMulticastEnable, 
+                  luxlQosConfigGlobalsStormPolicersMulticastRate, 
+                  luxlQosConfigGlobalsStormPolicersMulticastFrameRate }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 3 }
+
+luxlQosConfigGlobalsStormPolicersBroadcastInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigGlobalsStormPolicersBroadcastEnable, 
+                  luxlQosConfigGlobalsStormPolicersBroadcastRate, 
+                  luxlQosConfigGlobalsStormPolicersBroadcastFrameRate }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 4 }
+
+luxlQosConfigGlobalsWredTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigGlobalsWredEnable, 
+                  luxlQosConfigGlobalsWredMinimumFillLevel, 
+                  luxlQosConfigGlobalsWredMaximum, 
+                  luxlQosConfigGlobalsWredMaxSelector, 
+                  luxlQosConfigGlobalsWredMaximumDp1, 
+                  luxlQosConfigGlobalsWredMaximumDp2, 
+                  luxlQosConfigGlobalsWredMaximumDp3 }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 5 }
+
+luxlQosConfigGlobalsDscpTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigGlobalsDscpTrust, luxlQosConfigGlobalsDscpCos, 
+                  luxlQosConfigGlobalsDscpDpl, 
+                  luxlQosConfigGlobalsDscpIngressTranslation, 
+                  luxlQosConfigGlobalsDscpClassify, 
+                  luxlQosConfigGlobalsDscpEgressTranslation, 
+                  luxlQosConfigGlobalsDscpEgressTranslationDp1 }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 6 }
+
+luxlQosConfigGlobalsCosToDscpTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigGlobalsCosToDscpDscp, 
+                  luxlQosConfigGlobalsCosToDscpDscpDp1, 
+                  luxlQosConfigGlobalsCosToDscpDscpDp2, 
+                  luxlQosConfigGlobalsCosToDscpDscpDp3 }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 7 }
+
+luxlQosConfigInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfaceCos, luxlQosConfigInterfaceDpl, 
+                  luxlQosConfigInterfacePcp, luxlQosConfigInterfaceDei, 
+                  luxlQosConfigInterfaceTrustTag, 
+                  luxlQosConfigInterfaceTrustDscp, 
+                  luxlQosConfigInterfaceDwrrCount, 
+                  luxlQosConfigInterfaceTagRemarkingMode, 
+                  luxlQosConfigInterfaceTagPcp, luxlQosConfigInterfaceTagDei, 
+                  luxlQosConfigInterfaceDscpTranslate, 
+                  luxlQosConfigInterfaceDscpClassify, 
+                  luxlQosConfigInterfaceDscpRemark, 
+                  luxlQosConfigInterfaceQceAddressMode, 
+                  luxlQosConfigInterfaceQceKeyType, 
+                  luxlQosConfigInterfaceWredGroup }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 8 }
+
+luxlQosConfigInterfaceTagToCosTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfaceTagToCosCos, 
+                  luxlQosConfigInterfaceTagToCosDpl }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 9 }
+
+luxlQosConfigInterfaceCosToTagTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfaceCosToTagPcp, 
+                  luxlQosConfigInterfaceCosToTagDei }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 10 }
+
+luxlQosConfigInterfacePolicerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfacePolicerEnable, 
+                  luxlQosConfigInterfacePolicerFrameRate, 
+                  luxlQosConfigInterfacePolicerFlowControl, 
+                  luxlQosConfigInterfacePolicerCir }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 11 }
+
+luxlQosConfigInterfaceQueuePolicerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfaceQueuePolicerEnable, 
+                  luxlQosConfigInterfaceQueuePolicerCir }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 12 }
+
+luxlQosConfigInterfaceShaperTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfaceShaperEnable, 
+                  luxlQosConfigInterfaceShaperCir }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 13 }
+
+luxlQosConfigInterfaceQueueShaperTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfaceQueueShaperEnable, 
+                  luxlQosConfigInterfaceQueueShaperExcess, 
+                  luxlQosConfigInterfaceQueueShaperCir }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 14 }
+
+luxlQosConfigInterfaceSchedulerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfaceSchedulerWeight }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 15 }
+
+luxlQosConfigInterfaceStormPolicerUnicastTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfaceStormPolicerUnicastEnable, 
+                  luxlQosConfigInterfaceStormPolicerUnicastFrameRate, 
+                  luxlQosConfigInterfaceStormPolicerUnicastCir }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 16 }
+
+luxlQosConfigInterfaceStormPolicerBroadcastTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfaceStormPolicerBroadcastEnable, 
+                  luxlQosConfigInterfaceStormPolicerBroadcastFrameRate, 
+                  luxlQosConfigInterfaceStormPolicerBroadcastCir }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 17 }
+
+luxlQosConfigInterfaceStormPolicerUnknownTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigInterfaceStormPolicerUnknownEnable, 
+                  luxlQosConfigInterfaceStormPolicerUnknownFrameRate, 
+                  luxlQosConfigInterfaceStormPolicerUnknownCir }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 18 }
+
+luxlQosConfigQceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigQceNextQceId, luxlQosConfigQceSwitchId, 
+                  luxlQosConfigQcePortList, luxlQosConfigQceDestMacType, 
+                  luxlQosConfigQceDestMac, luxlQosConfigQceDestMacMask, 
+                  luxlQosConfigQceSrcMac, luxlQosConfigQceSrcMacMask, 
+                  luxlQosConfigQceVlanTagType, luxlQosConfigQceVlanIdOp, 
+                  luxlQosConfigQceVlanId, luxlQosConfigQceVlanIdRange, 
+                  luxlQosConfigQcePcp, luxlQosConfigQceDei, 
+                  luxlQosConfigQceInnerVlanTagType, 
+                  luxlQosConfigQceInnerVlanIdOp, luxlQosConfigQceInnerVlanId, 
+                  luxlQosConfigQceInnerVlanIdRange, luxlQosConfigQceInnerPcp, 
+                  luxlQosConfigQceInnerDei, luxlQosConfigQceFrameType, 
+                  luxlQosConfigQceEtype, luxlQosConfigQceLlcDsap, 
+                  luxlQosConfigQceLlcDsapMask, luxlQosConfigQceLlcSsap, 
+                  luxlQosConfigQceLlcSsapMask, luxlQosConfigQceLlcControl, 
+                  luxlQosConfigQceLlcControlMask, luxlQosConfigQceSnapPid, 
+                  luxlQosConfigQceSnapPidMask, luxlQosConfigQceIpv4Fragment, 
+                  luxlQosConfigQceIpv4DscpOp, luxlQosConfigQceIpv4Dscp, 
+                  luxlQosConfigQceIpv4DscpRange, luxlQosConfigQceIpv4Protocol, 
+                  luxlQosConfigQceIpv4ProtocolMask, luxlQosConfigQceIpv4SrcIp, 
+                  luxlQosConfigQceIpv4SrcIpMask, luxlQosConfigQceIpv4DestIp, 
+                  luxlQosConfigQceIpv4DestIpMask, luxlQosConfigQceIpv4SrcPortOp, 
+                  luxlQosConfigQceIpv4SrcPort, luxlQosConfigQceIpv4SrcPortRange, 
+                  luxlQosConfigQceIpv4DestPortOp, luxlQosConfigQceIpv4DestPort, 
+                  luxlQosConfigQceIpv4DestPortRange, luxlQosConfigQceIpv6DscpOp, 
+                  luxlQosConfigQceIpv6Dscp, luxlQosConfigQceIpv6DscpRange, 
+                  luxlQosConfigQceIpv6Protocol, luxlQosConfigQceIpv6ProtocolMask, 
+                  luxlQosConfigQceIpv6SrcIp, luxlQosConfigQceIpv6SrcIpMask, 
+                  luxlQosConfigQceIpv6DestIp, luxlQosConfigQceIpv6DestIpMask, 
+                  luxlQosConfigQceIpv6SrcPortOp, luxlQosConfigQceIpv6SrcPort, 
+                  luxlQosConfigQceIpv6SrcPortRange, 
+                  luxlQosConfigQceIpv6DestPortOp, luxlQosConfigQceIpv6DestPort, 
+                  luxlQosConfigQceIpv6DestPortRange, 
+                  luxlQosConfigQceActionCosEnable, luxlQosConfigQceActionCos, 
+                  luxlQosConfigQceActionDplEnable, luxlQosConfigQceActionDpl, 
+                  luxlQosConfigQceActionDscpEnable, luxlQosConfigQceActionDscp, 
+                  luxlQosConfigQceActionPcpDeiEnable, luxlQosConfigQceActionPcp, 
+                  luxlQosConfigQceActionDei, luxlQosConfigQceActionPolicyEnable, 
+                  luxlQosConfigQceActionPolicy, luxlQosConfigQceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 19 }
+
+luxlQosConfigQceTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigQceTableRowEditorQceId, 
+                  luxlQosConfigQceTableRowEditorNextQceId, 
+                  luxlQosConfigQceTableRowEditorSwitchId, 
+                  luxlQosConfigQceTableRowEditorPortList, 
+                  luxlQosConfigQceTableRowEditorDestMacType, 
+                  luxlQosConfigQceTableRowEditorDestMac, 
+                  luxlQosConfigQceTableRowEditorDestMacMask, 
+                  luxlQosConfigQceTableRowEditorSrcMac, 
+                  luxlQosConfigQceTableRowEditorSrcMacMask, 
+                  luxlQosConfigQceTableRowEditorVlanTagType, 
+                  luxlQosConfigQceTableRowEditorVlanIdOp, 
+                  luxlQosConfigQceTableRowEditorVlanId, 
+                  luxlQosConfigQceTableRowEditorVlanIdRange, 
+                  luxlQosConfigQceTableRowEditorPcp, 
+                  luxlQosConfigQceTableRowEditorDei, 
+                  luxlQosConfigQceTableRowEditorInnerVlanTagType, 
+                  luxlQosConfigQceTableRowEditorInnerVlanIdOp, 
+                  luxlQosConfigQceTableRowEditorInnerVlanId, 
+                  luxlQosConfigQceTableRowEditorInnerVlanIdRange, 
+                  luxlQosConfigQceTableRowEditorInnerPcp, 
+                  luxlQosConfigQceTableRowEditorInnerDei, 
+                  luxlQosConfigQceTableRowEditorFrameType, 
+                  luxlQosConfigQceTableRowEditorEtype, 
+                  luxlQosConfigQceTableRowEditorLlcDsap, 
+                  luxlQosConfigQceTableRowEditorLlcDsapMask, 
+                  luxlQosConfigQceTableRowEditorLlcSsap, 
+                  luxlQosConfigQceTableRowEditorLlcSsapMask, 
+                  luxlQosConfigQceTableRowEditorLlcControl, 
+                  luxlQosConfigQceTableRowEditorLlcControlMask, 
+                  luxlQosConfigQceTableRowEditorSnapPid, 
+                  luxlQosConfigQceTableRowEditorSnapPidMask, 
+                  luxlQosConfigQceTableRowEditorIpv4Fragment, 
+                  luxlQosConfigQceTableRowEditorIpv4DscpOp, 
+                  luxlQosConfigQceTableRowEditorIpv4Dscp, 
+                  luxlQosConfigQceTableRowEditorIpv4DscpRange, 
+                  luxlQosConfigQceTableRowEditorIpv4Protocol, 
+                  luxlQosConfigQceTableRowEditorIpv4ProtocolMask, 
+                  luxlQosConfigQceTableRowEditorIpv4SrcIp, 
+                  luxlQosConfigQceTableRowEditorIpv4SrcIpMask, 
+                  luxlQosConfigQceTableRowEditorIpv4DestIp, 
+                  luxlQosConfigQceTableRowEditorIpv4DestIpMask, 
+                  luxlQosConfigQceTableRowEditorIpv4SrcPortOp, 
+                  luxlQosConfigQceTableRowEditorIpv4SrcPort, 
+                  luxlQosConfigQceTableRowEditorIpv4SrcPortRange, 
+                  luxlQosConfigQceTableRowEditorIpv4DestPortOp, 
+                  luxlQosConfigQceTableRowEditorIpv4DestPort, 
+                  luxlQosConfigQceTableRowEditorIpv4DestPortRange, 
+                  luxlQosConfigQceTableRowEditorIpv6DscpOp, 
+                  luxlQosConfigQceTableRowEditorIpv6Dscp, 
+                  luxlQosConfigQceTableRowEditorIpv6DscpRange, 
+                  luxlQosConfigQceTableRowEditorIpv6Protocol, 
+                  luxlQosConfigQceTableRowEditorIpv6ProtocolMask, 
+                  luxlQosConfigQceTableRowEditorIpv6SrcIp, 
+                  luxlQosConfigQceTableRowEditorIpv6SrcIpMask, 
+                  luxlQosConfigQceTableRowEditorIpv6DestIp, 
+                  luxlQosConfigQceTableRowEditorIpv6DestIpMask, 
+                  luxlQosConfigQceTableRowEditorIpv6SrcPortOp, 
+                  luxlQosConfigQceTableRowEditorIpv6SrcPort, 
+                  luxlQosConfigQceTableRowEditorIpv6SrcPortRange, 
+                  luxlQosConfigQceTableRowEditorIpv6DestPortOp, 
+                  luxlQosConfigQceTableRowEditorIpv6DestPort, 
+                  luxlQosConfigQceTableRowEditorIpv6DestPortRange, 
+                  luxlQosConfigQceTableRowEditorActionCosEnable, 
+                  luxlQosConfigQceTableRowEditorActionCos, 
+                  luxlQosConfigQceTableRowEditorActionDplEnable, 
+                  luxlQosConfigQceTableRowEditorActionDpl, 
+                  luxlQosConfigQceTableRowEditorActionDscpEnable, 
+                  luxlQosConfigQceTableRowEditorActionDscp, 
+                  luxlQosConfigQceTableRowEditorActionPcpDeiEnable, 
+                  luxlQosConfigQceTableRowEditorActionPcp, 
+                  luxlQosConfigQceTableRowEditorActionDei, 
+                  luxlQosConfigQceTableRowEditorActionPolicyEnable, 
+                  luxlQosConfigQceTableRowEditorActionPolicy, 
+                  luxlQosConfigQceTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 20 }
+
+luxlQosConfigQcePrecedenceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosConfigQcePrecedenceQceId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 21 }
+
+luxlQosStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosStatusInterfaceCos }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 22 }
+
+luxlQosStatusInterfaceSchedulerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosStatusInterfaceSchedulerWeight }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 23 }
+
+luxlQosStatusQceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosStatusQceUserId, luxlQosStatusQceQceId, 
+                  luxlQosStatusQceConflict }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 24 }
+
+luxlQosControlQceInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlQosControlQceConflictResolve }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlQosMibGroups 25 }
+
+luxlQosMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlQosCapabilitiesInfoGroup, 
+                  luxlQosConfigGlobalsStormPolicersUnicastInfoGroup, 
+                  luxlQosConfigGlobalsStormPolicersMulticastInfoGroup, 
+                  luxlQosConfigGlobalsStormPolicersBroadcastInfoGroup, 
+                  luxlQosConfigGlobalsWredTableInfoGroup, 
+                  luxlQosConfigGlobalsDscpTableInfoGroup, 
+                  luxlQosConfigGlobalsCosToDscpTableInfoGroup, 
+                  luxlQosConfigInterfaceTableInfoGroup, 
+                  luxlQosConfigInterfaceTagToCosTableInfoGroup, 
+                  luxlQosConfigInterfaceCosToTagTableInfoGroup, 
+                  luxlQosConfigInterfacePolicerTableInfoGroup, 
+                  luxlQosConfigInterfaceQueuePolicerTableInfoGroup, 
+                  luxlQosConfigInterfaceShaperTableInfoGroup, 
+                  luxlQosConfigInterfaceQueueShaperTableInfoGroup, 
+                  luxlQosConfigInterfaceSchedulerTableInfoGroup, 
+                  luxlQosConfigInterfaceStormPolicerUnicastTableInfoGroup, 
+                  luxlQosConfigInterfaceStormPolicerBroadcastTableInfoGroup, 
+                  luxlQosConfigInterfaceStormPolicerUnknownTableInfoGroup, 
+                  luxlQosConfigQceTableInfoGroup, 
+                  luxlQosConfigQceTableRowEditorInfoGroup, 
+                  luxlQosConfigQcePrecedenceTableInfoGroup, 
+                  luxlQosStatusInterfaceTableInfoGroup, 
+                  luxlQosStatusInterfaceSchedulerTableInfoGroup, 
+                  luxlQosStatusQceTableInfoGroup, luxlQosControlQceInfoGroup }
+
+    ::= { luxlQosMibCompliances 1 }
+
+END

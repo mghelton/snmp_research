@@ -1,0 +1,4074 @@
+-- *****************************************************************
+-- EVC-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-EVC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Counter64 FROM SNMPv2-SMI
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLBitType FROM LUXL-TC
+    LUXLDestMacType FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    LUXLVcapKeyType FROM LUXL-TC
+    LUXLVlanTagPriority FROM LUXL-TC
+    LUXLVlanTagType FROM LUXL-TC
+    ;
+
+luxlEvcMib MODULE-IDENTITY
+    LAST-UPDATED "201408130000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private MIB for EVC"
+    REVISION    "201408130000Z"
+    DESCRIPTION
+        "Added MPLS PW table."
+    REVISION    "201407290000Z"
+    DESCRIPTION
+        "Updated descriptions when referring to a capability."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 62 }
+
+
+LUXLevcDeiMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The ECE DEI mode."
+    SYNTAX      INTEGER { classified(0), fixed(1), dp(2) }
+
+LUXLevcDirection ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The ECE direction."
+    SYNTAX      INTEGER { both(0), uniToNni(1), nniToUni(2) }
+
+LUXLevcEceL2cpMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The ECE L2CP forward mode."
+    SYNTAX      INTEGER { forward(0), discard(1), peer(2), tunnel(3) }
+
+LUXLevcFrameType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The ECE frame type."
+    SYNTAX      INTEGER { any(0), etype(1), llc(2), snap(3), l2cp(4), ipv4(5), ipv6(6) }
+
+LUXLevcInnerTagType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The inner tag type."
+    SYNTAX      INTEGER { none(0), cTagged(1), sTagged(2), sCustomTagged(3) }
+
+LUXLevcL2cpDmac ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The ECE DMAC used for L2CP tunneling."
+    SYNTAX      INTEGER { custom(0), cisco(1) }
+
+LUXLevcL2cpMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The EVC port L2CP mode."
+    SYNTAX      INTEGER { forward(0), discard(1), peer(2) }
+
+LUXLevcL2cpType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The L2CP type."
+    SYNTAX      INTEGER { none(0), stp(1), pause(2), lacp(3), lamp(4), loam(5), dot1x(6), elmi(7), pb(8), pbGvrp(9), lldp(10), gmrp(11), gvrp(12), uld(13), pagp(14), pvst(15), ciscoVlan(16), cdp(17), vtp(18), dtp(19), ciscoStp(20), ciscoCfm(21) }
+
+LUXLevcPcpMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The ECE PCP mode."
+    SYNTAX      INTEGER { classified(0), fixed(1), mapped(2) }
+
+LUXLevcPolicerMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The EVC policer mode."
+    SYNTAX      INTEGER { coupled(0), aware(1), blind(2) }
+
+LUXLevcPolicerOp ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The policer operator."
+    SYNTAX      INTEGER { normal(0), none(1), discard(2), evc(3) }
+
+LUXLevcPolicerType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The EVC policer type."
+    SYNTAX      INTEGER { mef(0), single(1) }
+
+LUXLevcPopTag ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The number of tags popped."
+    SYNTAX      INTEGER { zero(0), one(1), two(2) }
+
+LUXLevcRuleType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The ECE rule type."
+    SYNTAX      INTEGER { both(0), rx(1), tx(2) }
+
+LUXLevcTxLookup ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The ECE egress lookup key type."
+    SYNTAX      INTEGER { vid(0), vidPcp(1), isdx(2) }
+
+luxlEvcMibObjects OBJECT IDENTIFIER
+    ::= { luxlEvcMib 1 }
+
+luxlEvcCapabilities OBJECT IDENTIFIER
+    ::= { luxlEvcMibObjects 1 }
+
+luxlEvcCapabilitiesPolicerMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of EVC policers."
+    ::= { luxlEvcCapabilities 1 }
+
+luxlEvcCapabilitiesEvcMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of EVC rules."
+    ::= { luxlEvcCapabilities 2 }
+
+luxlEvcCapabilitiesEceMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of ECE rules."
+    ::= { luxlEvcCapabilities 3 }
+
+luxlEvcCapabilitiesHasPortDeiColoring OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports NNI port DEI coloring."
+    ::= { luxlEvcCapabilities 100 }
+
+luxlEvcCapabilitiesHasPortInnerTag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports NNI port inner tag classification."
+    ::= { luxlEvcCapabilities 101 }
+
+luxlEvcCapabilitiesHasPortAddrMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports port address mode (SMAC/SIP or
+         DMAC/DIP)."
+    ::= { luxlEvcCapabilities 102 }
+
+luxlEvcCapabilitiesHasPortKey OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports port key type."
+    ::= { luxlEvcCapabilities 103 }
+
+luxlEvcCapabilitiesHasPolicerColorBlind OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports color-blind policing."
+    ::= { luxlEvcCapabilities 200 }
+
+luxlEvcCapabilitiesHasEvcPolicer OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports EVC policer mapping."
+    ::= { luxlEvcCapabilities 300 }
+
+luxlEvcCapabilitiesHasEvcUniVid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports EVC UNI VLAN ID."
+    ::= { luxlEvcCapabilities 301 }
+
+luxlEvcCapabilitiesHasEvcItAdd OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports EVC inner tag adding."
+    ::= { luxlEvcCapabilities 302 }
+
+luxlEvcCapabilitiesHasEvcMpls OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports EVC MPLS."
+    ::= { luxlEvcCapabilities 303 }
+
+luxlEvcCapabilitiesHasEceAdvLookup OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE advanced lookup."
+    ::= { luxlEvcCapabilities 400 }
+
+luxlEvcCapabilitiesHasEceDestMacType OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE DMAC type matching."
+    ::= { luxlEvcCapabilities 401 }
+
+luxlEvcCapabilitiesHasEceDestMac OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE DMAC matching."
+    ::= { luxlEvcCapabilities 402 }
+
+luxlEvcCapabilitiesHasEceSrcMac OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE SMAC matching."
+    ::= { luxlEvcCapabilities 403 }
+
+luxlEvcCapabilitiesHasEceInnerTag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE inner tag matching."
+    ::= { luxlEvcCapabilities 404 }
+
+luxlEvcCapabilitiesHasEceEtype OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE Ethernet Type frame matching."
+    ::= { luxlEvcCapabilities 405 }
+
+luxlEvcCapabilitiesHasEceLlc OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE LLC frame matching."
+    ::= { luxlEvcCapabilities 406 }
+
+luxlEvcCapabilitiesHasEceSnap OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE SNAP frame matching."
+    ::= { luxlEvcCapabilities 407 }
+
+luxlEvcCapabilitiesHasEceL2cp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE LLC frame matching and forwarding."
+    ::= { luxlEvcCapabilities 408 }
+
+luxlEvcCapabilitiesHasEceIpv4Fragment OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE IPv4 fragment matching."
+    ::= { luxlEvcCapabilities 409 }
+
+luxlEvcCapabilitiesHasEceIpProto OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE IP protocol matching."
+    ::= { luxlEvcCapabilities 410 }
+
+luxlEvcCapabilitiesHasEceSrcIp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE source IP address matching."
+    ::= { luxlEvcCapabilities 411 }
+
+luxlEvcCapabilitiesHasEceDestIp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE destination IP address matching."
+    ::= { luxlEvcCapabilities 412 }
+
+luxlEvcCapabilitiesHasEceSrcPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE source UDP/TCP port matching."
+    ::= { luxlEvcCapabilities 413 }
+
+luxlEvcCapabilitiesHasEceDestPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE destination UDP/TCP port matching."
+    ::= { luxlEvcCapabilities 414 }
+
+luxlEvcCapabilitiesHasEceRuleType OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE rule type."
+    ::= { luxlEvcCapabilities 415 }
+
+luxlEvcCapabilitiesHasEceTxLookup OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE egress lookup type."
+    ::= { luxlEvcCapabilities 416 }
+
+luxlEvcCapabilitiesHasEceOtAddVid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE outer tag VID."
+    ::= { luxlEvcCapabilities 417 }
+
+luxlEvcCapabilitiesHasEcePcpMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE PCP mode."
+    ::= { luxlEvcCapabilities 418 }
+
+luxlEvcCapabilitiesHasEcePcpDeiPreserve OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE PCP/DEI preservation."
+    ::= { luxlEvcCapabilities 419 }
+
+luxlEvcCapabilitiesHasEceDeiMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE DEI mode."
+    ::= { luxlEvcCapabilities 420 }
+
+luxlEvcCapabilitiesHasEceItAdd OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE inner tag adding."
+    ::= { luxlEvcCapabilities 421 }
+
+luxlEvcCapabilitiesHasEcePolicer OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE policer mapping."
+    ::= { luxlEvcCapabilities 422 }
+
+luxlEvcCapabilitiesHasEceCos OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE CoS mapping."
+    ::= { luxlEvcCapabilities 423 }
+
+luxlEvcCapabilitiesHasEceDp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports ECE Drop Precedence mapping."
+    ::= { luxlEvcCapabilities 424 }
+
+luxlEvcCapabilitiesHasEvcPortHqos OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports (EVC, port) HQoS ID mapping."
+    ::= { luxlEvcCapabilities 500 }
+
+luxlEvcCapabilitiesHasEvcPortCounters OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the platform supports (EVC, port) counters."
+    ::= { luxlEvcCapabilities 501 }
+
+luxlEvcConfig OBJECT IDENTIFIER
+    ::= { luxlEvcMibObjects 2 }
+
+luxlEvcConfigInterface OBJECT IDENTIFIER
+    ::= { luxlEvcConfig 2 }
+
+luxlEvcConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides EVC configuration for interfaces"
+    ::= { luxlEvcConfigInterface 1 }
+
+luxlEvcConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for an interface"
+    INDEX       { luxlEvcConfigInterfaceIfIndex }
+    ::= { luxlEvcConfigInterfaceTable 1 }
+
+LUXLEvcConfigInterfaceEntry ::= SEQUENCE {
+    luxlEvcConfigInterfaceIfIndex   LUXLInterfaceIndex,
+    luxlEvcConfigInterfaceKey   LUXLVcapKeyType,
+    luxlEvcConfigInterfaceKeyAdv    LUXLVcapKeyType,
+    luxlEvcConfigInterfaceAddrMode      TruthValue,
+    luxlEvcConfigInterfaceAddrModeAdv   TruthValue,
+    luxlEvcConfigInterfaceDeiColoring   TruthValue,
+    luxlEvcConfigInterfaceInnerTag      TruthValue
+}
+
+luxlEvcConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlEvcConfigInterfaceEntry 1 }
+
+luxlEvcConfigInterfaceKey OBJECT-TYPE
+    SYNTAX      LUXLVcapKeyType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The key type for the basic ingress lookup.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasPortKey' is True."
+    ::= { luxlEvcConfigInterfaceEntry 2 }
+
+luxlEvcConfigInterfaceKeyAdv OBJECT-TYPE
+    SYNTAX      LUXLVcapKeyType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The key type for the advanced ingress lookup.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasPortKey' is True."
+    ::= { luxlEvcConfigInterfaceEntry 3 }
+
+luxlEvcConfigInterfaceAddrMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If false, the basic ingress lookup is based on SMAC/SIP. If true, the
+         basic ingress lookup is based on DMAC/DIP.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasPortAddrMode' is True."
+    ::= { luxlEvcConfigInterfaceEntry 4 }
+
+luxlEvcConfigInterfaceAddrModeAdv OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If false, the advanced ingress lookup is based on SMAC/SIP. If true,
+         the advanced ingress lookup is based on DMAC/DIP.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasPortKey' is True."
+    ::= { luxlEvcConfigInterfaceEntry 5 }
+
+luxlEvcConfigInterfaceDeiColoring OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If false, DEI coloring for the NNI port is enabled. If true, DEI
+         coloring for the NNI port is disabled.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasPortDeiColoring' is True."
+    ::= { luxlEvcConfigInterfaceEntry 6 }
+
+luxlEvcConfigInterfaceInnerTag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If false, the NNI port uses outer tag classification. If true, the NNI
+         port uses inner tag classification.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasPortInnerTag' is True."
+    ::= { luxlEvcConfigInterfaceEntry 7 }
+
+luxlEvcConfigInterfaceL2cpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcConfigInterfaceL2cpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides L2CP configuration for interfaces"
+    ::= { luxlEvcConfigInterface 2 }
+
+luxlEvcConfigInterfaceL2cpEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcConfigInterfaceL2cpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for an L2CP"
+    INDEX       { luxlEvcConfigInterfaceL2cpIfIndex, luxlEvcConfigInterfaceL2cpL2cpId }
+    ::= { luxlEvcConfigInterfaceL2cpTable 1 }
+
+LUXLEvcConfigInterfaceL2cpEntry ::= SEQUENCE {
+    luxlEvcConfigInterfaceL2cpIfIndex   LUXLInterfaceIndex,
+    luxlEvcConfigInterfaceL2cpL2cpId    Integer32,
+    luxlEvcConfigInterfaceL2cpL2cpMode      LUXLevcL2cpMode
+}
+
+luxlEvcConfigInterfaceL2cpIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlEvcConfigInterfaceL2cpEntry 1 }
+
+luxlEvcConfigInterfaceL2cpL2cpId OBJECT-TYPE
+    SYNTAX      Integer32 (0..31)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "L2CP ID."
+    ::= { luxlEvcConfigInterfaceL2cpEntry 2 }
+
+luxlEvcConfigInterfaceL2cpL2cpMode OBJECT-TYPE
+    SYNTAX      LUXLevcL2cpMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The forwarding mode for the L2CP."
+    ::= { luxlEvcConfigInterfaceL2cpEntry 3 }
+
+luxlEvcConfigPolicerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcConfigPolicerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides EVC policer configuration"
+    ::= { luxlEvcConfig 3 }
+
+luxlEvcConfigPolicerEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcConfigPolicerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a policer"
+    INDEX       { luxlEvcConfigPolicerPolicerId }
+    ::= { luxlEvcConfigPolicerTable 1 }
+
+LUXLEvcConfigPolicerEntry ::= SEQUENCE {
+    luxlEvcConfigPolicerPolicerId   Integer32,
+    luxlEvcConfigPolicerEnable      TruthValue,
+    luxlEvcConfigPolicerPolicerType     LUXLevcPolicerType,
+    luxlEvcConfigPolicerPolicerMode     LUXLevcPolicerMode,
+    luxlEvcConfigPolicerLineRate    TruthValue,
+    luxlEvcConfigPolicerCir     Unsigned32,
+    luxlEvcConfigPolicerCbs     Unsigned32,
+    luxlEvcConfigPolicerEir     Unsigned32,
+    luxlEvcConfigPolicerEbs     Unsigned32
+}
+
+luxlEvcConfigPolicerPolicerId OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Policer ID, allowed range is [0,PolicerMax[."
+    ::= { luxlEvcConfigPolicerEntry 1 }
+
+luxlEvcConfigPolicerEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable or disable policer."
+    ::= { luxlEvcConfigPolicerEntry 2 }
+
+luxlEvcConfigPolicerPolicerType OBJECT-TYPE
+    SYNTAX      LUXLevcPolicerType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The EVC policer type."
+    ::= { luxlEvcConfigPolicerEntry 3 }
+
+luxlEvcConfigPolicerPolicerMode OBJECT-TYPE
+    SYNTAX      LUXLevcPolicerMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The EVC policer mode. Color-blind policing is only supported if
+         HasPolicerColorBlind is true."
+    ::= { luxlEvcConfigPolicerEntry 4 }
+
+luxlEvcConfigPolicerLineRate OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable or disable line rate policing."
+    ::= { luxlEvcConfigPolicerEntry 5 }
+
+luxlEvcConfigPolicerCir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Committed Information Rate in kbps."
+    ::= { luxlEvcConfigPolicerEntry 6 }
+
+luxlEvcConfigPolicerCbs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Committed Burst Size in bytes."
+    ::= { luxlEvcConfigPolicerEntry 7 }
+
+luxlEvcConfigPolicerEir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Excess Information Rate in kbps."
+    ::= { luxlEvcConfigPolicerEntry 8 }
+
+luxlEvcConfigPolicerEbs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Excess Burst Size in bytes."
+    ::= { luxlEvcConfigPolicerEntry 9 }
+
+luxlEvcConfigEvc OBJECT IDENTIFIER
+    ::= { luxlEvcConfig 4 }
+
+luxlEvcConfigEvcTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcConfigEvcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the configuration of EVCs"
+    ::= { luxlEvcConfigEvc 1 }
+
+luxlEvcConfigEvcEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcConfigEvcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for an EVC"
+    INDEX       { luxlEvcConfigEvcEvcId }
+    ::= { luxlEvcConfigEvcTable 1 }
+
+LUXLEvcConfigEvcEntry ::= SEQUENCE {
+    luxlEvcConfigEvcEvcId   Integer32,
+    luxlEvcConfigEvcVid     LUXLUnsigned16,
+    luxlEvcConfigEvcIvid    LUXLUnsigned16,
+    luxlEvcConfigEvcNniPortList     LUXLPortList,
+    luxlEvcConfigEvcLearning    TruthValue,
+    luxlEvcConfigEvcPolicerOp   LUXLevcPolicerOp,
+    luxlEvcConfigEvcPolicerId   LUXLUnsigned16,
+    luxlEvcConfigEvcUniVid      LUXLUnsigned16,
+    luxlEvcConfigEvcItAddType   LUXLevcInnerTagType,
+    luxlEvcConfigEvcItInnerVid      TruthValue,
+    luxlEvcConfigEvcItAddVid    LUXLUnsigned16,
+    luxlEvcConfigEvcItAddPcpDeiPreserve     TruthValue,
+    luxlEvcConfigEvcItAddPcp    Unsigned32,
+    luxlEvcConfigEvcItAddDei    LUXLUnsigned8,
+    luxlEvcConfigEvcAction      LUXLRowEditorState
+}
+
+luxlEvcConfigEvcEvcId OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "EVC ID, allowed range is [0,EvcMax[."
+    ::= { luxlEvcConfigEvcEntry 1 }
+
+luxlEvcConfigEvcVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID used in the outer tag for the EVC."
+    ::= { luxlEvcConfigEvcEntry 2 }
+
+luxlEvcConfigEvcIvid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The internal classified VLAN ID for the EVC."
+    ::= { luxlEvcConfigEvcEntry 3 }
+
+luxlEvcConfigEvcNniPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of NNI ports for the EVC."
+    ::= { luxlEvcConfigEvcEntry 4 }
+
+luxlEvcConfigEvcLearning OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable or disable MAC address learning for the EVC."
+    ::= { luxlEvcConfigEvcEntry 5 }
+
+luxlEvcConfigEvcPolicerOp OBJECT-TYPE
+    SYNTAX      LUXLevcPolicerOp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Policer operator for the EVC.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPolicer' is True."
+    ::= { luxlEvcConfigEvcEntry 6 }
+
+luxlEvcConfigEvcPolicerId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Policer ID for the EVC.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPolicer' is True."
+    ::= { luxlEvcConfigEvcEntry 7 }
+
+luxlEvcConfigEvcUniVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID used in the outer tag on the UNI.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcUniVid' is True."
+    ::= { luxlEvcConfigEvcEntry 8 }
+
+luxlEvcConfigEvcItAddType OBJECT-TYPE
+    SYNTAX      LUXLevcInnerTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The tag type for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcEntry 9 }
+
+luxlEvcConfigEvcItInnerVid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable inner VLAN ID for EVC classification.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcEntry 10 }
+
+luxlEvcConfigEvcItAddVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID for the inner tag pushed
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcEntry 11 }
+
+luxlEvcConfigEvcItAddPcpDeiPreserve OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable PCP/DEI preservation for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcEntry 12 }
+
+luxlEvcConfigEvcItAddPcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcEntry 13 }
+
+luxlEvcConfigEvcItAddDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcEntry 14 }
+
+luxlEvcConfigEvcAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlEvcConfigEvcEntry 10000 }
+
+luxlEvcConfigEvcTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlEvcConfigEvc 2 }
+
+luxlEvcConfigEvcTableRowEditorEvcId OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "EVC ID, allowed range is [0,EvcMax[."
+    ::= { luxlEvcConfigEvcTableRowEditor 1 }
+
+luxlEvcConfigEvcTableRowEditorVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID used in the outer tag for the EVC."
+    ::= { luxlEvcConfigEvcTableRowEditor 2 }
+
+luxlEvcConfigEvcTableRowEditorIvid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The internal classified VLAN ID for the EVC."
+    ::= { luxlEvcConfigEvcTableRowEditor 3 }
+
+luxlEvcConfigEvcTableRowEditorNniPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of NNI ports for the EVC."
+    ::= { luxlEvcConfigEvcTableRowEditor 4 }
+
+luxlEvcConfigEvcTableRowEditorLearning OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable or disable MAC address learning for the EVC."
+    ::= { luxlEvcConfigEvcTableRowEditor 5 }
+
+luxlEvcConfigEvcTableRowEditorPolicerOp OBJECT-TYPE
+    SYNTAX      LUXLevcPolicerOp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Policer operator for the EVC.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPolicer' is True."
+    ::= { luxlEvcConfigEvcTableRowEditor 6 }
+
+luxlEvcConfigEvcTableRowEditorPolicerId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Policer ID for the EVC.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPolicer' is True."
+    ::= { luxlEvcConfigEvcTableRowEditor 7 }
+
+luxlEvcConfigEvcTableRowEditorUniVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID used in the outer tag on the UNI.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcUniVid' is True."
+    ::= { luxlEvcConfigEvcTableRowEditor 8 }
+
+luxlEvcConfigEvcTableRowEditorItAddType OBJECT-TYPE
+    SYNTAX      LUXLevcInnerTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The tag type for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcTableRowEditor 9 }
+
+luxlEvcConfigEvcTableRowEditorItInnerVid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable inner VLAN ID for EVC classification.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcTableRowEditor 10 }
+
+luxlEvcConfigEvcTableRowEditorItAddVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID for the inner tag pushed
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcTableRowEditor 11 }
+
+luxlEvcConfigEvcTableRowEditorItAddPcpDeiPreserve OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable PCP/DEI preservation for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcTableRowEditor 12 }
+
+luxlEvcConfigEvcTableRowEditorItAddPcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcTableRowEditor 13 }
+
+luxlEvcConfigEvcTableRowEditorItAddDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcItAdd' is True."
+    ::= { luxlEvcConfigEvcTableRowEditor 14 }
+
+luxlEvcConfigEvcTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlEvcConfigEvcTableRowEditor 10000 }
+
+luxlEvcConfigEce OBJECT IDENTIFIER
+    ::= { luxlEvcConfig 5 }
+
+luxlEvcConfigEceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcConfigEceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the configuration of ECEs"
+    ::= { luxlEvcConfigEce 1 }
+
+luxlEvcConfigEceEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcConfigEceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for an ECE"
+    INDEX       { luxlEvcConfigEceEceId }
+    ::= { luxlEvcConfigEceTable 1 }
+
+LUXLEvcConfigEceEntry ::= SEQUENCE {
+    luxlEvcConfigEceEceId   Integer32,
+    luxlEvcConfigEceNextId      Unsigned32,
+    luxlEvcConfigEceAdvLookup   TruthValue,
+    luxlEvcConfigEceUniPortList     LUXLPortList,
+    luxlEvcConfigEceSrcMac      MacAddress,
+    luxlEvcConfigEceSrcMacMask      MacAddress,
+    luxlEvcConfigEceDestMacType     LUXLDestMacType,
+    luxlEvcConfigEceDestMac     MacAddress,
+    luxlEvcConfigEceDestMacMask     MacAddress,
+    luxlEvcConfigEceOtMatchType     LUXLVlanTagType,
+    luxlEvcConfigEceOtMatchVid      Unsigned32,
+    luxlEvcConfigEceOtMatchPcp      LUXLVlanTagPriority,
+    luxlEvcConfigEceOtMatchDei      LUXLBitType,
+    luxlEvcConfigEceItMatchType     LUXLVlanTagType,
+    luxlEvcConfigEceItMatchVid      Unsigned32,
+    luxlEvcConfigEceItMatchPcp      LUXLVlanTagPriority,
+    luxlEvcConfigEceItMatchDei      LUXLBitType,
+    luxlEvcConfigEceFrameType   LUXLevcFrameType,
+    luxlEvcConfigEceEtype   LUXLUnsigned16,
+    luxlEvcConfigEceEtypeMask   LUXLUnsigned16,
+    luxlEvcConfigEceEtypeData   LUXLUnsigned16,
+    luxlEvcConfigEceEtypeDataMask   LUXLUnsigned16,
+    luxlEvcConfigEceLlcDsap     LUXLUnsigned8,
+    luxlEvcConfigEceLlcDsapMask     LUXLUnsigned8,
+    luxlEvcConfigEceLlcSsap     LUXLUnsigned8,
+    luxlEvcConfigEceLlcSsapMask     LUXLUnsigned8,
+    luxlEvcConfigEceLlcControl      LUXLUnsigned8,
+    luxlEvcConfigEceLlcControlMask      LUXLUnsigned8,
+    luxlEvcConfigEceLlcPid      LUXLUnsigned16,
+    luxlEvcConfigEceLlcPidMask      LUXLUnsigned16,
+    luxlEvcConfigEceSnapOui     Unsigned32,
+    luxlEvcConfigEceSnapOuiMask     Unsigned32,
+    luxlEvcConfigEceSnapPid     LUXLUnsigned16,
+    luxlEvcConfigEceSnapPidMask     LUXLUnsigned16,
+    luxlEvcConfigEceL2cpType    LUXLevcL2cpType,
+    luxlEvcConfigEceIpv4Dscp    Unsigned32,
+    luxlEvcConfigEceIpv4Proto   LUXLUnsigned8,
+    luxlEvcConfigEceIpv4ProtoMask   LUXLUnsigned8,
+    luxlEvcConfigEceIpv4Fragment    LUXLBitType,
+    luxlEvcConfigEceIpv4SrcIp   IpAddress,
+    luxlEvcConfigEceIpv4SrcIpMask   IpAddress,
+    luxlEvcConfigEceIpv4DestIp      IpAddress,
+    luxlEvcConfigEceIpv4DestIpMask      IpAddress,
+    luxlEvcConfigEceIpv4SrcPort     Unsigned32,
+    luxlEvcConfigEceIpv4DestPort    Unsigned32,
+    luxlEvcConfigEceIpv6Dscp    Unsigned32,
+    luxlEvcConfigEceIpv6Proto   LUXLUnsigned8,
+    luxlEvcConfigEceIpv6ProtoMask   LUXLUnsigned8,
+    luxlEvcConfigEceIpv6SrcIp   InetAddressIPv6,
+    luxlEvcConfigEceIpv6SrcIpMask   InetAddressIPv6,
+    luxlEvcConfigEceIpv6DestIp      InetAddressIPv6,
+    luxlEvcConfigEceIpv6DestIpMask      InetAddressIPv6,
+    luxlEvcConfigEceIpv6SrcPort     Unsigned32,
+    luxlEvcConfigEceIpv6DestPort    Unsigned32,
+    luxlEvcConfigEceDirection   LUXLevcDirection,
+    luxlEvcConfigEceRuleType    LUXLevcRuleType,
+    luxlEvcConfigEceTxLookup    LUXLevcTxLookup,
+    luxlEvcConfigEcePopTag      LUXLevcPopTag,
+    luxlEvcConfigEceOtAddEnable     TruthValue,
+    luxlEvcConfigEceOtAddVid    LUXLUnsigned16,
+    luxlEvcConfigEceOtAddPcpMode    LUXLevcPcpMode,
+    luxlEvcConfigEceOtAddPcpDeiPreserve     TruthValue,
+    luxlEvcConfigEceOtAddPcp    Unsigned32,
+    luxlEvcConfigEceOtAddDeiMode    LUXLevcDeiMode,
+    luxlEvcConfigEceOtAddDei    LUXLUnsigned8,
+    luxlEvcConfigEceItAddType   LUXLevcInnerTagType,
+    luxlEvcConfigEceItAddVid    LUXLUnsigned16,
+    luxlEvcConfigEceItAddPcpMode    LUXLevcPcpMode,
+    luxlEvcConfigEceItAddPcpDeiPreserve     TruthValue,
+    luxlEvcConfigEceItAddPcp    Unsigned32,
+    luxlEvcConfigEceItAddDeiMode    LUXLevcDeiMode,
+    luxlEvcConfigEceItAddDei    LUXLUnsigned8,
+    luxlEvcConfigEceEvcId   LUXLUnsigned16,
+    luxlEvcConfigEcePolicerOp   LUXLevcPolicerOp,
+    luxlEvcConfigEcePolicerId   LUXLUnsigned16,
+    luxlEvcConfigEcePolicyNo    Unsigned32,
+    luxlEvcConfigEceCosEnable   TruthValue,
+    luxlEvcConfigEceCos     Unsigned32,
+    luxlEvcConfigEceDpEnable    TruthValue,
+    luxlEvcConfigEceDp      LUXLUnsigned8,
+    luxlEvcConfigEceL2cpMode    LUXLevcEceL2cpMode,
+    luxlEvcConfigEceL2cpDmac    LUXLevcL2cpDmac,
+    luxlEvcConfigEceAction      LUXLRowEditorState
+}
+
+luxlEvcConfigEceEceId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4096)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "ECE ID, allowed range is [1,EceMax]."
+    ::= { luxlEvcConfigEceEntry 1 }
+
+luxlEvcConfigEceNextId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ID of the next ECE."
+    ::= { luxlEvcConfigEceEntry 2 }
+
+luxlEvcConfigEceAdvLookup OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable advanced ingress lookup.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceAdvLookup' is True."
+    ::= { luxlEvcConfigEceEntry 3 }
+
+luxlEvcConfigEceUniPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of UNI ports for the ECE."
+    ::= { luxlEvcConfigEceEntry 4 }
+
+luxlEvcConfigEceSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source MAC address to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcMac' is True."
+    ::= { luxlEvcConfigEceEntry 10 }
+
+luxlEvcConfigEceSrcMacMask OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source MAC address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcMac' is True."
+    ::= { luxlEvcConfigEceEntry 11 }
+
+luxlEvcConfigEceDestMacType OBJECT-TYPE
+    SYNTAX      LUXLDestMacType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination MAC address type to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestMacType' is True."
+    ::= { luxlEvcConfigEceEntry 12 }
+
+luxlEvcConfigEceDestMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination MAC address to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestMac' is True."
+    ::= { luxlEvcConfigEceEntry 13 }
+
+luxlEvcConfigEceDestMacMask OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination MAC address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestMac' is True."
+    ::= { luxlEvcConfigEceEntry 14 }
+
+luxlEvcConfigEceOtMatchType OBJECT-TYPE
+    SYNTAX      LUXLVlanTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The outer tag type to match."
+    ::= { luxlEvcConfigEceEntry 20 }
+
+luxlEvcConfigEceOtMatchVid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The outer tag VLAN ID range to match. The minimum value is encoded in
+         the 16 least significant bits. The maximum value is encoded in the 16
+         most significant bits."
+    ::= { luxlEvcConfigEceEntry 21 }
+
+luxlEvcConfigEceOtMatchPcp OBJECT-TYPE
+    SYNTAX      LUXLVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The outer tag PCP to match."
+    ::= { luxlEvcConfigEceEntry 22 }
+
+luxlEvcConfigEceOtMatchDei OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The outer tag DEI to match."
+    ::= { luxlEvcConfigEceEntry 23 }
+
+luxlEvcConfigEceItMatchType OBJECT-TYPE
+    SYNTAX      LUXLVlanTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner tag type to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceInnerTag' is True."
+    ::= { luxlEvcConfigEceEntry 30 }
+
+luxlEvcConfigEceItMatchVid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner tag VLAN ID range to match. The minimum value is encoded in
+         the 16 least significant bits. The maximum value is encoded in the 16
+         most significant bits.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceInnerTag' is True."
+    ::= { luxlEvcConfigEceEntry 31 }
+
+luxlEvcConfigEceItMatchPcp OBJECT-TYPE
+    SYNTAX      LUXLVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner tag PCP to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceInnerTag' is True."
+    ::= { luxlEvcConfigEceEntry 32 }
+
+luxlEvcConfigEceItMatchDei OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner tag DEI to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceInnerTag' is True."
+    ::= { luxlEvcConfigEceEntry 33 }
+
+luxlEvcConfigEceFrameType OBJECT-TYPE
+    SYNTAX      LUXLevcFrameType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ECE frame type."
+    ::= { luxlEvcConfigEceEntry 50 }
+
+luxlEvcConfigEceEtype OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Ethernet Type to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceEtype' is True."
+    ::= { luxlEvcConfigEceEntry 100 }
+
+luxlEvcConfigEceEtypeMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Ethernet Type mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceEtype' is True."
+    ::= { luxlEvcConfigEceEntry 101 }
+
+luxlEvcConfigEceEtypeData OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Ethernet Type data to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceEtype' is True."
+    ::= { luxlEvcConfigEceEntry 102 }
+
+luxlEvcConfigEceEtypeDataMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Ethernet Type data mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceEtype' is True."
+    ::= { luxlEvcConfigEceEntry 103 }
+
+luxlEvcConfigEceLlcDsap OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC DSAP field to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceEntry 200 }
+
+luxlEvcConfigEceLlcDsapMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC DSAP mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceEntry 201 }
+
+luxlEvcConfigEceLlcSsap OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC SSAP field to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceEntry 202 }
+
+luxlEvcConfigEceLlcSsapMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC SSAP mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceEntry 203 }
+
+luxlEvcConfigEceLlcControl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC Control field to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceEntry 204 }
+
+luxlEvcConfigEceLlcControlMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC Control mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceEntry 205 }
+
+luxlEvcConfigEceLlcPid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC Protocol ID to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceEntry 206 }
+
+luxlEvcConfigEceLlcPidMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC Protocol ID mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceEntry 207 }
+
+luxlEvcConfigEceSnapOui OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The SNAP OUI to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSnap' is True."
+    ::= { luxlEvcConfigEceEntry 300 }
+
+luxlEvcConfigEceSnapOuiMask OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The SNAP OUI mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSnap' is True."
+    ::= { luxlEvcConfigEceEntry 301 }
+
+luxlEvcConfigEceSnapPid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The SNAP Protocol ID to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSnap' is True."
+    ::= { luxlEvcConfigEceEntry 302 }
+
+luxlEvcConfigEceSnapPidMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The SNAP Protocol ID mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSnap' is True."
+    ::= { luxlEvcConfigEceEntry 303 }
+
+luxlEvcConfigEceL2cpType OBJECT-TYPE
+    SYNTAX      LUXLevcL2cpType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The L2CP type to match. The value 'none' is not valid for SET
+         operations.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceL2cp' is True."
+    ::= { luxlEvcConfigEceEntry 400 }
+
+luxlEvcConfigEceIpv4Dscp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 DSCP range to match. The minimum value is encoded in the 16
+         least significant bits. The maximum value is encoded in the 16 most
+         significant bits."
+    ::= { luxlEvcConfigEceEntry 500 }
+
+luxlEvcConfigEceIpv4Proto OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 protocol number to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceIpProto' is True."
+    ::= { luxlEvcConfigEceEntry 501 }
+
+luxlEvcConfigEceIpv4ProtoMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 protocol mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceIpProto' is True."
+    ::= { luxlEvcConfigEceEntry 502 }
+
+luxlEvcConfigEceIpv4Fragment OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 fragment match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceIpv4Fragment' is True."
+    ::= { luxlEvcConfigEceEntry 503 }
+
+luxlEvcConfigEceIpv4SrcIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 source address.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcIp' is True."
+    ::= { luxlEvcConfigEceEntry 504 }
+
+luxlEvcConfigEceIpv4SrcIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 source address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcIp' is True."
+    ::= { luxlEvcConfigEceEntry 505 }
+
+luxlEvcConfigEceIpv4DestIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 destination address.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestIp' is True."
+    ::= { luxlEvcConfigEceEntry 506 }
+
+luxlEvcConfigEceIpv4DestIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 destination address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestIp' is True."
+    ::= { luxlEvcConfigEceEntry 507 }
+
+luxlEvcConfigEceIpv4SrcPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 UDP/TCP source port range to match. The minimum value is
+         encoded in the 16 least significant bits. The maximum value is encoded
+         in the 16 most significant bits.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcPort' is True."
+    ::= { luxlEvcConfigEceEntry 508 }
+
+luxlEvcConfigEceIpv4DestPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 UDP/TCP destination port range to match. The minimum value is
+         encoded in the 16 least significant bits. The maximum value is encoded
+         in the 16 most significant bits.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestPort' is True."
+    ::= { luxlEvcConfigEceEntry 509 }
+
+luxlEvcConfigEceIpv6Dscp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 DSCP range to match. The minimum value is encoded in the 16
+         least significant bits. The maximum value is encoded in the 16 most
+         significant bits."
+    ::= { luxlEvcConfigEceEntry 600 }
+
+luxlEvcConfigEceIpv6Proto OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 protocol number to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceIpProto' is True."
+    ::= { luxlEvcConfigEceEntry 601 }
+
+luxlEvcConfigEceIpv6ProtoMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 protocol mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceIpProto' is True."
+    ::= { luxlEvcConfigEceEntry 602 }
+
+luxlEvcConfigEceIpv6SrcIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 source address.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcIp' is True."
+    ::= { luxlEvcConfigEceEntry 603 }
+
+luxlEvcConfigEceIpv6SrcIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 source address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcIp' is True."
+    ::= { luxlEvcConfigEceEntry 604 }
+
+luxlEvcConfigEceIpv6DestIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 destination address.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestIp' is True."
+    ::= { luxlEvcConfigEceEntry 605 }
+
+luxlEvcConfigEceIpv6DestIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 destination address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestIp' is True."
+    ::= { luxlEvcConfigEceEntry 606 }
+
+luxlEvcConfigEceIpv6SrcPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 UDP/TCP source port range to match. The minimum value is
+         encoded in the 16 least significant bits. The maximum value is encoded
+         in the 16 most significant bits.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcPort' is True."
+    ::= { luxlEvcConfigEceEntry 607 }
+
+luxlEvcConfigEceIpv6DestPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 UDP/TCP destination port range to match. The minimum value is
+         encoded in the 16 least significant bits. The maximum value is encoded
+         in the 16 most significant bits.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestPort' is True."
+    ::= { luxlEvcConfigEceEntry 608 }
+
+luxlEvcConfigEceDirection OBJECT-TYPE
+    SYNTAX      LUXLevcDirection
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ECE direction."
+    ::= { luxlEvcConfigEceEntry 1000 }
+
+luxlEvcConfigEceRuleType OBJECT-TYPE
+    SYNTAX      LUXLevcRuleType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ECE rule type.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceRuleType' is True."
+    ::= { luxlEvcConfigEceEntry 1010 }
+
+luxlEvcConfigEceTxLookup OBJECT-TYPE
+    SYNTAX      LUXLevcTxLookup
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The egress lookup key type.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceTxLookup' is True."
+    ::= { luxlEvcConfigEceEntry 1011 }
+
+luxlEvcConfigEcePopTag OBJECT-TYPE
+    SYNTAX      LUXLevcPopTag
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The number of tags popped."
+    ::= { luxlEvcConfigEceEntry 1020 }
+
+luxlEvcConfigEceOtAddEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable outer tag pushing for NNI-to-UNI direction."
+    ::= { luxlEvcConfigEceEntry 1100 }
+
+luxlEvcConfigEceOtAddVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID pushed for NNI-to-UNI direction.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceOtAddVid' is True."
+    ::= { luxlEvcConfigEceEntry 1101 }
+
+luxlEvcConfigEceOtAddPcpMode OBJECT-TYPE
+    SYNTAX      LUXLevcPcpMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP mode for the outer tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePcpMode' is True."
+    ::= { luxlEvcConfigEceEntry 1102 }
+
+luxlEvcConfigEceOtAddPcpDeiPreserve OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable PCP/DEI preservation for the outer tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePcpDeiPreserve' is True."
+    ::= { luxlEvcConfigEceEntry 1103 }
+
+luxlEvcConfigEceOtAddPcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value for the outer tag pushed."
+    ::= { luxlEvcConfigEceEntry 1104 }
+
+luxlEvcConfigEceOtAddDeiMode OBJECT-TYPE
+    SYNTAX      LUXLevcDeiMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI mode for the outer tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDeiMode' is True."
+    ::= { luxlEvcConfigEceEntry 1105 }
+
+luxlEvcConfigEceOtAddDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value for the outer tag pushed."
+    ::= { luxlEvcConfigEceEntry 1106 }
+
+luxlEvcConfigEceItAddType OBJECT-TYPE
+    SYNTAX      LUXLevcInnerTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The tag type for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceItAdd' is True."
+    ::= { luxlEvcConfigEceEntry 1200 }
+
+luxlEvcConfigEceItAddVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceItAdd' is True."
+    ::= { luxlEvcConfigEceEntry 1201 }
+
+luxlEvcConfigEceItAddPcpMode OBJECT-TYPE
+    SYNTAX      LUXLevcPcpMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP mode for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePcpMode' is True."
+    ::= { luxlEvcConfigEceEntry 1202 }
+
+luxlEvcConfigEceItAddPcpDeiPreserve OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable PCP/DEI preservation for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePcpDeiPreserve' is True."
+    ::= { luxlEvcConfigEceEntry 1203 }
+
+luxlEvcConfigEceItAddPcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceItAdd' is True."
+    ::= { luxlEvcConfigEceEntry 1204 }
+
+luxlEvcConfigEceItAddDeiMode OBJECT-TYPE
+    SYNTAX      LUXLevcDeiMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI mode for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDeiMode' is True."
+    ::= { luxlEvcConfigEceEntry 1205 }
+
+luxlEvcConfigEceItAddDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceItAdd' is True."
+    ::= { luxlEvcConfigEceEntry 1206 }
+
+luxlEvcConfigEceEvcId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The EVC ID for the ECE."
+    ::= { luxlEvcConfigEceEntry 1300 }
+
+luxlEvcConfigEcePolicerOp OBJECT-TYPE
+    SYNTAX      LUXLevcPolicerOp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policer operator for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePolicer' is True."
+    ::= { luxlEvcConfigEceEntry 1301 }
+
+luxlEvcConfigEcePolicerId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policer ID for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePolicer' is True."
+    ::= { luxlEvcConfigEceEntry 1302 }
+
+luxlEvcConfigEcePolicyNo OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ACL policy number for the ECE."
+    ::= { luxlEvcConfigEceEntry 1310 }
+
+luxlEvcConfigEceCosEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable CoS assignment.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceCos' is True."
+    ::= { luxlEvcConfigEceEntry 1320 }
+
+luxlEvcConfigEceCos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The CoS value for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceCos' is True."
+    ::= { luxlEvcConfigEceEntry 1321 }
+
+luxlEvcConfigEceDpEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable Drop Precendence assignment.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDp' is True."
+    ::= { luxlEvcConfigEceEntry 1330 }
+
+luxlEvcConfigEceDp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Drop Precedence value for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDp' is True."
+    ::= { luxlEvcConfigEceEntry 1331 }
+
+luxlEvcConfigEceL2cpMode OBJECT-TYPE
+    SYNTAX      LUXLevcEceL2cpMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The L2CP forward mode for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceL2cp' is True."
+    ::= { luxlEvcConfigEceEntry 1332 }
+
+luxlEvcConfigEceL2cpDmac OBJECT-TYPE
+    SYNTAX      LUXLevcL2cpDmac
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DMAC used for L2CP tunneling for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceL2cp' is True."
+    ::= { luxlEvcConfigEceEntry 1333 }
+
+luxlEvcConfigEceAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlEvcConfigEceEntry 10000 }
+
+luxlEvcConfigEceTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlEvcConfigEce 2 }
+
+luxlEvcConfigEceTableRowEditorEceId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4096)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "ECE ID, allowed range is [1,EceMax]."
+    ::= { luxlEvcConfigEceTableRowEditor 1 }
+
+luxlEvcConfigEceTableRowEditorNextId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ID of the next ECE."
+    ::= { luxlEvcConfigEceTableRowEditor 2 }
+
+luxlEvcConfigEceTableRowEditorAdvLookup OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable advanced ingress lookup.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceAdvLookup' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 3 }
+
+luxlEvcConfigEceTableRowEditorUniPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of UNI ports for the ECE."
+    ::= { luxlEvcConfigEceTableRowEditor 4 }
+
+luxlEvcConfigEceTableRowEditorSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source MAC address to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcMac' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 10 }
+
+luxlEvcConfigEceTableRowEditorSrcMacMask OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source MAC address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcMac' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 11 }
+
+luxlEvcConfigEceTableRowEditorDestMacType OBJECT-TYPE
+    SYNTAX      LUXLDestMacType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination MAC address type to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestMacType' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 12 }
+
+luxlEvcConfigEceTableRowEditorDestMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination MAC address to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestMac' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 13 }
+
+luxlEvcConfigEceTableRowEditorDestMacMask OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination MAC address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestMac' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 14 }
+
+luxlEvcConfigEceTableRowEditorOtMatchType OBJECT-TYPE
+    SYNTAX      LUXLVlanTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The outer tag type to match."
+    ::= { luxlEvcConfigEceTableRowEditor 20 }
+
+luxlEvcConfigEceTableRowEditorOtMatchVid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The outer tag VLAN ID range to match. The minimum value is encoded in
+         the 16 least significant bits. The maximum value is encoded in the 16
+         most significant bits."
+    ::= { luxlEvcConfigEceTableRowEditor 21 }
+
+luxlEvcConfigEceTableRowEditorOtMatchPcp OBJECT-TYPE
+    SYNTAX      LUXLVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The outer tag PCP to match."
+    ::= { luxlEvcConfigEceTableRowEditor 22 }
+
+luxlEvcConfigEceTableRowEditorOtMatchDei OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The outer tag DEI to match."
+    ::= { luxlEvcConfigEceTableRowEditor 23 }
+
+luxlEvcConfigEceTableRowEditorItMatchType OBJECT-TYPE
+    SYNTAX      LUXLVlanTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner tag type to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceInnerTag' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 30 }
+
+luxlEvcConfigEceTableRowEditorItMatchVid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner tag VLAN ID range to match. The minimum value is encoded in
+         the 16 least significant bits. The maximum value is encoded in the 16
+         most significant bits.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceInnerTag' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 31 }
+
+luxlEvcConfigEceTableRowEditorItMatchPcp OBJECT-TYPE
+    SYNTAX      LUXLVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner tag PCP to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceInnerTag' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 32 }
+
+luxlEvcConfigEceTableRowEditorItMatchDei OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The inner tag DEI to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceInnerTag' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 33 }
+
+luxlEvcConfigEceTableRowEditorFrameType OBJECT-TYPE
+    SYNTAX      LUXLevcFrameType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ECE frame type."
+    ::= { luxlEvcConfigEceTableRowEditor 50 }
+
+luxlEvcConfigEceTableRowEditorEtype OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Ethernet Type to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceEtype' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 100 }
+
+luxlEvcConfigEceTableRowEditorEtypeMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Ethernet Type mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceEtype' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 101 }
+
+luxlEvcConfigEceTableRowEditorEtypeData OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Ethernet Type data to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceEtype' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 102 }
+
+luxlEvcConfigEceTableRowEditorEtypeDataMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Ethernet Type data mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceEtype' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 103 }
+
+luxlEvcConfigEceTableRowEditorLlcDsap OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC DSAP field to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 200 }
+
+luxlEvcConfigEceTableRowEditorLlcDsapMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC DSAP mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 201 }
+
+luxlEvcConfigEceTableRowEditorLlcSsap OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC SSAP field to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 202 }
+
+luxlEvcConfigEceTableRowEditorLlcSsapMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC SSAP mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 203 }
+
+luxlEvcConfigEceTableRowEditorLlcControl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC Control field to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 204 }
+
+luxlEvcConfigEceTableRowEditorLlcControlMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC Control mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 205 }
+
+luxlEvcConfigEceTableRowEditorLlcPid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC Protocol ID to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 206 }
+
+luxlEvcConfigEceTableRowEditorLlcPidMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLC Protocol ID mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceLlc' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 207 }
+
+luxlEvcConfigEceTableRowEditorSnapOui OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The SNAP OUI to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSnap' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 300 }
+
+luxlEvcConfigEceTableRowEditorSnapOuiMask OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The SNAP OUI mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSnap' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 301 }
+
+luxlEvcConfigEceTableRowEditorSnapPid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The SNAP Protocol ID to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSnap' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 302 }
+
+luxlEvcConfigEceTableRowEditorSnapPidMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The SNAP Protocol ID mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSnap' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 303 }
+
+luxlEvcConfigEceTableRowEditorL2cpType OBJECT-TYPE
+    SYNTAX      LUXLevcL2cpType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The L2CP type to match. The value 'none' is not valid for SET
+         operations.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceL2cp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 400 }
+
+luxlEvcConfigEceTableRowEditorIpv4Dscp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 DSCP range to match. The minimum value is encoded in the 16
+         least significant bits. The maximum value is encoded in the 16 most
+         significant bits."
+    ::= { luxlEvcConfigEceTableRowEditor 500 }
+
+luxlEvcConfigEceTableRowEditorIpv4Proto OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 protocol number to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceIpProto' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 501 }
+
+luxlEvcConfigEceTableRowEditorIpv4ProtoMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 protocol mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceIpProto' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 502 }
+
+luxlEvcConfigEceTableRowEditorIpv4Fragment OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 fragment match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceIpv4Fragment' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 503 }
+
+luxlEvcConfigEceTableRowEditorIpv4SrcIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 source address.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcIp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 504 }
+
+luxlEvcConfigEceTableRowEditorIpv4SrcIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 source address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcIp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 505 }
+
+luxlEvcConfigEceTableRowEditorIpv4DestIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 destination address.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestIp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 506 }
+
+luxlEvcConfigEceTableRowEditorIpv4DestIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 destination address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestIp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 507 }
+
+luxlEvcConfigEceTableRowEditorIpv4SrcPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 UDP/TCP source port range to match. The minimum value is
+         encoded in the 16 least significant bits. The maximum value is encoded
+         in the 16 most significant bits.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcPort' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 508 }
+
+luxlEvcConfigEceTableRowEditorIpv4DestPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv4 UDP/TCP destination port range to match. The minimum value is
+         encoded in the 16 least significant bits. The maximum value is encoded
+         in the 16 most significant bits.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestPort' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 509 }
+
+luxlEvcConfigEceTableRowEditorIpv6Dscp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 DSCP range to match. The minimum value is encoded in the 16
+         least significant bits. The maximum value is encoded in the 16 most
+         significant bits."
+    ::= { luxlEvcConfigEceTableRowEditor 600 }
+
+luxlEvcConfigEceTableRowEditorIpv6Proto OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 protocol number to match.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceIpProto' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 601 }
+
+luxlEvcConfigEceTableRowEditorIpv6ProtoMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 protocol mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceIpProto' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 602 }
+
+luxlEvcConfigEceTableRowEditorIpv6SrcIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 source address.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcIp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 603 }
+
+luxlEvcConfigEceTableRowEditorIpv6SrcIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 source address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcIp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 604 }
+
+luxlEvcConfigEceTableRowEditorIpv6DestIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 destination address.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestIp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 605 }
+
+luxlEvcConfigEceTableRowEditorIpv6DestIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 destination address mask.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestIp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 606 }
+
+luxlEvcConfigEceTableRowEditorIpv6SrcPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 UDP/TCP source port range to match. The minimum value is
+         encoded in the 16 least significant bits. The maximum value is encoded
+         in the 16 most significant bits.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceSrcPort' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 607 }
+
+luxlEvcConfigEceTableRowEditorIpv6DestPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IPv6 UDP/TCP destination port range to match. The minimum value is
+         encoded in the 16 least significant bits. The maximum value is encoded
+         in the 16 most significant bits.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDestPort' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 608 }
+
+luxlEvcConfigEceTableRowEditorDirection OBJECT-TYPE
+    SYNTAX      LUXLevcDirection
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ECE direction."
+    ::= { luxlEvcConfigEceTableRowEditor 1000 }
+
+luxlEvcConfigEceTableRowEditorRuleType OBJECT-TYPE
+    SYNTAX      LUXLevcRuleType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ECE rule type.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceRuleType' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1010 }
+
+luxlEvcConfigEceTableRowEditorTxLookup OBJECT-TYPE
+    SYNTAX      LUXLevcTxLookup
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The egress lookup key type.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceTxLookup' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1011 }
+
+luxlEvcConfigEceTableRowEditorPopTag OBJECT-TYPE
+    SYNTAX      LUXLevcPopTag
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The number of tags popped."
+    ::= { luxlEvcConfigEceTableRowEditor 1020 }
+
+luxlEvcConfigEceTableRowEditorOtAddEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable outer tag pushing for NNI-to-UNI direction."
+    ::= { luxlEvcConfigEceTableRowEditor 1100 }
+
+luxlEvcConfigEceTableRowEditorOtAddVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID pushed for NNI-to-UNI direction.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceOtAddVid' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1101 }
+
+luxlEvcConfigEceTableRowEditorOtAddPcpMode OBJECT-TYPE
+    SYNTAX      LUXLevcPcpMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP mode for the outer tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePcpMode' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1102 }
+
+luxlEvcConfigEceTableRowEditorOtAddPcpDeiPreserve OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable PCP/DEI preservation for the outer tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePcpDeiPreserve' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1103 }
+
+luxlEvcConfigEceTableRowEditorOtAddPcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value for the outer tag pushed."
+    ::= { luxlEvcConfigEceTableRowEditor 1104 }
+
+luxlEvcConfigEceTableRowEditorOtAddDeiMode OBJECT-TYPE
+    SYNTAX      LUXLevcDeiMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI mode for the outer tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDeiMode' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1105 }
+
+luxlEvcConfigEceTableRowEditorOtAddDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value for the outer tag pushed."
+    ::= { luxlEvcConfigEceTableRowEditor 1106 }
+
+luxlEvcConfigEceTableRowEditorItAddType OBJECT-TYPE
+    SYNTAX      LUXLevcInnerTagType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The tag type for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceItAdd' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1200 }
+
+luxlEvcConfigEceTableRowEditorItAddVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceItAdd' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1201 }
+
+luxlEvcConfigEceTableRowEditorItAddPcpMode OBJECT-TYPE
+    SYNTAX      LUXLevcPcpMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP mode for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePcpMode' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1202 }
+
+luxlEvcConfigEceTableRowEditorItAddPcpDeiPreserve OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable PCP/DEI preservation for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePcpDeiPreserve' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1203 }
+
+luxlEvcConfigEceTableRowEditorItAddPcp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceItAdd' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1204 }
+
+luxlEvcConfigEceTableRowEditorItAddDeiMode OBJECT-TYPE
+    SYNTAX      LUXLevcDeiMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI mode for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDeiMode' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1205 }
+
+luxlEvcConfigEceTableRowEditorItAddDei OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DEI value for the inner tag pushed.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceItAdd' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1206 }
+
+luxlEvcConfigEceTableRowEditorEvcId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The EVC ID for the ECE."
+    ::= { luxlEvcConfigEceTableRowEditor 1300 }
+
+luxlEvcConfigEceTableRowEditorPolicerOp OBJECT-TYPE
+    SYNTAX      LUXLevcPolicerOp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policer operator for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePolicer' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1301 }
+
+luxlEvcConfigEceTableRowEditorPolicerId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policer ID for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEcePolicer' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1302 }
+
+luxlEvcConfigEceTableRowEditorPolicyNo OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ACL policy number for the ECE."
+    ::= { luxlEvcConfigEceTableRowEditor 1310 }
+
+luxlEvcConfigEceTableRowEditorCosEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable CoS assignment.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceCos' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1320 }
+
+luxlEvcConfigEceTableRowEditorCos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The CoS value for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceCos' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1321 }
+
+luxlEvcConfigEceTableRowEditorDpEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable Drop Precendence assignment.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1330 }
+
+luxlEvcConfigEceTableRowEditorDp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Drop Precedence value for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceDp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1331 }
+
+luxlEvcConfigEceTableRowEditorL2cpMode OBJECT-TYPE
+    SYNTAX      LUXLevcEceL2cpMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The L2CP forward mode for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceL2cp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1332 }
+
+luxlEvcConfigEceTableRowEditorL2cpDmac OBJECT-TYPE
+    SYNTAX      LUXLevcL2cpDmac
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The DMAC used for L2CP tunneling for the ECE.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEceL2cp' is True."
+    ::= { luxlEvcConfigEceTableRowEditor 1333 }
+
+luxlEvcConfigEceTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlEvcConfigEceTableRowEditor 10000 }
+
+luxlEvcConfigEcePrecedenceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcConfigEcePrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the precedence of ECEs ordered by their position"
+    ::= { luxlEvcConfigEce 3 }
+
+luxlEvcConfigEcePrecedenceEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcConfigEcePrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the precedence for an ECE"
+    INDEX       { luxlEvcConfigEcePrecedenceIndex }
+    ::= { luxlEvcConfigEcePrecedenceTable 1 }
+
+LUXLEvcConfigEcePrecedenceEntry ::= SEQUENCE {
+    luxlEvcConfigEcePrecedenceIndex     Integer32,
+    luxlEvcConfigEcePrecedenceEceId     Unsigned32
+}
+
+luxlEvcConfigEcePrecedenceIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "ECE precedence index, allowed range is [0,EceMax[."
+    ::= { luxlEvcConfigEcePrecedenceEntry 1 }
+
+luxlEvcConfigEcePrecedenceEceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "ECE ID."
+    ::= { luxlEvcConfigEcePrecedenceEntry 2 }
+
+luxlEvcConfigEvcInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcConfigEvcInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides interface configuration for EVCs"
+    ::= { luxlEvcConfig 6 }
+
+luxlEvcConfigEvcInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcConfigEvcInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for an interface on an EVC"
+    INDEX       { luxlEvcConfigEvcInterfaceEvcId, luxlEvcConfigEvcInterfaceIfIndex }
+    ::= { luxlEvcConfigEvcInterfaceTable 1 }
+
+LUXLEvcConfigEvcInterfaceEntry ::= SEQUENCE {
+    luxlEvcConfigEvcInterfaceEvcId      Integer32,
+    luxlEvcConfigEvcInterfaceIfIndex    LUXLInterfaceIndex,
+    luxlEvcConfigEvcInterfaceHqosId     LUXLUnsigned16
+}
+
+luxlEvcConfigEvcInterfaceEvcId OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "EVC ID, allowed range is [0,EvcMax[."
+    ::= { luxlEvcConfigEvcInterfaceEntry 1 }
+
+luxlEvcConfigEvcInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlEvcConfigEvcInterfaceEntry 2 }
+
+luxlEvcConfigEvcInterfaceHqosId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "HQoS ID mapping.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortHqos' is True."
+    ::= { luxlEvcConfigEvcInterfaceEntry 3 }
+
+luxlEvcConfigMplsTp OBJECT IDENTIFIER
+    ::= { luxlEvcConfig 7 }
+
+luxlEvcConfigMplsTpPwTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcConfigMplsTpPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the set of MPLS-TP pseudo wires attached to an EVC."
+    ::= { luxlEvcConfigMplsTp 1 }
+
+luxlEvcConfigMplsTpPwEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcConfigMplsTpPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the EVC-specific configuration for an MPLS-TP pseudo
+         wire."
+    INDEX       { luxlEvcConfigMplsTpPwEvcId, luxlEvcConfigMplsTpPwIfIndex }
+    ::= { luxlEvcConfigMplsTpPwTable 1 }
+
+LUXLEvcConfigMplsTpPwEntry ::= SEQUENCE {
+    luxlEvcConfigMplsTpPwEvcId      Integer32,
+    luxlEvcConfigMplsTpPwIfIndex    LUXLInterfaceIndex,
+    luxlEvcConfigMplsTpPwSplitHorizon   TruthValue,
+    luxlEvcConfigMplsTpPwAction     LUXLRowEditorState
+}
+
+luxlEvcConfigMplsTpPwEvcId OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "EVC ID, allowed range is [0,EvcMax[."
+    ::= { luxlEvcConfigMplsTpPwEntry 1 }
+
+luxlEvcConfigMplsTpPwIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MPLS pseudo wire interface index. Zero = unused."
+    ::= { luxlEvcConfigMplsTpPwEntry 2 }
+
+luxlEvcConfigMplsTpPwSplitHorizon OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "True: Enable split-horizon for a PW. False: Disable split-horizon."
+    ::= { luxlEvcConfigMplsTpPwEntry 4 }
+
+luxlEvcConfigMplsTpPwAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlEvcConfigMplsTpPwEntry 10000 }
+
+luxlEvcConfigMplsTpPwTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlEvcConfigMplsTp 2 }
+
+luxlEvcConfigMplsTpPwTableRowEditorEvcId OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "EVC ID, allowed range is [0,EvcMax[."
+    ::= { luxlEvcConfigMplsTpPwTableRowEditor 1 }
+
+luxlEvcConfigMplsTpPwTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MPLS pseudo wire interface index. Zero = unused."
+    ::= { luxlEvcConfigMplsTpPwTableRowEditor 2 }
+
+luxlEvcConfigMplsTpPwTableRowEditorSplitHorizon OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "True: Enable split-horizon for a PW. False: Disable split-horizon."
+    ::= { luxlEvcConfigMplsTpPwTableRowEditor 4 }
+
+luxlEvcConfigMplsTpPwTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlEvcConfigMplsTpPwTableRowEditor 10000 }
+
+luxlEvcStatus OBJECT IDENTIFIER
+    ::= { luxlEvcMibObjects 3 }
+
+luxlEvcStatusEvcTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcStatusEvcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the status of EVCs"
+    ::= { luxlEvcStatus 3 }
+
+luxlEvcStatusEvcEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcStatusEvcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the status for an EVC"
+    INDEX       { luxlEvcStatusEvcEvcId }
+    ::= { luxlEvcStatusEvcTable 1 }
+
+LUXLEvcStatusEvcEntry ::= SEQUENCE {
+    luxlEvcStatusEvcEvcId   Integer32,
+    luxlEvcStatusEvcConflict    TruthValue
+}
+
+luxlEvcStatusEvcEvcId OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "EVC ID, allowed range is [0,EvcMax[."
+    ::= { luxlEvcStatusEvcEntry 1 }
+
+luxlEvcStatusEvcConflict OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Resource conflict indication."
+    ::= { luxlEvcStatusEvcEntry 2 }
+
+luxlEvcStatusEceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcStatusEceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the status of ECEs"
+    ::= { luxlEvcStatus 4 }
+
+luxlEvcStatusEceEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcStatusEceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the status for an ECE"
+    INDEX       { luxlEvcStatusEceIndex }
+    ::= { luxlEvcStatusEceTable 1 }
+
+LUXLEvcStatusEceEntry ::= SEQUENCE {
+    luxlEvcStatusEceIndex   Integer32,
+    luxlEvcStatusEceConflict    TruthValue
+}
+
+luxlEvcStatusEceIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "ECE precedence index, allowed range is [0,EceMax[."
+    ::= { luxlEvcStatusEceEntry 1 }
+
+luxlEvcStatusEceConflict OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Resource conflict indication."
+    ::= { luxlEvcStatusEceEntry 2 }
+
+luxlEvcStatusEvcInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcStatusEvcInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains EVC interface statistics"
+    ::= { luxlEvcStatus 5 }
+
+luxlEvcStatusEvcInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcStatusEvcInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the statistics for an EVC and interface"
+    INDEX       { luxlEvcStatusEvcInterfaceEvcId, luxlEvcStatusEvcInterfaceIfIndex }
+    ::= { luxlEvcStatusEvcInterfaceTable 1 }
+
+LUXLEvcStatusEvcInterfaceEntry ::= SEQUENCE {
+    luxlEvcStatusEvcInterfaceEvcId      Integer32,
+    luxlEvcStatusEvcInterfaceIfIndex    LUXLInterfaceIndex,
+    luxlEvcStatusEvcInterfaceRxGreenFrames      Counter64,
+    luxlEvcStatusEvcInterfaceRxGreenBytes   Counter64,
+    luxlEvcStatusEvcInterfaceRxYellowFrames     Counter64,
+    luxlEvcStatusEvcInterfaceRxYellowBytes      Counter64,
+    luxlEvcStatusEvcInterfaceRxRedFrames    Counter64,
+    luxlEvcStatusEvcInterfaceRxRedBytes     Counter64,
+    luxlEvcStatusEvcInterfaceRxDiscardFrames    Counter64,
+    luxlEvcStatusEvcInterfaceRxDiscardBytes     Counter64,
+    luxlEvcStatusEvcInterfaceTxGreenFrames      Counter64,
+    luxlEvcStatusEvcInterfaceTxGreenBytes   Counter64,
+    luxlEvcStatusEvcInterfaceTxYellowFrames     Counter64,
+    luxlEvcStatusEvcInterfaceTxYellowBytes      Counter64,
+    luxlEvcStatusEvcInterfaceTxDiscardFrames    Counter64,
+    luxlEvcStatusEvcInterfaceTxDiscardBytes     Counter64
+}
+
+luxlEvcStatusEvcInterfaceEvcId OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "EVC ID, allowed range is [0,EvcMax[."
+    ::= { luxlEvcStatusEvcInterfaceEntry 1 }
+
+luxlEvcStatusEvcInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlEvcStatusEvcInterfaceEntry 2 }
+
+luxlEvcStatusEvcInterfaceRxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 3 }
+
+luxlEvcStatusEvcInterfaceRxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 4 }
+
+luxlEvcStatusEvcInterfaceRxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 5 }
+
+luxlEvcStatusEvcInterfaceRxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 6 }
+
+luxlEvcStatusEvcInterfaceRxRedFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 7 }
+
+luxlEvcStatusEvcInterfaceRxRedBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 8 }
+
+luxlEvcStatusEvcInterfaceRxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 9 }
+
+luxlEvcStatusEvcInterfaceRxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 10 }
+
+luxlEvcStatusEvcInterfaceTxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 100 }
+
+luxlEvcStatusEvcInterfaceTxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 101 }
+
+luxlEvcStatusEvcInterfaceTxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 102 }
+
+luxlEvcStatusEvcInterfaceTxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 103 }
+
+luxlEvcStatusEvcInterfaceTxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 104 }
+
+luxlEvcStatusEvcInterfaceTxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEvcInterfaceEntry 105 }
+
+luxlEvcStatusEceInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcStatusEceInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains ECE interface statistics"
+    ::= { luxlEvcStatus 6 }
+
+luxlEvcStatusEceInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcStatusEceInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the statistics for an ECE and interface"
+    INDEX       { luxlEvcStatusEceInterfaceIndex, luxlEvcStatusEceInterfaceIfIndex }
+    ::= { luxlEvcStatusEceInterfaceTable 1 }
+
+LUXLEvcStatusEceInterfaceEntry ::= SEQUENCE {
+    luxlEvcStatusEceInterfaceIndex      Integer32,
+    luxlEvcStatusEceInterfaceIfIndex    LUXLInterfaceIndex,
+    luxlEvcStatusEceInterfaceRxGreenFrames      Counter64,
+    luxlEvcStatusEceInterfaceRxGreenBytes   Counter64,
+    luxlEvcStatusEceInterfaceRxYellowFrames     Counter64,
+    luxlEvcStatusEceInterfaceRxYellowBytes      Counter64,
+    luxlEvcStatusEceInterfaceRxRedFrames    Counter64,
+    luxlEvcStatusEceInterfaceRxRedBytes     Counter64,
+    luxlEvcStatusEceInterfaceRxDiscardFrames    Counter64,
+    luxlEvcStatusEceInterfaceRxDiscardBytes     Counter64,
+    luxlEvcStatusEceInterfaceTxGreenFrames      Counter64,
+    luxlEvcStatusEceInterfaceTxGreenBytes   Counter64,
+    luxlEvcStatusEceInterfaceTxYellowFrames     Counter64,
+    luxlEvcStatusEceInterfaceTxYellowBytes      Counter64,
+    luxlEvcStatusEceInterfaceTxDiscardFrames    Counter64,
+    luxlEvcStatusEceInterfaceTxDiscardBytes     Counter64
+}
+
+luxlEvcStatusEceInterfaceIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "ECE precedence index, allowed range is [0,EceMax[."
+    ::= { luxlEvcStatusEceInterfaceEntry 1 }
+
+luxlEvcStatusEceInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlEvcStatusEceInterfaceEntry 2 }
+
+luxlEvcStatusEceInterfaceRxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 3 }
+
+luxlEvcStatusEceInterfaceRxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received green bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 4 }
+
+luxlEvcStatusEceInterfaceRxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 5 }
+
+luxlEvcStatusEceInterfaceRxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received yellow bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 6 }
+
+luxlEvcStatusEceInterfaceRxRedFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 7 }
+
+luxlEvcStatusEceInterfaceRxRedBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received red bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 8 }
+
+luxlEvcStatusEceInterfaceRxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 9 }
+
+luxlEvcStatusEceInterfaceRxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received discarded bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 10 }
+
+luxlEvcStatusEceInterfaceTxGreenFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 100 }
+
+luxlEvcStatusEceInterfaceTxGreenBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted green bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 101 }
+
+luxlEvcStatusEceInterfaceTxYellowFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 102 }
+
+luxlEvcStatusEceInterfaceTxYellowBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted yellow bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 103 }
+
+luxlEvcStatusEceInterfaceTxDiscardFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded frames.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 104 }
+
+luxlEvcStatusEceInterfaceTxDiscardBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of egress discarded bytes.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcStatusEceInterfaceEntry 105 }
+
+luxlEvcControl OBJECT IDENTIFIER
+    ::= { luxlEvcMibObjects 4 }
+
+luxlEvcControlEvcInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcControlEvcInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides EVC interface control"
+    ::= { luxlEvcControl 5 }
+
+luxlEvcControlEvcInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcControlEvcInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row controls an EVC and interface"
+    INDEX       { luxlEvcControlEvcInterfaceEvcId, luxlEvcControlEvcInterfaceIfIndex }
+    ::= { luxlEvcControlEvcInterfaceTable 1 }
+
+LUXLEvcControlEvcInterfaceEntry ::= SEQUENCE {
+    luxlEvcControlEvcInterfaceEvcId     Integer32,
+    luxlEvcControlEvcInterfaceIfIndex   LUXLInterfaceIndex,
+    luxlEvcControlEvcInterfaceClearStatistics   TruthValue
+}
+
+luxlEvcControlEvcInterfaceEvcId OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "EVC ID, allowed range is [0,EvcMax[."
+    ::= { luxlEvcControlEvcInterfaceEntry 1 }
+
+luxlEvcControlEvcInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlEvcControlEvcInterfaceEntry 2 }
+
+luxlEvcControlEvcInterfaceClearStatistics OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear statistics by setting to true.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcControlEvcInterfaceEntry 3 }
+
+luxlEvcControlEceInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEvcControlEceInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides ECE interface control"
+    ::= { luxlEvcControl 6 }
+
+luxlEvcControlEceInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLEvcControlEceInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row controls an ECE and interface"
+    INDEX       { luxlEvcControlEceInterfaceIndex, luxlEvcControlEceInterfaceIfIndex }
+    ::= { luxlEvcControlEceInterfaceTable 1 }
+
+LUXLEvcControlEceInterfaceEntry ::= SEQUENCE {
+    luxlEvcControlEceInterfaceIndex     Integer32,
+    luxlEvcControlEceInterfaceIfIndex   LUXLInterfaceIndex,
+    luxlEvcControlEceInterfaceClearStatistics   TruthValue
+}
+
+luxlEvcControlEceInterfaceIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "ECE precedence index, allowed range is [0,EceMax[."
+    ::= { luxlEvcControlEceInterfaceEntry 1 }
+
+luxlEvcControlEceInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlEvcControlEceInterfaceEntry 2 }
+
+luxlEvcControlEceInterfaceClearStatistics OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear statistics by setting to true.
+         
+         This object is only available if the capability object
+         'luxlEvcCapabilitiesHasEvcPortCounters' is True."
+    ::= { luxlEvcControlEceInterfaceEntry 3 }
+
+luxlEvcMibConformance OBJECT IDENTIFIER
+    ::= { luxlEvcMib 2 }
+
+luxlEvcMibCompliances OBJECT IDENTIFIER
+    ::= { luxlEvcMibConformance 1 }
+
+luxlEvcMibGroups OBJECT IDENTIFIER
+    ::= { luxlEvcMibConformance 2 }
+
+luxlEvcCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcCapabilitiesPolicerMax, luxlEvcCapabilitiesEvcMax, 
+                  luxlEvcCapabilitiesEceMax, 
+                  luxlEvcCapabilitiesHasPortDeiColoring, 
+                  luxlEvcCapabilitiesHasPortInnerTag, 
+                  luxlEvcCapabilitiesHasPortAddrMode, 
+                  luxlEvcCapabilitiesHasPortKey, 
+                  luxlEvcCapabilitiesHasPolicerColorBlind, 
+                  luxlEvcCapabilitiesHasEvcPolicer, 
+                  luxlEvcCapabilitiesHasEvcUniVid, 
+                  luxlEvcCapabilitiesHasEvcItAdd, luxlEvcCapabilitiesHasEvcMpls, 
+                  luxlEvcCapabilitiesHasEceAdvLookup, 
+                  luxlEvcCapabilitiesHasEceDestMacType, 
+                  luxlEvcCapabilitiesHasEceDestMac, 
+                  luxlEvcCapabilitiesHasEceSrcMac, 
+                  luxlEvcCapabilitiesHasEceInnerTag, 
+                  luxlEvcCapabilitiesHasEceEtype, luxlEvcCapabilitiesHasEceLlc, 
+                  luxlEvcCapabilitiesHasEceSnap, luxlEvcCapabilitiesHasEceL2cp, 
+                  luxlEvcCapabilitiesHasEceIpv4Fragment, 
+                  luxlEvcCapabilitiesHasEceIpProto, 
+                  luxlEvcCapabilitiesHasEceSrcIp, 
+                  luxlEvcCapabilitiesHasEceDestIp, 
+                  luxlEvcCapabilitiesHasEceSrcPort, 
+                  luxlEvcCapabilitiesHasEceDestPort, 
+                  luxlEvcCapabilitiesHasEceRuleType, 
+                  luxlEvcCapabilitiesHasEceTxLookup, 
+                  luxlEvcCapabilitiesHasEceOtAddVid, 
+                  luxlEvcCapabilitiesHasEcePcpMode, 
+                  luxlEvcCapabilitiesHasEcePcpDeiPreserve, 
+                  luxlEvcCapabilitiesHasEceDeiMode, 
+                  luxlEvcCapabilitiesHasEceItAdd, 
+                  luxlEvcCapabilitiesHasEcePolicer, luxlEvcCapabilitiesHasEceCos, 
+                  luxlEvcCapabilitiesHasEceDp, luxlEvcCapabilitiesHasEvcPortHqos, 
+                  luxlEvcCapabilitiesHasEvcPortCounters }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 1 }
+
+luxlEvcConfigInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigInterfaceKey, luxlEvcConfigInterfaceKeyAdv, 
+                  luxlEvcConfigInterfaceAddrMode, 
+                  luxlEvcConfigInterfaceAddrModeAdv, 
+                  luxlEvcConfigInterfaceDeiColoring, 
+                  luxlEvcConfigInterfaceInnerTag }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 2 }
+
+luxlEvcConfigInterfaceL2cpTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigInterfaceL2cpL2cpMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 3 }
+
+luxlEvcConfigPolicerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigPolicerEnable, luxlEvcConfigPolicerPolicerType, 
+                  luxlEvcConfigPolicerPolicerMode, luxlEvcConfigPolicerLineRate, 
+                  luxlEvcConfigPolicerCir, luxlEvcConfigPolicerCbs, 
+                  luxlEvcConfigPolicerEir, luxlEvcConfigPolicerEbs }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 4 }
+
+luxlEvcConfigEvcTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigEvcVid, luxlEvcConfigEvcIvid, 
+                  luxlEvcConfigEvcNniPortList, luxlEvcConfigEvcLearning, 
+                  luxlEvcConfigEvcPolicerOp, luxlEvcConfigEvcPolicerId, 
+                  luxlEvcConfigEvcUniVid, luxlEvcConfigEvcItAddType, 
+                  luxlEvcConfigEvcItInnerVid, luxlEvcConfigEvcItAddVid, 
+                  luxlEvcConfigEvcItAddPcpDeiPreserve, luxlEvcConfigEvcItAddPcp, 
+                  luxlEvcConfigEvcItAddDei, luxlEvcConfigEvcAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 5 }
+
+luxlEvcConfigEvcTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigEvcTableRowEditorEvcId, 
+                  luxlEvcConfigEvcTableRowEditorVid, 
+                  luxlEvcConfigEvcTableRowEditorIvid, 
+                  luxlEvcConfigEvcTableRowEditorNniPortList, 
+                  luxlEvcConfigEvcTableRowEditorLearning, 
+                  luxlEvcConfigEvcTableRowEditorPolicerOp, 
+                  luxlEvcConfigEvcTableRowEditorPolicerId, 
+                  luxlEvcConfigEvcTableRowEditorUniVid, 
+                  luxlEvcConfigEvcTableRowEditorItAddType, 
+                  luxlEvcConfigEvcTableRowEditorItInnerVid, 
+                  luxlEvcConfigEvcTableRowEditorItAddVid, 
+                  luxlEvcConfigEvcTableRowEditorItAddPcpDeiPreserve, 
+                  luxlEvcConfigEvcTableRowEditorItAddPcp, 
+                  luxlEvcConfigEvcTableRowEditorItAddDei, 
+                  luxlEvcConfigEvcTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 6 }
+
+luxlEvcConfigEceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigEceNextId, luxlEvcConfigEceAdvLookup, 
+                  luxlEvcConfigEceUniPortList, luxlEvcConfigEceSrcMac, 
+                  luxlEvcConfigEceSrcMacMask, luxlEvcConfigEceDestMacType, 
+                  luxlEvcConfigEceDestMac, luxlEvcConfigEceDestMacMask, 
+                  luxlEvcConfigEceOtMatchType, luxlEvcConfigEceOtMatchVid, 
+                  luxlEvcConfigEceOtMatchPcp, luxlEvcConfigEceOtMatchDei, 
+                  luxlEvcConfigEceItMatchType, luxlEvcConfigEceItMatchVid, 
+                  luxlEvcConfigEceItMatchPcp, luxlEvcConfigEceItMatchDei, 
+                  luxlEvcConfigEceFrameType, luxlEvcConfigEceEtype, 
+                  luxlEvcConfigEceEtypeMask, luxlEvcConfigEceEtypeData, 
+                  luxlEvcConfigEceEtypeDataMask, luxlEvcConfigEceLlcDsap, 
+                  luxlEvcConfigEceLlcDsapMask, luxlEvcConfigEceLlcSsap, 
+                  luxlEvcConfigEceLlcSsapMask, luxlEvcConfigEceLlcControl, 
+                  luxlEvcConfigEceLlcControlMask, luxlEvcConfigEceLlcPid, 
+                  luxlEvcConfigEceLlcPidMask, luxlEvcConfigEceSnapOui, 
+                  luxlEvcConfigEceSnapOuiMask, luxlEvcConfigEceSnapPid, 
+                  luxlEvcConfigEceSnapPidMask, luxlEvcConfigEceL2cpType, 
+                  luxlEvcConfigEceIpv4Dscp, luxlEvcConfigEceIpv4Proto, 
+                  luxlEvcConfigEceIpv4ProtoMask, luxlEvcConfigEceIpv4Fragment, 
+                  luxlEvcConfigEceIpv4SrcIp, luxlEvcConfigEceIpv4SrcIpMask, 
+                  luxlEvcConfigEceIpv4DestIp, luxlEvcConfigEceIpv4DestIpMask, 
+                  luxlEvcConfigEceIpv4SrcPort, luxlEvcConfigEceIpv4DestPort, 
+                  luxlEvcConfigEceIpv6Dscp, luxlEvcConfigEceIpv6Proto, 
+                  luxlEvcConfigEceIpv6ProtoMask, luxlEvcConfigEceIpv6SrcIp, 
+                  luxlEvcConfigEceIpv6SrcIpMask, luxlEvcConfigEceIpv6DestIp, 
+                  luxlEvcConfigEceIpv6DestIpMask, luxlEvcConfigEceIpv6SrcPort, 
+                  luxlEvcConfigEceIpv6DestPort, luxlEvcConfigEceDirection, 
+                  luxlEvcConfigEceRuleType, luxlEvcConfigEceTxLookup, 
+                  luxlEvcConfigEcePopTag, luxlEvcConfigEceOtAddEnable, 
+                  luxlEvcConfigEceOtAddVid, luxlEvcConfigEceOtAddPcpMode, 
+                  luxlEvcConfigEceOtAddPcpDeiPreserve, luxlEvcConfigEceOtAddPcp, 
+                  luxlEvcConfigEceOtAddDeiMode, luxlEvcConfigEceOtAddDei, 
+                  luxlEvcConfigEceItAddType, luxlEvcConfigEceItAddVid, 
+                  luxlEvcConfigEceItAddPcpMode, 
+                  luxlEvcConfigEceItAddPcpDeiPreserve, luxlEvcConfigEceItAddPcp, 
+                  luxlEvcConfigEceItAddDeiMode, luxlEvcConfigEceItAddDei, 
+                  luxlEvcConfigEceEvcId, luxlEvcConfigEcePolicerOp, 
+                  luxlEvcConfigEcePolicerId, luxlEvcConfigEcePolicyNo, 
+                  luxlEvcConfigEceCosEnable, luxlEvcConfigEceCos, 
+                  luxlEvcConfigEceDpEnable, luxlEvcConfigEceDp, 
+                  luxlEvcConfigEceL2cpMode, luxlEvcConfigEceL2cpDmac, 
+                  luxlEvcConfigEceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 7 }
+
+luxlEvcConfigEceTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigEceTableRowEditorEceId, 
+                  luxlEvcConfigEceTableRowEditorNextId, 
+                  luxlEvcConfigEceTableRowEditorAdvLookup, 
+                  luxlEvcConfigEceTableRowEditorUniPortList, 
+                  luxlEvcConfigEceTableRowEditorSrcMac, 
+                  luxlEvcConfigEceTableRowEditorSrcMacMask, 
+                  luxlEvcConfigEceTableRowEditorDestMacType, 
+                  luxlEvcConfigEceTableRowEditorDestMac, 
+                  luxlEvcConfigEceTableRowEditorDestMacMask, 
+                  luxlEvcConfigEceTableRowEditorOtMatchType, 
+                  luxlEvcConfigEceTableRowEditorOtMatchVid, 
+                  luxlEvcConfigEceTableRowEditorOtMatchPcp, 
+                  luxlEvcConfigEceTableRowEditorOtMatchDei, 
+                  luxlEvcConfigEceTableRowEditorItMatchType, 
+                  luxlEvcConfigEceTableRowEditorItMatchVid, 
+                  luxlEvcConfigEceTableRowEditorItMatchPcp, 
+                  luxlEvcConfigEceTableRowEditorItMatchDei, 
+                  luxlEvcConfigEceTableRowEditorFrameType, 
+                  luxlEvcConfigEceTableRowEditorEtype, 
+                  luxlEvcConfigEceTableRowEditorEtypeMask, 
+                  luxlEvcConfigEceTableRowEditorEtypeData, 
+                  luxlEvcConfigEceTableRowEditorEtypeDataMask, 
+                  luxlEvcConfigEceTableRowEditorLlcDsap, 
+                  luxlEvcConfigEceTableRowEditorLlcDsapMask, 
+                  luxlEvcConfigEceTableRowEditorLlcSsap, 
+                  luxlEvcConfigEceTableRowEditorLlcSsapMask, 
+                  luxlEvcConfigEceTableRowEditorLlcControl, 
+                  luxlEvcConfigEceTableRowEditorLlcControlMask, 
+                  luxlEvcConfigEceTableRowEditorLlcPid, 
+                  luxlEvcConfigEceTableRowEditorLlcPidMask, 
+                  luxlEvcConfigEceTableRowEditorSnapOui, 
+                  luxlEvcConfigEceTableRowEditorSnapOuiMask, 
+                  luxlEvcConfigEceTableRowEditorSnapPid, 
+                  luxlEvcConfigEceTableRowEditorSnapPidMask, 
+                  luxlEvcConfigEceTableRowEditorL2cpType, 
+                  luxlEvcConfigEceTableRowEditorIpv4Dscp, 
+                  luxlEvcConfigEceTableRowEditorIpv4Proto, 
+                  luxlEvcConfigEceTableRowEditorIpv4ProtoMask, 
+                  luxlEvcConfigEceTableRowEditorIpv4Fragment, 
+                  luxlEvcConfigEceTableRowEditorIpv4SrcIp, 
+                  luxlEvcConfigEceTableRowEditorIpv4SrcIpMask, 
+                  luxlEvcConfigEceTableRowEditorIpv4DestIp, 
+                  luxlEvcConfigEceTableRowEditorIpv4DestIpMask, 
+                  luxlEvcConfigEceTableRowEditorIpv4SrcPort, 
+                  luxlEvcConfigEceTableRowEditorIpv4DestPort, 
+                  luxlEvcConfigEceTableRowEditorIpv6Dscp, 
+                  luxlEvcConfigEceTableRowEditorIpv6Proto, 
+                  luxlEvcConfigEceTableRowEditorIpv6ProtoMask, 
+                  luxlEvcConfigEceTableRowEditorIpv6SrcIp, 
+                  luxlEvcConfigEceTableRowEditorIpv6SrcIpMask, 
+                  luxlEvcConfigEceTableRowEditorIpv6DestIp, 
+                  luxlEvcConfigEceTableRowEditorIpv6DestIpMask, 
+                  luxlEvcConfigEceTableRowEditorIpv6SrcPort, 
+                  luxlEvcConfigEceTableRowEditorIpv6DestPort, 
+                  luxlEvcConfigEceTableRowEditorDirection, 
+                  luxlEvcConfigEceTableRowEditorRuleType, 
+                  luxlEvcConfigEceTableRowEditorTxLookup, 
+                  luxlEvcConfigEceTableRowEditorPopTag, 
+                  luxlEvcConfigEceTableRowEditorOtAddEnable, 
+                  luxlEvcConfigEceTableRowEditorOtAddVid, 
+                  luxlEvcConfigEceTableRowEditorOtAddPcpMode, 
+                  luxlEvcConfigEceTableRowEditorOtAddPcpDeiPreserve, 
+                  luxlEvcConfigEceTableRowEditorOtAddPcp, 
+                  luxlEvcConfigEceTableRowEditorOtAddDeiMode, 
+                  luxlEvcConfigEceTableRowEditorOtAddDei, 
+                  luxlEvcConfigEceTableRowEditorItAddType, 
+                  luxlEvcConfigEceTableRowEditorItAddVid, 
+                  luxlEvcConfigEceTableRowEditorItAddPcpMode, 
+                  luxlEvcConfigEceTableRowEditorItAddPcpDeiPreserve, 
+                  luxlEvcConfigEceTableRowEditorItAddPcp, 
+                  luxlEvcConfigEceTableRowEditorItAddDeiMode, 
+                  luxlEvcConfigEceTableRowEditorItAddDei, 
+                  luxlEvcConfigEceTableRowEditorEvcId, 
+                  luxlEvcConfigEceTableRowEditorPolicerOp, 
+                  luxlEvcConfigEceTableRowEditorPolicerId, 
+                  luxlEvcConfigEceTableRowEditorPolicyNo, 
+                  luxlEvcConfigEceTableRowEditorCosEnable, 
+                  luxlEvcConfigEceTableRowEditorCos, 
+                  luxlEvcConfigEceTableRowEditorDpEnable, 
+                  luxlEvcConfigEceTableRowEditorDp, 
+                  luxlEvcConfigEceTableRowEditorL2cpMode, 
+                  luxlEvcConfigEceTableRowEditorL2cpDmac, 
+                  luxlEvcConfigEceTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 8 }
+
+luxlEvcConfigEcePrecedenceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigEcePrecedenceEceId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 9 }
+
+luxlEvcConfigEvcInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigEvcInterfaceHqosId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 10 }
+
+luxlEvcConfigMplsTpPwTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigMplsTpPwSplitHorizon, luxlEvcConfigMplsTpPwAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 11 }
+
+luxlEvcConfigMplsTpPwTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcConfigMplsTpPwTableRowEditorEvcId, 
+                  luxlEvcConfigMplsTpPwTableRowEditorIfIndex, 
+                  luxlEvcConfigMplsTpPwTableRowEditorSplitHorizon, 
+                  luxlEvcConfigMplsTpPwTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 12 }
+
+luxlEvcStatusEvcTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcStatusEvcConflict }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 13 }
+
+luxlEvcStatusEceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcStatusEceConflict }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 14 }
+
+luxlEvcStatusEvcInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcStatusEvcInterfaceRxGreenFrames, 
+                  luxlEvcStatusEvcInterfaceRxGreenBytes, 
+                  luxlEvcStatusEvcInterfaceRxYellowFrames, 
+                  luxlEvcStatusEvcInterfaceRxYellowBytes, 
+                  luxlEvcStatusEvcInterfaceRxRedFrames, 
+                  luxlEvcStatusEvcInterfaceRxRedBytes, 
+                  luxlEvcStatusEvcInterfaceRxDiscardFrames, 
+                  luxlEvcStatusEvcInterfaceRxDiscardBytes, 
+                  luxlEvcStatusEvcInterfaceTxGreenFrames, 
+                  luxlEvcStatusEvcInterfaceTxGreenBytes, 
+                  luxlEvcStatusEvcInterfaceTxYellowFrames, 
+                  luxlEvcStatusEvcInterfaceTxYellowBytes, 
+                  luxlEvcStatusEvcInterfaceTxDiscardFrames, 
+                  luxlEvcStatusEvcInterfaceTxDiscardBytes }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 15 }
+
+luxlEvcStatusEceInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcStatusEceInterfaceRxGreenFrames, 
+                  luxlEvcStatusEceInterfaceRxGreenBytes, 
+                  luxlEvcStatusEceInterfaceRxYellowFrames, 
+                  luxlEvcStatusEceInterfaceRxYellowBytes, 
+                  luxlEvcStatusEceInterfaceRxRedFrames, 
+                  luxlEvcStatusEceInterfaceRxRedBytes, 
+                  luxlEvcStatusEceInterfaceRxDiscardFrames, 
+                  luxlEvcStatusEceInterfaceRxDiscardBytes, 
+                  luxlEvcStatusEceInterfaceTxGreenFrames, 
+                  luxlEvcStatusEceInterfaceTxGreenBytes, 
+                  luxlEvcStatusEceInterfaceTxYellowFrames, 
+                  luxlEvcStatusEceInterfaceTxYellowBytes, 
+                  luxlEvcStatusEceInterfaceTxDiscardFrames, 
+                  luxlEvcStatusEceInterfaceTxDiscardBytes }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 16 }
+
+luxlEvcControlEvcInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcControlEvcInterfaceClearStatistics }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 17 }
+
+luxlEvcControlEceInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEvcControlEceInterfaceClearStatistics }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEvcMibGroups 18 }
+
+luxlEvcMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlEvcCapabilitiesInfoGroup, 
+                  luxlEvcConfigInterfaceTableInfoGroup, 
+                  luxlEvcConfigInterfaceL2cpTableInfoGroup, 
+                  luxlEvcConfigPolicerTableInfoGroup, 
+                  luxlEvcConfigEvcTableInfoGroup, 
+                  luxlEvcConfigEvcTableRowEditorInfoGroup, 
+                  luxlEvcConfigEceTableInfoGroup, 
+                  luxlEvcConfigEceTableRowEditorInfoGroup, 
+                  luxlEvcConfigEcePrecedenceTableInfoGroup, 
+                  luxlEvcConfigEvcInterfaceTableInfoGroup, 
+                  luxlEvcConfigMplsTpPwTableInfoGroup, 
+                  luxlEvcConfigMplsTpPwTableRowEditorInfoGroup, 
+                  luxlEvcStatusEvcTableInfoGroup, luxlEvcStatusEceTableInfoGroup, 
+                  luxlEvcStatusEvcInterfaceTableInfoGroup, 
+                  luxlEvcStatusEceInterfaceTableInfoGroup, 
+                  luxlEvcControlEvcInterfaceTableInfoGroup, 
+                  luxlEvcControlEceInterfaceTableInfoGroup }
+
+    ::= { luxlEvcMibCompliances 1 }
+
+END

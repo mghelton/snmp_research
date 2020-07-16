@@ -1,0 +1,251 @@
+-- *****************************************************************
+-- THERMAL-PROTECTION-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-THERMAL-PROTECTION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInteger16 FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlThermalProtectionMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of thermal protection. The PHY thermal
+         protections consists of four groups. Each PHY is associated to a group,
+         and each group has a configured max temperature. If the average
+         temperature of all sensors exceeds the configured max temperature of a
+         group, then the PHYs in that group is shoutdown."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 78 }
+
+
+luxlThermalProtectionMibObjects OBJECT IDENTIFIER
+    ::= { luxlThermalProtectionMib 1 }
+
+luxlThermalProtectionCapabilities OBJECT IDENTIFIER
+    ::= { luxlThermalProtectionMibObjects 1 }
+
+luxlThermalProtectionCapabilitiesMaxSupportedGroup OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of supported thermal protection groups."
+    ::= { luxlThermalProtectionCapabilities 1 }
+
+luxlThermalProtectionConfig OBJECT IDENTIFIER
+    ::= { luxlThermalProtectionMibObjects 2 }
+
+luxlThermalProtectionConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlThermalProtectionConfig 1 }
+
+luxlThermalProtectionConfigGlobalsParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLThermalProtectionConfigGlobalsParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to assign a temperature to each of the groups"
+    ::= { luxlThermalProtectionConfigGlobals 1 }
+
+luxlThermalProtectionConfigGlobalsParamEntry OBJECT-TYPE
+    SYNTAX      LUXLThermalProtectionConfigGlobalsParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each group associates with a temperature"
+    INDEX       { luxlThermalProtectionConfigGlobalsParamGroupIndex }
+    ::= { luxlThermalProtectionConfigGlobalsParamTable 1 }
+
+LUXLThermalProtectionConfigGlobalsParamEntry ::= SEQUENCE {
+    luxlThermalProtectionConfigGlobalsParamGroupIndex   Integer32,
+    luxlThermalProtectionConfigGlobalsParamGroupTemperature     LUXLInteger16
+}
+
+luxlThermalProtectionConfigGlobalsParamGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Group number."
+    ::= { luxlThermalProtectionConfigGlobalsParamEntry 1 }
+
+luxlThermalProtectionConfigGlobalsParamGroupTemperature OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Temperature(in C) where the interfaces mapped to the group will be shut
+         down."
+    ::= { luxlThermalProtectionConfigGlobalsParamEntry 2 }
+
+luxlThermalProtectionConfigInterface OBJECT IDENTIFIER
+    ::= { luxlThermalProtectionConfig 2 }
+
+luxlThermalProtectionConfigInterfaceParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLThermalProtectionConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to interface group configuration"
+    ::= { luxlThermalProtectionConfigInterface 1 }
+
+luxlThermalProtectionConfigInterfaceParamEntry OBJECT-TYPE
+    SYNTAX      LUXLThermalProtectionConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each physical port associates with a group temperature"
+    INDEX       { luxlThermalProtectionConfigInterfaceParamIfIndex }
+    ::= { luxlThermalProtectionConfigInterfaceParamTable 1 }
+
+LUXLThermalProtectionConfigInterfaceParamEntry ::= SEQUENCE {
+    luxlThermalProtectionConfigInterfaceParamIfIndex    LUXLInterfaceIndex,
+    luxlThermalProtectionConfigInterfaceParamGroup      LUXLUnsigned8
+}
+
+luxlThermalProtectionConfigInterfaceParamIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlThermalProtectionConfigInterfaceParamEntry 1 }
+
+luxlThermalProtectionConfigInterfaceParamGroup OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..4)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Thermal protection groups. Object value (4) mean disable thermal
+         protect for the interface. Object values from 0 to 3 are for the
+         temperature group. "
+    ::= { luxlThermalProtectionConfigInterfaceParamEntry 2 }
+
+luxlThermalProtectionStatus OBJECT IDENTIFIER
+    ::= { luxlThermalProtectionMibObjects 3 }
+
+luxlThermalProtectionStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLThermalProtectionStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to thermal protection interface status"
+    ::= { luxlThermalProtectionStatus 1 }
+
+luxlThermalProtectionStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLThermalProtectionStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of status parameters"
+    INDEX       { luxlThermalProtectionStatusInterfaceIfIndex }
+    ::= { luxlThermalProtectionStatusInterfaceTable 1 }
+
+LUXLThermalProtectionStatusInterfaceEntry ::= SEQUENCE {
+    luxlThermalProtectionStatusInterfaceIfIndex     LUXLInterfaceIndex,
+    luxlThermalProtectionStatusInterfaceTemperature     LUXLInteger16,
+    luxlThermalProtectionStatusInterfacePower   TruthValue
+}
+
+luxlThermalProtectionStatusInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlThermalProtectionStatusInterfaceEntry 1 }
+
+luxlThermalProtectionStatusInterfaceTemperature OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current port temperature(in C)."
+    ::= { luxlThermalProtectionStatusInterfaceEntry 2 }
+
+luxlThermalProtectionStatusInterfacePower OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Port thermal protection status. false means port link is up and port is
+         operating normally. true means port link is down and port is thermal
+         protected."
+    ::= { luxlThermalProtectionStatusInterfaceEntry 3 }
+
+luxlThermalProtectionMibConformance OBJECT IDENTIFIER
+    ::= { luxlThermalProtectionMib 2 }
+
+luxlThermalProtectionMibCompliances OBJECT IDENTIFIER
+    ::= { luxlThermalProtectionMibConformance 1 }
+
+luxlThermalProtectionMibGroups OBJECT IDENTIFIER
+    ::= { luxlThermalProtectionMibConformance 2 }
+
+luxlThermalProtectionCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlThermalProtectionCapabilitiesMaxSupportedGroup }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlThermalProtectionMibGroups 1 }
+
+luxlThermalProtectionConfigGlobalsParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlThermalProtectionConfigGlobalsParamGroupTemperature }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlThermalProtectionMibGroups 2 }
+
+luxlThermalProtectionConfigInterfaceParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlThermalProtectionConfigInterfaceParamGroup }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlThermalProtectionMibGroups 3 }
+
+luxlThermalProtectionStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlThermalProtectionStatusInterfaceTemperature, 
+                  luxlThermalProtectionStatusInterfacePower }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlThermalProtectionMibGroups 4 }
+
+luxlThermalProtectionMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlThermalProtectionCapabilitiesInfoGroup, 
+                  luxlThermalProtectionConfigGlobalsParamTableInfoGroup, 
+                  luxlThermalProtectionConfigInterfaceParamTableInfoGroup, 
+                  luxlThermalProtectionStatusInterfaceTableInfoGroup }
+
+    ::= { luxlThermalProtectionMibCompliances 1 }
+
+END

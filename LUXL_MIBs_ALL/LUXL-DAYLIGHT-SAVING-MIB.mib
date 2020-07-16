@@ -1,0 +1,317 @@
+-- *****************************************************************
+-- DAYLIGHT-SAVING-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-DAYLIGHT-SAVING-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInteger16 FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlDaylightSavingMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of daylight saving. Used to configure system
+         Summer time(Daylight Saving) and Time Zone."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 97 }
+
+
+LUXLDaylightSavingMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available summer time(Daylight Saving)
+         mode."
+    SYNTAX      INTEGER { disable(0), recurring(1), nonRecurring(2) }
+
+luxlDaylightSavingMibObjects OBJECT IDENTIFIER
+    ::= { luxlDaylightSavingMib 1 }
+
+luxlDaylightSavingConfig OBJECT IDENTIFIER
+    ::= { luxlDaylightSavingMibObjects 2 }
+
+luxlDaylightSavingConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlDaylightSavingConfig 1 }
+
+luxlDaylightSavingConfigGlobalsTimeZoneAcronym OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a acronym to identify the time zone."
+    ::= { luxlDaylightSavingConfigGlobals 1 }
+
+luxlDaylightSavingConfigGlobalsTimeZoneOffset OBJECT-TYPE
+    SYNTAX      LUXLInteger16 (-720..720)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "To set the system time zone with respect to UTC in minutes."
+    ::= { luxlDaylightSavingConfigGlobals 2 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeMode OBJECT-TYPE
+    SYNTAX      LUXLDaylightSavingMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time mode.
+         
+         Disabled: The daylight feature is disabled,
+         
+         and no input validation is performed on remaining configurations
+         parameters.
+         
+         Recurring mode: Summer time configuration will repeat every year.
+         
+         To enable this mode requires that the parameters Month, Week and Day
+         are configured with valid
+         
+         values (non zero). The parameters Year and Date must be set to 0,
+         
+         signaling that they are not used.
+         
+         Non recurring mode: Summer time configuration is done once.
+         
+         To enable this feature requires that the following values are
+         configured with valid values
+         
+         (non zero): Year, Month and Date. The parameters Week and Day must be
+         set to 0
+         
+         signaling that they are not used."
+    ::= { luxlDaylightSavingConfigGlobals 3 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeWeekStart OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..5)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time starting week.
+         
+         This object needs to be set when summer time mode is recurring.
+         
+         Object value 0 means unused object."
+    ::= { luxlDaylightSavingConfigGlobals 4 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeDayStart OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time starting day.
+         
+         where monday = 1, sunday = 7.
+         
+         This object needs to be set when summer time mode is recurring.
+         
+         Object value 0 means unused object."
+    ::= { luxlDaylightSavingConfigGlobals 5 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeMonthStart OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (1..12)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time starting month.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { luxlDaylightSavingConfigGlobals 6 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeDateStart OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..31)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time starting date.
+         
+         This object needs to be set when summer time mode is non recurring."
+    ::= { luxlDaylightSavingConfigGlobals 7 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeYearStart OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (0..2097)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time starting year.
+         
+         This object needs to be set when summer time mode is non recurring.
+         
+         Object value 0 means unused object."
+    ::= { luxlDaylightSavingConfigGlobals 8 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeHourStart OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..23)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time starting hour.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { luxlDaylightSavingConfigGlobals 9 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeMinuteStart OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..59)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time starting minute.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { luxlDaylightSavingConfigGlobals 10 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeWeekEnd OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..5)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time ending week.
+         
+         This object needs to be set when summer time mode is recurring.
+         
+         Object value 0 means unused object."
+    ::= { luxlDaylightSavingConfigGlobals 11 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeDayEnd OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time ending day.
+         
+         This object needs to be set when summer time mode is recurring.
+         
+         Object value 0 means unused object."
+    ::= { luxlDaylightSavingConfigGlobals 12 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeMonthEnd OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (1..12)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time ending month.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { luxlDaylightSavingConfigGlobals 13 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeDateEnd OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..31)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time ending date.
+         
+         This object needs to be set when summer time mode is non recurring.
+         
+         Object value 0 means unused object."
+    ::= { luxlDaylightSavingConfigGlobals 14 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeYearEnd OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (0..2097)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time ending year.
+         
+         This object needs to be set when summer time mode is non recurring.
+         
+         Object value 0 means unused object."
+    ::= { luxlDaylightSavingConfigGlobals 15 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeHourEnd OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..23)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time ending hour.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { luxlDaylightSavingConfigGlobals 16 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeMinuteEnd OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..59)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a summer time ending minute.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { luxlDaylightSavingConfigGlobals 17 }
+
+luxlDaylightSavingConfigGlobalsSummerTimeOffset OBJECT-TYPE
+    SYNTAX      LUXLInteger16 (1..1440)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The value of this object indicates
+         
+         the number of minutes to add or to subtract during summertime.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { luxlDaylightSavingConfigGlobals 18 }
+
+luxlDaylightSavingMibConformance OBJECT IDENTIFIER
+    ::= { luxlDaylightSavingMib 2 }
+
+luxlDaylightSavingMibCompliances OBJECT IDENTIFIER
+    ::= { luxlDaylightSavingMibConformance 1 }
+
+luxlDaylightSavingMibGroups OBJECT IDENTIFIER
+    ::= { luxlDaylightSavingMibConformance 2 }
+
+luxlDaylightSavingConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDaylightSavingConfigGlobalsTimeZoneAcronym, 
+                  luxlDaylightSavingConfigGlobalsTimeZoneOffset, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeMode, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeWeekStart, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeDayStart, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeMonthStart, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeDateStart, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeYearStart, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeHourStart, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeMinuteStart, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeWeekEnd, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeDayEnd, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeMonthEnd, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeDateEnd, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeYearEnd, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeHourEnd, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeMinuteEnd, 
+                  luxlDaylightSavingConfigGlobalsSummerTimeOffset }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDaylightSavingMibGroups 1 }
+
+luxlDaylightSavingMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlDaylightSavingConfigGlobalsInfoGroup }
+
+    ::= { luxlDaylightSavingMibCompliances 1 }
+
+END

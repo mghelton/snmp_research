@@ -1,0 +1,498 @@
+-- *****************************************************************
+-- LACP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-LACP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Counter64 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlLacpMib MODULE-IDENTITY
+    LAST-UPDATED "201411140000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the IEEE802.3ad LAG MIB"
+    REVISION    "201411140000Z"
+    DESCRIPTION
+        "Added a new leaf for LACP system priority"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 35 }
+
+
+luxlLacpMibObjects OBJECT IDENTIFIER
+    ::= { luxlLacpMib 1 }
+
+luxlLacpConfig OBJECT IDENTIFIER
+    ::= { luxlLacpMibObjects 2 }
+
+luxlLacpConfigPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLacpConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of the LACP port configurations"
+    ::= { luxlLacpConfig 1 }
+
+luxlLacpConfigPortEntry OBJECT-TYPE
+    SYNTAX      LUXLLacpConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters"
+    INDEX       { luxlLacpConfigPortInterfaceNo }
+    ::= { luxlLacpConfigPortTable 1 }
+
+LUXLLacpConfigPortEntry ::= SEQUENCE {
+    luxlLacpConfigPortInterfaceNo   LUXLInterfaceIndex,
+    luxlLacpConfigPortDot3adAggrActorAdminMode      TruthValue,
+    luxlLacpConfigPortDot3adAggrActorAdminKey   Unsigned32,
+    luxlLacpConfigPortDot3adAggrRole    TruthValue,
+    luxlLacpConfigPortDot3adAggrTimeout     TruthValue,
+    luxlLacpConfigPortDot3adAggrPortPriority    Unsigned32
+}
+
+luxlLacpConfigPortInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlLacpConfigPortEntry 1 }
+
+luxlLacpConfigPortDot3adAggrActorAdminMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Control whether port is LACP enabled(1) or disabled(0)."
+    ::= { luxlLacpConfigPortEntry 2 }
+
+luxlLacpConfigPortDot3adAggrActorAdminKey OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The current administrative value of the Key for the Aggregator. The
+         administrative Key value may differ from the operational Key value for
+         the reasons discussed in 43.6.2. This is a 16-bit, read-write value.
+         The meaning of particular Key values is of local significance"
+    ::= { luxlLacpConfigPortEntry 3 }
+
+luxlLacpConfigPortDot3adAggrRole OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Role shows the LACP activity status. The Active(true) will transmit
+         LACP packets each second, while Passive(false) will wait for a LACP
+         packet from a partner"
+    ::= { luxlLacpConfigPortEntry 4 }
+
+luxlLacpConfigPortDot3adAggrTimeout OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Timeout controls the period between BPDU transmissions. Fast(true)
+         will transmit LACP packets each second, while Slow(0) will wait for 30
+         seconds before sending a LACP packet."
+    ::= { luxlLacpConfigPortEntry 5 }
+
+luxlLacpConfigPortDot3adAggrPortPriority OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Port Priority controls the priority of the port. If the LACP
+         partner wants to form a larger group than is supported by this device
+         then this parameter will control which ports will be active and which
+         ports will be in a backup role. Lower number means greater priority."
+    ::= { luxlLacpConfigPortEntry 6 }
+
+luxlLacpConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlLacpConfig 2 }
+
+luxlLacpConfigGlobalsDot3adAggrSystemPriority OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "LACP system priority is a value."
+    ::= { luxlLacpConfigGlobals 1 }
+
+luxlLacpStatus OBJECT IDENTIFIER
+    ::= { luxlLacpMibObjects 3 }
+
+luxlLacpStatusSystemTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLacpStatusSystemEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of the LACP system status"
+    ::= { luxlLacpStatus 1 }
+
+luxlLacpStatusSystemEntry OBJECT-TYPE
+    SYNTAX      LUXLLacpStatusSystemEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each lag has a set of parameters"
+    INDEX       { luxlLacpStatusSystemInterfaceNo }
+    ::= { luxlLacpStatusSystemTable 1 }
+
+LUXLLacpStatusSystemEntry ::= SEQUENCE {
+    luxlLacpStatusSystemInterfaceNo     LUXLInterfaceIndex,
+    luxlLacpStatusSystemDot3adAggrID    LUXLUnsigned16,
+    luxlLacpStatusSystemDot3adAggrPartnerSystemID   MacAddress,
+    luxlLacpStatusSystemDot3adAggrPartnerOperKey    LUXLUnsigned16,
+    luxlLacpStatusSystemDot3adAggrPartnerOperSystemPriority     LUXLUnsigned16,
+    luxlLacpStatusSystemDot3adAggrPartnerStateLastChanged   Unsigned32,
+    luxlLacpStatusSystemDot3adAggrLocalPorts    LUXLPortList
+}
+
+luxlLacpStatusSystemInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlLacpStatusSystemEntry 1 }
+
+luxlLacpStatusSystemDot3adAggrID OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The aggregation ID for a particular link aggregation group."
+    ::= { luxlLacpStatusSystemEntry 2 }
+
+luxlLacpStatusSystemDot3adAggrPartnerSystemID OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The system ID (MAC address) of the aggregation partner."
+    ::= { luxlLacpStatusSystemEntry 3 }
+
+luxlLacpStatusSystemDot3adAggrPartnerOperKey OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The Key that the partner has assigned to this aggregation ID."
+    ::= { luxlLacpStatusSystemEntry 4 }
+
+luxlLacpStatusSystemDot3adAggrPartnerOperSystemPriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "A 2-octet read-only value indicating the operational value of priority
+         associated with the Partner's System ID. The value of this attribute
+         may contain the manually configured value carried in
+         aAggPortPartnerAdminSystemPriority if there is no protocol Partner."
+    ::= { luxlLacpStatusSystemEntry 5 }
+
+luxlLacpStatusSystemDot3adAggrPartnerStateLastChanged OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The time in second since this aggregation changed"
+    ::= { luxlLacpStatusSystemEntry 6 }
+
+luxlLacpStatusSystemDot3adAggrLocalPorts OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Local port list"
+    ::= { luxlLacpStatusSystemEntry 7 }
+
+luxlLacpStatusPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLacpStatusPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of the LACP port status"
+    ::= { luxlLacpStatus 2 }
+
+luxlLacpStatusPortEntry OBJECT-TYPE
+    SYNTAX      LUXLLacpStatusPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters"
+    INDEX       { luxlLacpStatusPortInterfaceNo }
+    ::= { luxlLacpStatusPortTable 1 }
+
+LUXLLacpStatusPortEntry ::= SEQUENCE {
+    luxlLacpStatusPortInterfaceNo   LUXLInterfaceIndex,
+    luxlLacpStatusPortDot3adAggrActorAdminMode      TruthValue,
+    luxlLacpStatusPortDot3adAggrActorAdminKey   LUXLUnsigned16,
+    luxlLacpStatusPortDot3adAggrPartnerOperPortIndex    LUXLUnsigned8,
+    luxlLacpStatusPortDot3adAggrPartnerOperPortPriority     LUXLUnsigned16
+}
+
+luxlLacpStatusPortInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlLacpStatusPortEntry 1 }
+
+luxlLacpStatusPortDot3adAggrActorAdminMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the current Admin mode of port, if LACP enabled then returns true
+         else returns false."
+    ::= { luxlLacpStatusPortEntry 2 }
+
+luxlLacpStatusPortDot3adAggrActorAdminKey OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the current administrative value of the Key for the Aggregator.
+         The administrative Key value may differ from the operational Key value
+         for the reasons discussed in 43.6.2. This is a 16-bit, read-write
+         value. The meaning of particular Key values is of local significance"
+    ::= { luxlLacpStatusPortEntry 3 }
+
+luxlLacpStatusPortDot3adAggrPartnerOperPortIndex OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the port index of the partner port connected to this port."
+    ::= { luxlLacpStatusPortEntry 4 }
+
+luxlLacpStatusPortDot3adAggrPartnerOperPortPriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the port priority of the port partner port connected to this
+         port."
+    ::= { luxlLacpStatusPortEntry 5 }
+
+luxlLacpControl OBJECT IDENTIFIER
+    ::= { luxlLacpMibObjects 4 }
+
+luxlLacpControlPortStatsClearTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLacpControlPortStatsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to clear LACP port statistics"
+    ::= { luxlLacpControl 1 }
+
+luxlLacpControlPortStatsClearEntry OBJECT-TYPE
+    SYNTAX      LUXLLacpControlPortStatsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters"
+    INDEX       { luxlLacpControlPortStatsClearInterfaceNo }
+    ::= { luxlLacpControlPortStatsClearTable 1 }
+
+LUXLLacpControlPortStatsClearEntry ::= SEQUENCE {
+    luxlLacpControlPortStatsClearInterfaceNo    LUXLInterfaceIndex,
+    luxlLacpControlPortStatsClearPortStatisticsClear    TruthValue
+}
+
+luxlLacpControlPortStatsClearInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlLacpControlPortStatsClearEntry 1 }
+
+luxlLacpControlPortStatsClearPortStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to true to clear the statistics of a port."
+    ::= { luxlLacpControlPortStatsClearEntry 2 }
+
+luxlLacpStatistics OBJECT IDENTIFIER
+    ::= { luxlLacpMibObjects 5 }
+
+luxlLacpStatisticsPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLacpStatisticsPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of the LACP port statistics"
+    ::= { luxlLacpStatistics 3 }
+
+luxlLacpStatisticsPortEntry OBJECT-TYPE
+    SYNTAX      LUXLLacpStatisticsPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters"
+    INDEX       { luxlLacpStatisticsPortInterfaceNo }
+    ::= { luxlLacpStatisticsPortTable 1 }
+
+LUXLLacpStatisticsPortEntry ::= SEQUENCE {
+    luxlLacpStatisticsPortInterfaceNo   LUXLInterfaceIndex,
+    luxlLacpStatisticsPortDot3adAggrRxFrames    Counter64,
+    luxlLacpStatisticsPortDot3adAggrTxFrames    Counter64,
+    luxlLacpStatisticsPortDot3adAggrRxIllegalFrames     Counter64,
+    luxlLacpStatisticsPortDot3adAggrRxUnknownFrames     Counter64
+}
+
+luxlLacpStatisticsPortInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlLacpStatisticsPortEntry 1 }
+
+luxlLacpStatisticsPortDot3adAggrRxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows received LACP frame count."
+    ::= { luxlLacpStatisticsPortEntry 2 }
+
+luxlLacpStatisticsPortDot3adAggrTxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows transmitted LACP frame count."
+    ::= { luxlLacpStatisticsPortEntry 3 }
+
+luxlLacpStatisticsPortDot3adAggrRxIllegalFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows recevied illegal LACP frame count."
+    ::= { luxlLacpStatisticsPortEntry 4 }
+
+luxlLacpStatisticsPortDot3adAggrRxUnknownFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows recevied unknown LACP frame count."
+    ::= { luxlLacpStatisticsPortEntry 5 }
+
+luxlLacpMibConformance OBJECT IDENTIFIER
+    ::= { luxlLacpMib 2 }
+
+luxlLacpMibCompliances OBJECT IDENTIFIER
+    ::= { luxlLacpMibConformance 1 }
+
+luxlLacpMibGroups OBJECT IDENTIFIER
+    ::= { luxlLacpMibConformance 2 }
+
+luxlLacpConfigPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLacpConfigPortDot3adAggrActorAdminMode, 
+                  luxlLacpConfigPortDot3adAggrActorAdminKey, 
+                  luxlLacpConfigPortDot3adAggrRole, 
+                  luxlLacpConfigPortDot3adAggrTimeout, 
+                  luxlLacpConfigPortDot3adAggrPortPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLacpMibGroups 1 }
+
+luxlLacpConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLacpConfigGlobalsDot3adAggrSystemPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLacpMibGroups 2 }
+
+luxlLacpStatusSystemTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLacpStatusSystemDot3adAggrID, 
+                  luxlLacpStatusSystemDot3adAggrPartnerSystemID, 
+                  luxlLacpStatusSystemDot3adAggrPartnerOperKey, 
+                  luxlLacpStatusSystemDot3adAggrPartnerOperSystemPriority, 
+                  luxlLacpStatusSystemDot3adAggrPartnerStateLastChanged, 
+                  luxlLacpStatusSystemDot3adAggrLocalPorts }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLacpMibGroups 3 }
+
+luxlLacpStatusPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLacpStatusPortDot3adAggrActorAdminMode, 
+                  luxlLacpStatusPortDot3adAggrActorAdminKey, 
+                  luxlLacpStatusPortDot3adAggrPartnerOperPortIndex, 
+                  luxlLacpStatusPortDot3adAggrPartnerOperPortPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLacpMibGroups 4 }
+
+luxlLacpControlPortStatsClearTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLacpControlPortStatsClearPortStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLacpMibGroups 5 }
+
+luxlLacpStatisticsPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLacpStatisticsPortDot3adAggrRxFrames, 
+                  luxlLacpStatisticsPortDot3adAggrTxFrames, 
+                  luxlLacpStatisticsPortDot3adAggrRxIllegalFrames, 
+                  luxlLacpStatisticsPortDot3adAggrRxUnknownFrames }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLacpMibGroups 6 }
+
+luxlLacpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlLacpConfigPortTableInfoGroup, 
+                  luxlLacpConfigGlobalsInfoGroup, 
+                  luxlLacpStatusSystemTableInfoGroup, 
+                  luxlLacpStatusPortTableInfoGroup, 
+                  luxlLacpControlPortStatsClearTableInfoGroup, 
+                  luxlLacpStatisticsPortTableInfoGroup }
+
+    ::= { luxlLacpMibCompliances 1 }
+
+END

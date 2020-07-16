@@ -1,0 +1,316 @@
+-- *****************************************************************
+-- JSON-RPC-NOTIFICATION-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-JSON-RPC-NOTIFICATION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    LUXLDisplayString FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    ;
+
+luxlJsonRpcNotificationMib MODULE-IDENTITY
+    LAST-UPDATED "201410030000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "Private JSON-RPC Notification MIB."
+    REVISION    "201410030000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { luxlSwitchMgmt 129 }
+
+
+LUXLJsonRpcNotificationDestAuthType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Type of authentication (if any)."
+    SYNTAX      INTEGER { none(0), basic(1) }
+
+luxlJsonRpcNotificationMibObjects OBJECT IDENTIFIER
+    ::= { luxlJsonRpcNotificationMib 1 }
+
+luxlJsonRpcNotificationConfig OBJECT IDENTIFIER
+    ::= { luxlJsonRpcNotificationMibObjects 2 }
+
+luxlJsonRpcNotificationConfigDestinationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLJsonRpcNotificationConfigDestinationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table of JSON-RPC Notification destinations."
+    ::= { luxlJsonRpcNotificationConfig 1 }
+
+luxlJsonRpcNotificationConfigDestinationEntry OBJECT-TYPE
+    SYNTAX      LUXLJsonRpcNotificationConfigDestinationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Entries in this table represent a JSON-RPC Notification destination
+         which can be referred to in the notification subscription table."
+    INDEX       { luxlJsonRpcNotificationConfigDestinationName }
+    ::= { luxlJsonRpcNotificationConfigDestinationTable 1 }
+
+LUXLJsonRpcNotificationConfigDestinationEntry ::= SEQUENCE {
+    luxlJsonRpcNotificationConfigDestinationName    LUXLDisplayString,
+    luxlJsonRpcNotificationConfigDestinationUrl     LUXLDisplayString,
+    luxlJsonRpcNotificationConfigDestinationAuthType    LUXLJsonRpcNotificationDestAuthType,
+    luxlJsonRpcNotificationConfigDestinationUsername    LUXLDisplayString,
+    luxlJsonRpcNotificationConfigDestinationPassword    LUXLDisplayString,
+    luxlJsonRpcNotificationConfigDestinationAction      LUXLRowEditorState
+}
+
+luxlJsonRpcNotificationConfigDestinationName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Name of destination"
+    ::= { luxlJsonRpcNotificationConfigDestinationEntry 1 }
+
+luxlJsonRpcNotificationConfigDestinationUrl OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "URL of the destination where the events are delivered to."
+    ::= { luxlJsonRpcNotificationConfigDestinationEntry 2 }
+
+luxlJsonRpcNotificationConfigDestinationAuthType OBJECT-TYPE
+    SYNTAX      LUXLJsonRpcNotificationDestAuthType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of authentication to use (if any)"
+    ::= { luxlJsonRpcNotificationConfigDestinationEntry 3 }
+
+luxlJsonRpcNotificationConfigDestinationUsername OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "User name for the authentication process"
+    ::= { luxlJsonRpcNotificationConfigDestinationEntry 4 }
+
+luxlJsonRpcNotificationConfigDestinationPassword OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Password for the authentication process"
+    ::= { luxlJsonRpcNotificationConfigDestinationEntry 5 }
+
+luxlJsonRpcNotificationConfigDestinationAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlJsonRpcNotificationConfigDestinationEntry 100 }
+
+luxlJsonRpcNotificationConfigDestinationRowEditor OBJECT IDENTIFIER
+    ::= { luxlJsonRpcNotificationConfig 2 }
+
+luxlJsonRpcNotificationConfigDestinationRowEditorName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Name of destination"
+    ::= { luxlJsonRpcNotificationConfigDestinationRowEditor 1 }
+
+luxlJsonRpcNotificationConfigDestinationRowEditorUrl OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "URL of the destination where the events are delivered to."
+    ::= { luxlJsonRpcNotificationConfigDestinationRowEditor 2 }
+
+luxlJsonRpcNotificationConfigDestinationRowEditorAuthType OBJECT-TYPE
+    SYNTAX      LUXLJsonRpcNotificationDestAuthType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of authentication to use (if any)"
+    ::= { luxlJsonRpcNotificationConfigDestinationRowEditor 3 }
+
+luxlJsonRpcNotificationConfigDestinationRowEditorUsername OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "User name for the authentication process"
+    ::= { luxlJsonRpcNotificationConfigDestinationRowEditor 4 }
+
+luxlJsonRpcNotificationConfigDestinationRowEditorPassword OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Password for the authentication process"
+    ::= { luxlJsonRpcNotificationConfigDestinationRowEditor 5 }
+
+luxlJsonRpcNotificationConfigDestinationRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlJsonRpcNotificationConfigDestinationRowEditor 100 }
+
+luxlJsonRpcNotificationConfigNotificationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLJsonRpcNotificationConfigNotificationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table of JSON-RPC Notifications subscriptions."
+    ::= { luxlJsonRpcNotificationConfig 3 }
+
+luxlJsonRpcNotificationConfigNotificationEntry OBJECT-TYPE
+    SYNTAX      LUXLJsonRpcNotificationConfigNotificationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry represents a subscription of a given notification to a given
+         destination. If the corresponding destination is deleted, then
+         subscription is deleted as well."
+    INDEX       { luxlJsonRpcNotificationConfigNotificationDestination, luxlJsonRpcNotificationConfigNotificationNotification }
+    ::= { luxlJsonRpcNotificationConfigNotificationTable 1 }
+
+LUXLJsonRpcNotificationConfigNotificationEntry ::= SEQUENCE {
+    luxlJsonRpcNotificationConfigNotificationDestination    LUXLDisplayString,
+    luxlJsonRpcNotificationConfigNotificationNotification   LUXLDisplayString,
+    luxlJsonRpcNotificationConfigNotificationAction     LUXLRowEditorState
+}
+
+luxlJsonRpcNotificationConfigNotificationDestination OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Name of destination"
+    ::= { luxlJsonRpcNotificationConfigNotificationEntry 1 }
+
+luxlJsonRpcNotificationConfigNotificationNotification OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..96))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Name of notification"
+    ::= { luxlJsonRpcNotificationConfigNotificationEntry 2 }
+
+luxlJsonRpcNotificationConfigNotificationAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlJsonRpcNotificationConfigNotificationEntry 100 }
+
+luxlJsonRpcNotificationConfigNotificationRowEditor OBJECT IDENTIFIER
+    ::= { luxlJsonRpcNotificationConfig 4 }
+
+luxlJsonRpcNotificationConfigNotificationRowEditorDestination OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Name of destination"
+    ::= { luxlJsonRpcNotificationConfigNotificationRowEditor 1 }
+
+luxlJsonRpcNotificationConfigNotificationRowEditorNotification OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..96))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Name of notification"
+    ::= { luxlJsonRpcNotificationConfigNotificationRowEditor 2 }
+
+luxlJsonRpcNotificationConfigNotificationRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlJsonRpcNotificationConfigNotificationRowEditor 100 }
+
+luxlJsonRpcNotificationMibConformance OBJECT IDENTIFIER
+    ::= { luxlJsonRpcNotificationMib 2 }
+
+luxlJsonRpcNotificationMibCompliances OBJECT IDENTIFIER
+    ::= { luxlJsonRpcNotificationMibConformance 1 }
+
+luxlJsonRpcNotificationMibGroups OBJECT IDENTIFIER
+    ::= { luxlJsonRpcNotificationMibConformance 2 }
+
+luxlJsonRpcNotificationConfigDestinationTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlJsonRpcNotificationConfigDestinationUrl, 
+                  luxlJsonRpcNotificationConfigDestinationAuthType, 
+                  luxlJsonRpcNotificationConfigDestinationUsername, 
+                  luxlJsonRpcNotificationConfigDestinationPassword, 
+                  luxlJsonRpcNotificationConfigDestinationAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlJsonRpcNotificationMibGroups 1 }
+
+luxlJsonRpcNotificationConfigDestinationRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlJsonRpcNotificationConfigDestinationRowEditorName, 
+                  luxlJsonRpcNotificationConfigDestinationRowEditorUrl, 
+                  luxlJsonRpcNotificationConfigDestinationRowEditorAuthType, 
+                  luxlJsonRpcNotificationConfigDestinationRowEditorUsername, 
+                  luxlJsonRpcNotificationConfigDestinationRowEditorPassword, 
+                  luxlJsonRpcNotificationConfigDestinationRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlJsonRpcNotificationMibGroups 2 }
+
+luxlJsonRpcNotificationConfigNotificationTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlJsonRpcNotificationConfigNotificationAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlJsonRpcNotificationMibGroups 3 }
+
+luxlJsonRpcNotificationConfigNotificationRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { 
+                  luxlJsonRpcNotificationConfigNotificationRowEditorDestination, 
+                  luxlJsonRpcNotificationConfigNotificationRowEditorNotification, 
+                  luxlJsonRpcNotificationConfigNotificationRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlJsonRpcNotificationMibGroups 4 }
+
+luxlJsonRpcNotificationMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { 
+                  luxlJsonRpcNotificationConfigDestinationTableInfoGroup, 
+                  luxlJsonRpcNotificationConfigDestinationRowEditorInfoGroup, 
+                  luxlJsonRpcNotificationConfigNotificationTableInfoGroup, 
+                  luxlJsonRpcNotificationConfigNotificationRowEditorInfoGroup }
+
+    ::= { luxlJsonRpcNotificationMibCompliances 1 }
+
+END

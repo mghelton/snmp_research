@@ -1,0 +1,2137 @@
+-- *****************************************************************
+-- LLDP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-LLDP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInteger64 FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned64 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlLldpMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the LLDP MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 34 }
+
+
+LUXLlldpAdminState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumerations the admin state."
+    SYNTAX      INTEGER { disabled(0), txAndRx(1), txOnly(2), rxOnly(3) }
+
+LUXLlldpmedAltitudeType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumerations the altitude type."
+    SYNTAX      INTEGER { meters(1), floors(2) }
+
+LUXLlldpmedCivicAddressType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumerations the civic address type."
+    SYNTAX      INTEGER { state(1), county(2), city(3), district(4), block(5), street(6), leadingStreetDirection(16), trailingStreetSuffix(17), streetSuffix(18), houseNo(19), houseNoSuffix(20), landmark(21), additionalInformation(22), name(23), zipCode(24), building(25), apartment(26), floor(27), roomNumber(28), placeType(29), postalCommunityName(30), poBox(31), additionalCode(32) }
+
+LUXLlldpmedDatumType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumerations the datum (geodetic system)."
+    SYNTAX      INTEGER { wgs84(1), nad83navd88(2), nad83mllw(3) }
+
+LUXLlldpmedDeviceType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumerations the device type that the device shall operate as."
+    SYNTAX      INTEGER { connectivity(0), endpoint(1) }
+
+LUXLlldpmedRemoteDeviceType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumerations the remote neighbor's device type."
+    SYNTAX      INTEGER { notDefined(0), endpointClassI(1), endpointClassII(2), endpointClassIII(3), networkConnectivity(4), reserved(5) }
+
+LUXLlldpmedRemoteNetworkPolicyApplicationType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumerations the remote neighbor's network policy's application
+         type."
+    SYNTAX      INTEGER { voice(1), voiceSignaling(2), guestVoice(3), guestVoiceSignaling(4), softphoneVoice(5), videoConferencing(6), streamingVideo(7), videoSignaling(8) }
+
+luxlLldpMibObjects OBJECT IDENTIFIER
+    ::= { luxlLldpMib 1 }
+
+luxlLldpConfig OBJECT IDENTIFIER
+    ::= { luxlLldpMibObjects 2 }
+
+luxlLldpConfigGlobal OBJECT IDENTIFIER
+    ::= { luxlLldpConfig 1 }
+
+luxlLldpConfigGlobalReInitDelay OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set the LLDP tx reinitialization delay in seconds. Valid range 1-10.
+         
+         When a port is disabled, LLDP is disabled or the switch is rebooted, a
+         LLDP shutdown frame is transmitted to the neighboring units, signaling
+         that the LLDP information isn't valid anymore.
+         
+         Tx reinitialization delay controls the amount of seconds between the
+         shutdown frame and a new LLDP initialization.
+         
+         
+         
+         Note: Must be less than 0.25 times the Tx interval."
+    ::= { luxlLldpConfigGlobal 1 }
+
+luxlLldpConfigGlobalMsgTxHold OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set the LLDP tx hold times . Valid range 2-10.
+         
+         Each LLDP frame contains information about how long time the
+         information in the LLDP frame shall be considered valid. The LLDP
+         information valid period is set to tx hold times multiplied by tx
+         interval seconds."
+    ::= { luxlLldpConfigGlobal 2 }
+
+luxlLldpConfigGlobalMsgTxInterval OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set the LLDP tx interval in seconds.
+         
+         The switch periodically transmits LLDP frames to its neighbors for
+         having the network discovery information up-to-date. The interval
+         between each LLDP frame is determined by the tx Interval value.
+         
+         
+         
+         Valid range 5-32768 seconds."
+    ::= { luxlLldpConfigGlobal 3 }
+
+luxlLldpConfigGlobalTxDelay OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set the LLDP tx delay in seconds. Valid range 1-8192.
+         
+         If some configuration is changed (e.g. the IP address) a new LLDP frame
+         is transmitted, but the time between the LLDP frames will always be at
+         least the value of tx delay seconds.
+         
+         Note: tx Delay cannot be larger than 1/4 of the tx interval."
+    ::= { luxlLldpConfigGlobal 4 }
+
+luxlLldpConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to configure LLDP configurations for a specific
+         interface."
+    ::= { luxlLldpConfig 2 }
+
+luxlLldpConfigEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of control parameters"
+    INDEX       { luxlLldpConfigIfIndex }
+    ::= { luxlLldpConfigTable 1 }
+
+LUXLLldpConfigEntry ::= SEQUENCE {
+    luxlLldpConfigIfIndex   LUXLInterfaceIndex,
+    luxlLldpConfigAdminState    LUXLlldpAdminState,
+    luxlLldpConfigCdpAware      TruthValue,
+    luxlLldpConfigOptionalTlvs      LUXLUnsigned8
+}
+
+luxlLldpConfigIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number index."
+    ::= { luxlLldpConfigEntry 1 }
+
+luxlLldpConfigAdminState OBJECT-TYPE
+    SYNTAX      LUXLlldpAdminState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Sets the LLDP admin state for the interface."
+    ::= { luxlLldpConfigEntry 3 }
+
+luxlLldpConfigCdpAware OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enables/disables CDP awareness for the interface.
+         
+         CDP is Cisco's equivalent to LLDP.
+         
+         
+         
+         The CDP operation is restricted to decoding incoming CDP frames (The
+         switch doesn't transmit CDP frames). CDP frames are only decoded if
+         LLDP on the port is enabled.
+         
+         
+         
+         Only CDP TLVs that can be mapped to a corresponding field in the LLDP
+         neighbors' table are decoded. All other TLVs are discarded
+         (Unrecognized CDP TLVs and discarded CDP frames are not shown in the
+         LLDP statistics.).
+         
+         CDP TLVs are mapped onto LLDP neighbors' table as shown below.
+         
+         CDP TLV 'Device ID' is mapped to the LLDP 'Chassis ID' field.
+         
+         CDP TLV 'Address' is mapped to the LLDP 'Management Address' field. The
+         CDP address TLV can contain multiple addresses, but only the first
+         address is shown in the LLDP neighbors table.
+         
+         CDP TLV 'Port ID' is mapped to the LLDP 'Port ID' field.
+         
+         CDP TLV 'Version and Platform' is mapped to the LLDP 'System
+         Description' field.
+         
+         Both the CDP and LLDP support 'system capabilities', but the CDP
+         capabilities cover capabilities that are not part of the LLDP. These
+         capabilities are shown as 'others' in the LLDP neighbors' table.
+         
+         
+         
+         If all ports have CDP awareness disabled the switch forwards CDP frames
+         received from neighbor devices. If at least one port has CDP awareness
+         enabled all CDP frames are terminated by the switch.
+         
+         
+         
+         Note: When CDP awareness on a port is disabled the CDP information
+         isn't removed immediately, but gets removed when the hold time is
+         exceeded."
+    ::= { luxlLldpConfigEntry 4 }
+
+luxlLldpConfigOptionalTlvs OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enables/Disables the LLDP optional TLVs. Bit mask, where setting the
+         bit to 1 means enable transmission of the corresponding TLV.
+         
+         Bit 0 represents Port Description TLV.
+         
+         Bit 1 represents System Name TLV.
+         
+         Bit 2 represents System Description.
+         
+         Bit 3 represents System Capabilities TLV.
+         
+         Bit 4 represents Management Address TLV."
+    ::= { luxlLldpConfigEntry 5 }
+
+luxlLldpConfigMed OBJECT IDENTIFIER
+    ::= { luxlLldpConfig 3 }
+
+luxlLldpConfigMedTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpConfigMedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to configure LLDP MEDIA configurations for a specific
+         interface."
+    ::= { luxlLldpConfigMed 1 }
+
+luxlLldpConfigMedEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpConfigMedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of control parameters"
+    INDEX       { luxlLldpConfigMedIfIndex }
+    ::= { luxlLldpConfigMedTable 1 }
+
+LUXLLldpConfigMedEntry ::= SEQUENCE {
+    luxlLldpConfigMedIfIndex    LUXLInterfaceIndex,
+    luxlLldpConfigMedOptionalTlvs   LUXLUnsigned8,
+    luxlLldpConfigMedDeviceType     LUXLlldpmedDeviceType
+}
+
+luxlLldpConfigMedIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number index."
+    ::= { luxlLldpConfigMedEntry 1 }
+
+luxlLldpConfigMedOptionalTlvs OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enables/Disables the LLDP optional TLVs. Bit mask, where setting the
+         bit to 1 means
+         
+         enable transmission of the corresponding optional TLV.
+         
+         Bit 0 represents the capabilities TLV.
+         
+         Bit 1 represents the network Policy TLV.
+         
+         Bit 2 represents the location TLV.
+         
+         Bit 3 represents the PoE TLV."
+    ::= { luxlLldpConfigMedEntry 3 }
+
+luxlLldpConfigMedDeviceType OBJECT-TYPE
+    SYNTAX      LUXLlldpmedDeviceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Setting device type to configure the mode the device shall operate as."
+    ::= { luxlLldpConfigMedEntry 4 }
+
+luxlLldpConfigMedPolicyTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpConfigMedPolicyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to configure LLDP MED Policies for the device."
+    ::= { luxlLldpConfigMed 2 }
+
+luxlLldpConfigMedPolicyEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpConfigMedPolicyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Network Policy Discovery enables the efficient discovery and diagnosis
+         of mismatch issues with the VLAN configuration, along with the
+         associated Layer 2 and Layer 3 attributes, which apply for a set of
+         specific protocol applications on that port. Improper network policy
+         configurations are a very significant issue in VoIP environments that
+         frequently result in voice quality degradation or loss of service.
+         Policies are only intended for use with applications that have specific
+         'real-time' network policy requirements, such as interactive voice
+         and/or video services."
+    INDEX       { luxlLldpConfigMedPolicyLldpmedPolicy }
+    ::= { luxlLldpConfigMedPolicyTable 1 }
+
+LUXLLldpConfigMedPolicyEntry ::= SEQUENCE {
+    luxlLldpConfigMedPolicyLldpmedPolicy    Integer32,
+    luxlLldpConfigMedPolicyApplicationType      LUXLlldpmedRemoteNetworkPolicyApplicationType,
+    luxlLldpConfigMedPolicyTagged   TruthValue,
+    luxlLldpConfigMedPolicyVlanId   LUXLUnsigned16,
+    luxlLldpConfigMedPolicyL2Priority   LUXLUnsigned8,
+    luxlLldpConfigMedPolicyDscp     LUXLUnsigned8,
+    luxlLldpConfigMedPolicyAction   LUXLRowEditorState
+}
+
+luxlLldpConfigMedPolicyLldpmedPolicy OBJECT-TYPE
+    SYNTAX      Integer32 (0..31)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Policy index."
+    ::= { luxlLldpConfigMedPolicyEntry 1 }
+
+luxlLldpConfigMedPolicyApplicationType OBJECT-TYPE
+    SYNTAX      LUXLlldpmedRemoteNetworkPolicyApplicationType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy application type."
+    ::= { luxlLldpConfigMedPolicyEntry 3 }
+
+luxlLldpConfigMedPolicyTagged OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy tagged flag. Defines if LLDP policy uses tagged VLAN."
+    ::= { luxlLldpConfigMedPolicyEntry 4 }
+
+luxlLldpConfigMedPolicyVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy VLAN ID. Only valid when policy 'Tagged' is TRUE"
+    ::= { luxlLldpConfigMedPolicyEntry 5 }
+
+luxlLldpConfigMedPolicyL2Priority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy L2 priority."
+    ::= { luxlLldpConfigMedPolicyEntry 6 }
+
+luxlLldpConfigMedPolicyDscp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..63)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy DSCP."
+    ::= { luxlLldpConfigMedPolicyEntry 7 }
+
+luxlLldpConfigMedPolicyAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlLldpConfigMedPolicyEntry 100 }
+
+luxlLldpConfigMedPolicyListTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpConfigMedPolicyListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface can be mapped to multiple policies. Set to TRUE in order
+         to enable the corresponding policy to be transmitted at the interface.
+         It is a requirement that the policy is defined."
+    ::= { luxlLldpConfigMed 3 }
+
+luxlLldpConfigMedPolicyListEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpConfigMedPolicyListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each location information has a control parameter"
+    INDEX       { luxlLldpConfigMedPolicyListIfIndex, luxlLldpConfigMedPolicyListLldpmedPolicy }
+    ::= { luxlLldpConfigMedPolicyListTable 1 }
+
+LUXLLldpConfigMedPolicyListEntry ::= SEQUENCE {
+    luxlLldpConfigMedPolicyListIfIndex      LUXLInterfaceIndex,
+    luxlLldpConfigMedPolicyListLldpmedPolicy    Integer32,
+    luxlLldpConfigMedPolicyListLldpmedPoliciesList      TruthValue
+}
+
+luxlLldpConfigMedPolicyListIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number index."
+    ::= { luxlLldpConfigMedPolicyListEntry 1 }
+
+luxlLldpConfigMedPolicyListLldpmedPolicy OBJECT-TYPE
+    SYNTAX      Integer32 (0..31)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Policy index."
+    ::= { luxlLldpConfigMedPolicyListEntry 3 }
+
+luxlLldpConfigMedPolicyListLldpmedPoliciesList OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE assign the corresponding policy index to the interface."
+    ::= { luxlLldpConfigMedPolicyListEntry 4 }
+
+luxlLldpConfigMedGlobal OBJECT IDENTIFIER
+    ::= { luxlLldpConfigMed 4 }
+
+luxlLldpConfigMedGlobalFastRepeatCount OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (1..10)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of times to repeat LLDP frame transmission at fast start
+         
+         Rapid startup and Emergency Call Service Location Identification
+         Discovery of endpoints is a critically important aspect of VoIP systems
+         in general. In addition, it is best to advertise only those pieces of
+         information which are specifically relevant to particular endpoint
+         types (for example only advertise the voice network policy to permitted
+         voice-capable devices), both in order to conserve the limited LLDPU
+         space and to reduce security and system integrity issues that can come
+         with inappropriate knowledge of the network policy.
+         
+         With this in mind LLDP-MED defines an LLDP-MED Fast Start interaction
+         between the protocol and the application layers on top of the protocol,
+         in order to achieve these related properties. Initially, a Network
+         Connectivity Device will only transmit LLDP TLVs in an LLDPDU. Only
+         after an LLDP-MED Endpoint Device is detected, will an LLDP-MED capable
+         Network Connectivity Device start to advertise LLDP-MED TLVs in
+         outgoing LLDPDUs on the associated port. The LLDP-MED application will
+         temporarily speed up the transmission of the LLDPDU to start within a
+         second, when a new LLDP-MED neighbor has been detected in order share
+         LLDP-MED information as fast as possible to new neighbors.
+         
+         Because there is a risk of an LLDP frame being lost during transmission
+         between neighbors, it is recommended to repeat the fast start
+         transmission multiple times to increase the possibility of the
+         neighbors receiving the LLDP frame. With fast start repeat count it is
+         possible to specify the number of times the fast start transmission
+         would be repeated. The recommended value is 4 times, given that 4 LLDP
+         frames with a 1 second interval will be transmitted, when an LLDP frame
+         with new information is received.
+         
+         It should be noted that LLDP-MED and the LLDP-MED Fast Start mechanism
+         is only intended to run on links between LLDP-MED Network Connectivity
+         Devices and Endpoint Devices, and as such does not apply to links
+         between LAN infrastructure elements, including Network Connectivity
+         Devices, or other types of links."
+    ::= { luxlLldpConfigMedGlobal 1 }
+
+luxlLldpConfigMedGlobalLatitude OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Latitude degrees in 2s-complement as specified in RFC 3825. Positive
+         numbers are north of the equator and negative numbers are south of the
+         equator."
+    ::= { luxlLldpConfigMedGlobal 2 }
+
+luxlLldpConfigMedGlobalLongitude OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Longitude degrees in 2s-complement as specified in RFC 3825. Positive
+         values are East of the prime meridian and negative numbers are West of
+         the prime meridian."
+    ::= { luxlLldpConfigMedGlobal 3 }
+
+luxlLldpConfigMedGlobalAltitudeType OBJECT-TYPE
+    SYNTAX      LUXLlldpmedAltitudeType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Setting altitude type
+         
+         Possible to select between two altitude types (floors or meters).
+         Meters are representing meters of altitude defined by the vertical
+         datum specified. Floors are representing altitude in a form more
+         relevant in buildings which have different floor-to-floor dimensions.
+         An altitude = 0.0 is meaningful even outside a building, and represents
+         ground level at the given latitude and longitude. Inside a building,
+         0.0 represents the floor level associated with ground level at the main
+         entrance."
+    ::= { luxlLldpConfigMedGlobal 4 }
+
+luxlLldpConfigMedGlobalAltitude OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Altitude value in 2s-complement as specified in RFC 3825"
+    ::= { luxlLldpConfigMedGlobal 5 }
+
+luxlLldpConfigMedGlobalElinAddr OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..25))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Emergency Call Service ELIN identifier data format is defined to carry
+         the ELIN identifier as used during emergency call setup to a
+         traditional CAMA or ISDN trunk-based PSAP. This format consists of a
+         numerical digit string, corresponding to the ELIN to be used for
+         emergency calling. Maximum number of octets are 25."
+    ::= { luxlLldpConfigMedGlobal 6 }
+
+luxlLldpConfigMedGlobalDatum OBJECT-TYPE
+    SYNTAX      LUXLlldpmedDatumType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Setting datum to configure the datum (geodetic system) to use.
+         
+         The Map Datum is used for the coordinates given in these options:
+         
+         WGS84: (Geographical 3D) - World Geodesic System 1984, CRS Code 4327,
+         Prime Meridian Name: Greenwich.
+         
+         NAD83/NAVD88: North American Datum 1983, CRS Code 4269, Prime Meridian
+         Name: Greenwich;The associated vertical datum is the North American
+         Vertical Datum of 1988 (NAVD88).This datum pair is to be used when
+         referencing locations on land, not near tidal water(which would use
+         Datum = NAD83/MLLW).
+         
+         NAD83/MLLW: North American Datum 1983, CRS Code 4269, Prime Meridian
+         Name: Greenwich; The associated vertical datum is Mean Lower Low Water
+         (MLLW). This datum pair is to be used when referencing locations on
+         water/sea/ocean."
+    ::= { luxlLldpConfigMedGlobal 7 }
+
+luxlLldpConfigMedGlobalCountryCode OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..2))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The two-letter ISO 3166 country code in capital ASCII letters -
+         Example: DK, DE or US."
+    ::= { luxlLldpConfigMedGlobal 8 }
+
+luxlLldpConfigMedLocationInformationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpConfigMedLocationInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The civic address location information. Each civic address can contain
+         up to 250 characters, but the total amount of characters for the
+         combined civic address locations must not exceed 250 bytes. Note: If an
+         civic address location is non-empty it uses the amount of characters
+         plus addition two characters. This is described in TIA1057, Section
+         10.2.4.3.2."
+    ::= { luxlLldpConfigMed 5 }
+
+luxlLldpConfigMedLocationInformationEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpConfigMedLocationInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each civic address type as defined in TIA1057, Section 3.4 in Annex B"
+    INDEX       { luxlLldpConfigMedLocationInformationLldpmedIndex }
+    ::= { luxlLldpConfigMedLocationInformationTable 1 }
+
+LUXLLldpConfigMedLocationInformationEntry ::= SEQUENCE {
+    luxlLldpConfigMedLocationInformationLldpmedIndex    LUXLlldpmedCivicAddressType,
+    luxlLldpConfigMedLocationInformationCivicAddress    LUXLDisplayString
+}
+
+luxlLldpConfigMedLocationInformationLldpmedIndex OBJECT-TYPE
+    SYNTAX      LUXLlldpmedCivicAddressType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Civic address type.
+         
+         1 - State/National subdivisions
+         
+         2 - County, parish, gun (JP), district (IN)
+         
+         3 - City, township
+         
+         4 - City division, borough, city district, ward, chou (JP)
+         
+         5 - Neighborhood, block
+         
+         6 - Street
+         
+         16 - Leading street direction
+         
+         17 - Trailing street direction
+         
+         18 - Street suffix
+         
+         19 - House number
+         
+         20 - House number suffix
+         
+         21 - Landmark or vanity address
+         
+         22 - Additional location information
+         
+         23 - Name
+         
+         24 - Postal/zip code
+         
+         25 - Building
+         
+         26 - Unit
+         
+         27 - Floor
+         
+         28 - Room
+         
+         29 - Place type
+         
+         30 - Postal
+         
+         31 - Post office
+         
+         32 - Additional code"
+    ::= { luxlLldpConfigMedLocationInformationEntry 2 }
+
+luxlLldpConfigMedLocationInformationCivicAddress OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Civic address"
+    ::= { luxlLldpConfigMedLocationInformationEntry 3 }
+
+luxlLldpConfigMedPolicyRowEditor OBJECT IDENTIFIER
+    ::= { luxlLldpConfigMed 6 }
+
+luxlLldpConfigMedPolicyRowEditorLldpmedPolicy OBJECT-TYPE
+    SYNTAX      Integer32 (0..31)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Policy index."
+    ::= { luxlLldpConfigMedPolicyRowEditor 1 }
+
+luxlLldpConfigMedPolicyRowEditorApplicationType OBJECT-TYPE
+    SYNTAX      LUXLlldpmedRemoteNetworkPolicyApplicationType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy application type."
+    ::= { luxlLldpConfigMedPolicyRowEditor 3 }
+
+luxlLldpConfigMedPolicyRowEditorTagged OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy tagged flag. Defines if LLDP policy uses tagged VLAN."
+    ::= { luxlLldpConfigMedPolicyRowEditor 4 }
+
+luxlLldpConfigMedPolicyRowEditorVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy VLAN ID. Only valid when policy 'Tagged' is TRUE"
+    ::= { luxlLldpConfigMedPolicyRowEditor 5 }
+
+luxlLldpConfigMedPolicyRowEditorL2Priority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy L2 priority."
+    ::= { luxlLldpConfigMedPolicyRowEditor 6 }
+
+luxlLldpConfigMedPolicyRowEditorDscp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..63)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy DSCP."
+    ::= { luxlLldpConfigMedPolicyRowEditor 7 }
+
+luxlLldpConfigMedPolicyRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlLldpConfigMedPolicyRowEditor 100 }
+
+luxlLldpStatus OBJECT IDENTIFIER
+    ::= { luxlLldpMibObjects 3 }
+
+luxlLldpStatusStatistics OBJECT IDENTIFIER
+    ::= { luxlLldpStatus 1 }
+
+luxlLldpStatusStatisticsGlobalCounters OBJECT IDENTIFIER
+    ::= { luxlLldpStatusStatistics 1 }
+
+luxlLldpStatusStatisticsGlobalCountersTableInserts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of new entries added since switch reboot."
+    ::= { luxlLldpStatusStatisticsGlobalCounters 1 }
+
+luxlLldpStatusStatisticsGlobalCountersTableDeletes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of new entries deleted since switch reboot."
+    ::= { luxlLldpStatusStatisticsGlobalCounters 2 }
+
+luxlLldpStatusStatisticsGlobalCountersTableDrops OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of LLDP frames dropped due to the entry table being
+         full."
+    ::= { luxlLldpStatusStatisticsGlobalCounters 3 }
+
+luxlLldpStatusStatisticsGlobalCountersTableAgeOuts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of entries deleted due to Time-To-Live expiring."
+    ::= { luxlLldpStatusStatisticsGlobalCounters 4 }
+
+luxlLldpStatusStatisticsGlobalCountersLastChangeTime OBJECT-TYPE
+    SYNTAX      LUXLUnsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the time when the last entry was last deleted or added. It also
+         shows the time elapsed since the last change was detected."
+    ::= { luxlLldpStatusStatisticsGlobalCounters 5 }
+
+luxlLldpStatusStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpStatusStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents the LLDP interface counters"
+    ::= { luxlLldpStatusStatistics 2 }
+
+luxlLldpStatusStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpStatusStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port interface has a set of statistics counters"
+    INDEX       { luxlLldpStatusStatisticsIfIndex }
+    ::= { luxlLldpStatusStatisticsTable 1 }
+
+LUXLLldpStatusStatisticsEntry ::= SEQUENCE {
+    luxlLldpStatusStatisticsIfIndex     LUXLInterfaceIndex,
+    luxlLldpStatusStatisticsTxTotal     Unsigned32,
+    luxlLldpStatusStatisticsRxTotal     Unsigned32,
+    luxlLldpStatusStatisticsRxError     Unsigned32,
+    luxlLldpStatusStatisticsRxDiscarded     Unsigned32,
+    luxlLldpStatusStatisticsTLVsDiscarded   Unsigned32,
+    luxlLldpStatusStatisticsTLVsUnrecognized    Unsigned32,
+    luxlLldpStatusStatisticsTLVsOrgDiscarded    Unsigned32,
+    luxlLldpStatusStatisticsAgeOuts     Unsigned32
+}
+
+luxlLldpStatusStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number index."
+    ::= { luxlLldpStatusStatisticsEntry 1 }
+
+luxlLldpStatusStatisticsTxTotal OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of LLDP frames transmitted."
+    ::= { luxlLldpStatusStatisticsEntry 2 }
+
+luxlLldpStatusStatisticsRxTotal OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of LLDP frames received."
+    ::= { luxlLldpStatusStatisticsEntry 3 }
+
+luxlLldpStatusStatisticsRxError OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of received LLDP frames containing some kind of error."
+    ::= { luxlLldpStatusStatisticsEntry 4 }
+
+luxlLldpStatusStatisticsRxDiscarded OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Show the number of LLDP frames discarded. If a LLDP frame is received
+         at an interface, and the switch's internal table has run full, the LLDP
+         frame is counted and discarded. This situation is known as 'Too Many
+         Neighbors' in the LLDP standard. LLDP frames require a new entry in the
+         table when the Chassis ID or Remote Port ID is not already contained
+         within the table. Entries are removed from the table when a given
+         interface's link is down, an LLDP shutdown frame is received, or when
+         the entry ages out."
+    ::= { luxlLldpStatusStatisticsEntry 5 }
+
+luxlLldpStatusStatisticsTLVsDiscarded OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of TLVs discarded. Each LLDP frame can contain
+         multiple pieces of information, known as TLVs (TLV is short for 'Type
+         Length Value'). If a TLV is malformed, it is counted and discarded."
+    ::= { luxlLldpStatusStatisticsEntry 6 }
+
+luxlLldpStatusStatisticsTLVsUnrecognized OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of well-formed TLVs, but with an unknown type value."
+    ::= { luxlLldpStatusStatisticsEntry 7 }
+
+luxlLldpStatusStatisticsTLVsOrgDiscarded OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of well-formed TLVs, but with an organizationally TLV
+         which is not supported."
+    ::= { luxlLldpStatusStatisticsEntry 8 }
+
+luxlLldpStatusStatisticsAgeOuts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Show the number of age-outs. Each frame contains information about how
+         long time the LLDP information is valid (age-out time). If no new LLDP
+         frame is received within the age out time, the information is removed,
+         and the counter is incremented."
+    ::= { luxlLldpStatusStatisticsEntry 9 }
+
+luxlLldpStatusNeighborsInformationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpStatusNeighborsInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to show the LLDP neighbors information for a specific
+         interface."
+    ::= { luxlLldpStatus 2 }
+
+luxlLldpStatusNeighborsInformationEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpStatusNeighborsInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of neighbors information"
+    INDEX       { luxlLldpStatusNeighborsInformationIfIndex, luxlLldpStatusNeighborsInformationLldpmedIndex }
+    ::= { luxlLldpStatusNeighborsInformationTable 1 }
+
+LUXLLldpStatusNeighborsInformationEntry ::= SEQUENCE {
+    luxlLldpStatusNeighborsInformationIfIndex   LUXLInterfaceIndex,
+    luxlLldpStatusNeighborsInformationLldpmedIndex      Integer32,
+    luxlLldpStatusNeighborsInformationChassisId     LUXLDisplayString,
+    luxlLldpStatusNeighborsInformationPortId    LUXLDisplayString,
+    luxlLldpStatusNeighborsInformationPortDescription   LUXLDisplayString,
+    luxlLldpStatusNeighborsInformationSystemName    LUXLDisplayString,
+    luxlLldpStatusNeighborsInformationSystemDescription     LUXLDisplayString,
+    luxlLldpStatusNeighborsInformationSystemCapabilities    LUXLUnsigned16,
+    luxlLldpStatusNeighborsInformationSystemCapabilitiesEnable      LUXLUnsigned16
+}
+
+luxlLldpStatusNeighborsInformationIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number index."
+    ::= { luxlLldpStatusNeighborsInformationEntry 1 }
+
+luxlLldpStatusNeighborsInformationLldpmedIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..192)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Neighbor information table entry index."
+    ::= { luxlLldpStatusNeighborsInformationEntry 2 }
+
+luxlLldpStatusNeighborsInformationChassisId OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's chassis Id."
+    ::= { luxlLldpStatusNeighborsInformationEntry 4 }
+
+luxlLldpStatusNeighborsInformationPortId OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's port id."
+    ::= { luxlLldpStatusNeighborsInformationEntry 5 }
+
+luxlLldpStatusNeighborsInformationPortDescription OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's port description."
+    ::= { luxlLldpStatusNeighborsInformationEntry 6 }
+
+luxlLldpStatusNeighborsInformationSystemName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's system name."
+    ::= { luxlLldpStatusNeighborsInformationEntry 7 }
+
+luxlLldpStatusNeighborsInformationSystemDescription OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's system description."
+    ::= { luxlLldpStatusNeighborsInformationEntry 8 }
+
+luxlLldpStatusNeighborsInformationSystemCapabilities OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's system capabilities as bit mask.
+         
+         If the bit is set, it means that the functionality is supported by the
+         neighbor system.
+         
+         Bit 0 represents Other.
+         
+         Bit 1 represents Repeater.
+         
+         Bit 2 represents Bridge.
+         
+         Bit 3 represents WLAN Access Point.
+         
+         Bit 4 represents Router.
+         
+         Bit 5 represents Telephone.
+         
+         Bit 6 represents DOCSIS cable device.
+         
+         Bit 7 represents Station Only.
+         
+         Bit 8 represents Reserved."
+    ::= { luxlLldpStatusNeighborsInformationEntry 9 }
+
+luxlLldpStatusNeighborsInformationSystemCapabilitiesEnable OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's system capabilities which is enabled.
+         
+         If the bit is set, it means that the functionality is currently enabled
+         at the neighbor system.
+         
+         Bit 0 represents Other.
+         
+         Bit 1 represents Repeater.
+         
+         Bit 2 represents Bridge.
+         
+         Bit 3 represents WLAN Access Point.
+         
+         Bit 4 represents Router.
+         
+         Bit 5 represents Telephone.
+         
+         Bit 6 represents DOCSIS cable device.
+         
+         Bit 7 represents Station Only.
+         
+         Bit 8 represents Reserved."
+    ::= { luxlLldpStatusNeighborsInformationEntry 10 }
+
+luxlLldpStatusNeighborsMgmtInformationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpStatusNeighborsMgmtInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to show the LLDP neighbors information for a specific
+         interface."
+    ::= { luxlLldpStatus 3 }
+
+luxlLldpStatusNeighborsMgmtInformationEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpStatusNeighborsMgmtInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of neighbors information"
+    INDEX       { luxlLldpStatusNeighborsMgmtInformationIfIndex, luxlLldpStatusNeighborsMgmtInformationLldpmedIndex, luxlLldpStatusNeighborsMgmtInformationLldpManagement }
+    ::= { luxlLldpStatusNeighborsMgmtInformationTable 1 }
+
+LUXLLldpStatusNeighborsMgmtInformationEntry ::= SEQUENCE {
+    luxlLldpStatusNeighborsMgmtInformationIfIndex   LUXLInterfaceIndex,
+    luxlLldpStatusNeighborsMgmtInformationLldpmedIndex      Integer32,
+    luxlLldpStatusNeighborsMgmtInformationLldpManagement    Integer32,
+    luxlLldpStatusNeighborsMgmtInformationSystemMgmAddressSubtype   LUXLUnsigned8,
+    luxlLldpStatusNeighborsMgmtInformationSystemMgmtAddress     LUXLDisplayString,
+    luxlLldpStatusNeighborsMgmtInformationSystemMgmtInterfaceSubtype    Integer32,
+    luxlLldpStatusNeighborsMgmtInformationSystemMgmtInterface   Integer32,
+    luxlLldpStatusNeighborsMgmtInformationSystemMgmtOid     OBJECT IDENTIFIER
+}
+
+luxlLldpStatusNeighborsMgmtInformationIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number index."
+    ::= { luxlLldpStatusNeighborsMgmtInformationEntry 1 }
+
+luxlLldpStatusNeighborsMgmtInformationLldpmedIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..192)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Neighbor information table entry index."
+    ::= { luxlLldpStatusNeighborsMgmtInformationEntry 2 }
+
+luxlLldpStatusNeighborsMgmtInformationLldpManagement OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Neighbor management information table entry index."
+    ::= { luxlLldpStatusNeighborsMgmtInformationEntry 4 }
+
+luxlLldpStatusNeighborsMgmtInformationSystemMgmAddressSubtype OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "LLDP neighbor's management address subtype , section 9.5.9.3
+         IEEE802.1AB-2005."
+    ::= { luxlLldpStatusNeighborsMgmtInformationEntry 5 }
+
+luxlLldpStatusNeighborsMgmtInformationSystemMgmtAddress OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "LLDP neighbor's management address string, section 9.5.9.4
+         IEEE802.1AB-2005."
+    ::= { luxlLldpStatusNeighborsMgmtInformationEntry 6 }
+
+luxlLldpStatusNeighborsMgmtInformationSystemMgmtInterfaceSubtype OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Interface numbering subtype, section 9.5.9.5 IEEE802.1AB-2005."
+    ::= { luxlLldpStatusNeighborsMgmtInformationEntry 7 }
+
+luxlLldpStatusNeighborsMgmtInformationSystemMgmtInterface OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Interface number, section 9.5.9.6 IEEE802.1AB-2005."
+    ::= { luxlLldpStatusNeighborsMgmtInformationEntry 8 }
+
+luxlLldpStatusNeighborsMgmtInformationSystemMgmtOid OBJECT-TYPE
+    SYNTAX      OBJECT IDENTIFIER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Object identifier, section 9.5.9.8 IEEE802.1AB-2005."
+    ::= { luxlLldpStatusNeighborsMgmtInformationEntry 9 }
+
+luxlLldpStatusMed OBJECT IDENTIFIER
+    ::= { luxlLldpStatus 4 }
+
+luxlLldpStatusMedRemoteDeviceInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpStatusMedRemoteDeviceInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to show the LLDP neighbors information for a specific
+         interface."
+    ::= { luxlLldpStatusMed 1 }
+
+luxlLldpStatusMedRemoteDeviceInfoEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpStatusMedRemoteDeviceInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of neighbors information"
+    INDEX       { luxlLldpStatusMedRemoteDeviceInfoIfIndex, luxlLldpStatusMedRemoteDeviceInfoLldpmedIndex }
+    ::= { luxlLldpStatusMedRemoteDeviceInfoTable 1 }
+
+LUXLLldpStatusMedRemoteDeviceInfoEntry ::= SEQUENCE {
+    luxlLldpStatusMedRemoteDeviceInfoIfIndex    LUXLInterfaceIndex,
+    luxlLldpStatusMedRemoteDeviceInfoLldpmedIndex   Integer32,
+    luxlLldpStatusMedRemoteDeviceInfoCapabilities   LUXLUnsigned16,
+    luxlLldpStatusMedRemoteDeviceInfoCapabilitiesEnabled    LUXLUnsigned16,
+    luxlLldpStatusMedRemoteDeviceInfoLatitude   LUXLInteger64,
+    luxlLldpStatusMedRemoteDeviceInfoLongitude      LUXLInteger64,
+    luxlLldpStatusMedRemoteDeviceInfoAltitudeType   LUXLlldpmedAltitudeType,
+    luxlLldpStatusMedRemoteDeviceInfoAltitude   Integer32,
+    luxlLldpStatusMedRemoteDeviceInfoDatum      LUXLlldpmedDatumType,
+    luxlLldpStatusMedRemoteDeviceInfoElinaddr   LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceInfoDeviceType     LUXLlldpmedRemoteDeviceType,
+    luxlLldpStatusMedRemoteDeviceInfoHwRev      LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceInfoFwRev      LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceInfoSwRev      LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceInfoSerialNo   LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceInfoManufacturerName   LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceInfoModelName      LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceInfoAssetId    LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceInfoEeeRxTwSys     LUXLUnsigned16,
+    luxlLldpStatusMedRemoteDeviceInfoEeeTxTwSys     LUXLUnsigned16,
+    luxlLldpStatusMedRemoteDeviceInfoEeeFbTwSys     LUXLUnsigned16,
+    luxlLldpStatusMedRemoteDeviceInfoEeeTxTwSysEcho     LUXLUnsigned16,
+    luxlLldpStatusMedRemoteDeviceInfoEeeRxTwSysEcho     LUXLUnsigned16
+}
+
+luxlLldpStatusMedRemoteDeviceInfoIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number index."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 1 }
+
+luxlLldpStatusMedRemoteDeviceInfoLldpmedIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..192)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Neighbor information table entry index."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 2 }
+
+luxlLldpStatusMedRemoteDeviceInfoCapabilities OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "LLDP neighbor's capabilities bit mask.
+         
+         Bit 0 represents LLDP-MED capabilities.
+         
+         Bit 1 represents Network Policy.
+         
+         Bit 2 represents Location Identification.
+         
+         Bit 3 represents Extended Power via MDI - PSE.
+         
+         Bit 4 represents Extended Power via MDI - PD
+         
+         Bit 5 represents Inventory
+         
+         "
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 4 }
+
+luxlLldpStatusMedRemoteDeviceInfoCapabilitiesEnabled OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "LLDP neighbor's capabilities bit mask for the capabilities which are
+         currently enabled.
+         
+         Bit 0 represents LLDP-MED capabilities.
+         
+         Bit 1 represents Network Policy.
+         
+         Bit 2 represents Location Identification.
+         
+         Bit 3 represents Extended Power via MDI - PSE.
+         
+         Bit 4 represents Extended Power via MDI - PD
+         
+         Bit 5 represents Inventory
+         
+         "
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 5 }
+
+luxlLldpStatusMedRemoteDeviceInfoLatitude OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Latitude degrees in 2s-complement as specified in RFC 3825. Positive
+         numbers are north of the equator and negative numbers are south of the
+         equator."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 6 }
+
+luxlLldpStatusMedRemoteDeviceInfoLongitude OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Longitude degrees in 2s-complement as specified in RFC 3825. Positive
+         values are East of the prime meridian and negative numbers are West of
+         the prime meridian."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 7 }
+
+luxlLldpStatusMedRemoteDeviceInfoAltitudeType OBJECT-TYPE
+    SYNTAX      LUXLlldpmedAltitudeType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Altitude type as either floors or meters. Meters are representing
+         meters of altitude defined by the vertical datum specified. Floors are
+         representing altitude in a form more relevant in buildings which have
+         different floor-to-floor dimensions. An altitude = 0.0 is meaningful
+         even outside a building, and represents ground level at the given
+         latitude and longitude. Inside a building, 0.0 represents the floor
+         level associated with ground level at the main entrance."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 8 }
+
+luxlLldpStatusMedRemoteDeviceInfoAltitude OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Altitude value in 2s-complement as specified in RFC 3825"
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 9 }
+
+luxlLldpStatusMedRemoteDeviceInfoDatum OBJECT-TYPE
+    SYNTAX      LUXLlldpmedDatumType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Datum (geodetic system) .
+         
+         The Map Datum is used for the coordinates given in these options:
+         
+         WGS84: (Geographical 3D) - World Geodesic System 1984, CRS Code 4327,
+         Prime Meridian Name: Greenwich.
+         
+         NAD83/NAVD88: North American Datum 1983, CRS Code 4269, Prime Meridian
+         Name: Greenwich; The associated vertical datum is the North American
+         Vertical Datum of 1988 (NAVD88). This datum pair is to be used when
+         referencing locations on land, not near tidal water(which would use
+         Datum = NAD83/MLLW).
+         
+         NAD83/MLLW: North American Datum 1983, CRS Code 4269, Prime Meridian
+         Name: Greenwich; The associated vertical datum is Mean Lower Low Water
+         (MLLW). This datum pair is to be used when referencing locations on
+         water/sea/ocean."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 10 }
+
+luxlLldpStatusMedRemoteDeviceInfoElinaddr OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..25))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Emergency Call Service ELIN identifier data format is defined to carry
+         the ELIN identifier as used during emergency call setup to a
+         traditional CAMA or ISDN trunk-based PSAP. This format consists of a
+         numerical digit string, corresponding to the ELIN to be used for
+         emergency calling. Maximum number of octets are 25."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 11 }
+
+luxlLldpStatusMedRemoteDeviceInfoDeviceType OBJECT-TYPE
+    SYNTAX      LUXLlldpmedRemoteDeviceType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's device type."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 12 }
+
+luxlLldpStatusMedRemoteDeviceInfoHwRev OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's hardware revision."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 13 }
+
+luxlLldpStatusMedRemoteDeviceInfoFwRev OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's firmware revision."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 14 }
+
+luxlLldpStatusMedRemoteDeviceInfoSwRev OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's software revision."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 15 }
+
+luxlLldpStatusMedRemoteDeviceInfoSerialNo OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's serial number."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 16 }
+
+luxlLldpStatusMedRemoteDeviceInfoManufacturerName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's manufacturer name."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 17 }
+
+luxlLldpStatusMedRemoteDeviceInfoModelName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's model name."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 18 }
+
+luxlLldpStatusMedRemoteDeviceInfoAssetId OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's asset id."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 19 }
+
+luxlLldpStatusMedRemoteDeviceInfoEeeRxTwSys OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's Receive tw_sys_rx . Tw_sys_rx is defined as
+         the time (expressed in microseconds) that the transmitting link partner
+         will wait before it starts transmitting data after leaving the Low
+         Power Idle (LPI) mode. Section 79.3.5.2, IEEE802.3az."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 20 }
+
+luxlLldpStatusMedRemoteDeviceInfoEeeTxTwSys OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's Transmit Tw_sys_tx . Tw_sys_tx is defined as
+         the time (expressed in microseconds) that the receiving link partner is
+         requesting the transmitting link partner to wait before starting the
+         transmission data following the Low Power Idle (LPI) mode. Section
+         79.3.5.1, IEEE802.3az."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 21 }
+
+luxlLldpStatusMedRemoteDeviceInfoEeeFbTwSys OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's Fallback tw_sys_tx. A receiving link partner
+         may inform the transmitter of an alternate desired Tw_sys_tx. Since a
+         receiving link partner is likely to have discrete levels for savings,
+         this provides the transmitter with additional information that it may
+         use for a more efficient allocation. Section 79.3.5.3, IEEE802.3az."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 22 }
+
+luxlLldpStatusMedRemoteDeviceInfoEeeTxTwSysEcho OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's echo transmit Tw. The respective echo values
+         shall be defined as the local link partners reflection (echo) of the
+         remote link partners respective values. When a local link partner
+         receives its echoed values from the remote link partner it can
+         determine whether or not the remote link partner has received,
+         registered, and processed its most recent values. Section 79.3.5.4,
+         IEEE802.3az."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 23 }
+
+luxlLldpStatusMedRemoteDeviceInfoEeeRxTwSysEcho OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's echo receive Tw. The respective echo values
+         shall be defined as the local link partners reflection (echo) of the
+         remote link partners respective values. When a local link partner
+         receives its echoed values from the remote link partner it can
+         determine whether or not the remote link partner has received,
+         registered, and processed its most recent values. Section 79.3.5.4,
+         IEEE802.3az."
+    ::= { luxlLldpStatusMedRemoteDeviceInfoEntry 24 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpStatusMedRemoteDeviceLocInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to show the LLDP-MED remote device (neighbor) civic
+         location information for a specific interface."
+    ::= { luxlLldpStatusMed 2 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpStatusMedRemoteDeviceLocInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of neighbors information"
+    INDEX       { luxlLldpStatusMedRemoteDeviceLocInfoIfIndex, luxlLldpStatusMedRemoteDeviceLocInfoLldpmedIndex }
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoTable 1 }
+
+LUXLLldpStatusMedRemoteDeviceLocInfoEntry ::= SEQUENCE {
+    luxlLldpStatusMedRemoteDeviceLocInfoIfIndex     LUXLInterfaceIndex,
+    luxlLldpStatusMedRemoteDeviceLocInfoLldpmedIndex    Integer32,
+    luxlLldpStatusMedRemoteDeviceLocInfoState   LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoCounty      LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoCity    LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoDistrict    LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoBlock   LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoStreet      LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoLeadingStreetDirection      LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoTrailingStreetSuffix    LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoStreetSuffix    LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoHouseNo     LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoHouseNoSuffix   LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoLandmark    LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoAdditionalInfo      LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoName    LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoZipCode     LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoBuilding    LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoApartment   LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoFloor   LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoRoomNumber      LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoPlaceType   LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoPostalCommunityName     LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoPoBox   LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoAdditionalCode      LUXLDisplayString,
+    luxlLldpStatusMedRemoteDeviceLocInfoCountryCode     LUXLDisplayString
+}
+
+luxlLldpStatusMedRemoteDeviceLocInfoIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number index."
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 1 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoLldpmedIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..192)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Neighbor information table entry index."
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 2 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoState OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "National subdivision"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 5 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoCounty OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "County"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 6 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoCity OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "City"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 7 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoDistrict OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "City district"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 8 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoBlock OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Block (Neighborhood)"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 9 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoStreet OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Street"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 10 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoLeadingStreetDirection OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Street Direction"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 11 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoTrailingStreetSuffix OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Trailing Street Suffix"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 12 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoStreetSuffix OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Street Suffix"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 13 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoHouseNo OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "House No."
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 14 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoHouseNoSuffix OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "House No. Suffix"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 15 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoLandmark OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Landmark"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 16 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoAdditionalInfo OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Additional Location Info"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 17 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Name"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 18 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoZipCode OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Zip code"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 19 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoBuilding OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Building"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 20 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoApartment OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Apartment/unit"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 21 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoFloor OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Floor"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 22 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoRoomNumber OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Room Number"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 23 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoPlaceType OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Place type"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 24 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoPostalCommunityName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Postal Community Name"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 25 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoPoBox OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Post Office Box"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 26 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoAdditionalCode OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..250))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Addination Code"
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 27 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoCountryCode OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..2))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The two-letter ISO 3166 country code in capital ASCII letters -
+         Example: DK, DE or US."
+    ::= { luxlLldpStatusMedRemoteDeviceLocInfoEntry 28 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to show the LLDP-MED remote device (neighbor) network
+         policies information for a specific interface."
+    ::= { luxlLldpStatusMed 3 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of neighbors information"
+    INDEX       { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoIfIndex, luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoLldpmedIndex, luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoLldpmedPolicy }
+    ::= { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoTable 1 }
+
+LUXLLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry ::= SEQUENCE {
+    luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoIfIndex   LUXLInterfaceIndex,
+    luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoLldpmedIndex      Integer32,
+    luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoLldpmedPolicy     Integer32,
+    luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoApplicationType   LUXLlldpmedRemoteNetworkPolicyApplicationType,
+    luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoUnknownPolicy     TruthValue,
+    luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoTagged    TruthValue,
+    luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoVlanId    LUXLUnsigned16,
+    luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoL2Priority    LUXLUnsigned8,
+    luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoDscp      LUXLUnsigned8
+}
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number index."
+    ::= { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry 1 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoLldpmedIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..192)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Neighbor information table entry index."
+    ::= { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry 2 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoLldpmedPolicy OBJECT-TYPE
+    SYNTAX      Integer32 (0..31)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Policy index."
+    ::= { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry 3 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoApplicationType OBJECT-TYPE
+    SYNTAX      LUXLlldpmedRemoteNetworkPolicyApplicationType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The LLDP policy application type."
+    ::= { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry 5 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoUnknownPolicy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Policy indicates that an Endpoint Device wants to explicitly advertise
+         that the policy is required by the device. Can be either Defined or
+         Unknown
+         
+         Unknown: The network policy for the specified application type is
+         currently unknown.
+         
+         Defined: The network policy is defined (known)."
+    ::= { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry 6 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoTagged OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Defines if LLDP policy uses tagged VLAN."
+    ::= { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry 7 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (1..4095)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The policy VLAN ID. Only valid when policy 'Tagged' is TRUE"
+    ::= { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry 8 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoL2Priority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..7)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the LLDP neighbor's policy L2 priority."
+    ::= { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry 9 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoDscp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..63)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "LLDP policy DSCP."
+    ::= { luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoEntry 10 }
+
+luxlLldpControl OBJECT IDENTIFIER
+    ::= { luxlLldpMibObjects 4 }
+
+luxlLldpControlStatisticsClear OBJECT IDENTIFIER
+    ::= { luxlLldpControl 1 }
+
+luxlLldpControlStatisticsClearTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLldpControlStatisticsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to clear LLDP statistics for a specific interface."
+    ::= { luxlLldpControlStatisticsClear 1 }
+
+luxlLldpControlStatisticsClearEntry OBJECT-TYPE
+    SYNTAX      LUXLLldpControlStatisticsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of statistics counters"
+    INDEX       { luxlLldpControlStatisticsClearIfIndex }
+    ::= { luxlLldpControlStatisticsClearTable 1 }
+
+LUXLLldpControlStatisticsClearEntry ::= SEQUENCE {
+    luxlLldpControlStatisticsClearIfIndex   LUXLInterfaceIndex,
+    luxlLldpControlStatisticsClearStatisticsClear   TruthValue
+}
+
+luxlLldpControlStatisticsClearIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number index."
+    ::= { luxlLldpControlStatisticsClearEntry 1 }
+
+luxlLldpControlStatisticsClearStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE to clear the LLDP statistics of an interface."
+    ::= { luxlLldpControlStatisticsClearEntry 2 }
+
+luxlLldpControlStatisticsClearGlobal OBJECT IDENTIFIER
+    ::= { luxlLldpControlStatisticsClear 2 }
+
+luxlLldpControlStatisticsClearGlobalClear OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear LLDP global counters."
+    ::= { luxlLldpControlStatisticsClearGlobal 1 }
+
+luxlLldpMibConformance OBJECT IDENTIFIER
+    ::= { luxlLldpMib 2 }
+
+luxlLldpMibCompliances OBJECT IDENTIFIER
+    ::= { luxlLldpMibConformance 1 }
+
+luxlLldpMibGroups OBJECT IDENTIFIER
+    ::= { luxlLldpMibConformance 2 }
+
+luxlLldpConfigGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpConfigGlobalReInitDelay, luxlLldpConfigGlobalMsgTxHold, 
+                  luxlLldpConfigGlobalMsgTxInterval, luxlLldpConfigGlobalTxDelay }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 1 }
+
+luxlLldpConfigInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpConfigAdminState, luxlLldpConfigCdpAware, 
+                  luxlLldpConfigOptionalTlvs }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 2 }
+
+luxlLldpConfigMedInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpConfigMedOptionalTlvs, luxlLldpConfigMedDeviceType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 3 }
+
+luxlLldpConfigMedPolicyInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpConfigMedPolicyApplicationType, 
+                  luxlLldpConfigMedPolicyTagged, luxlLldpConfigMedPolicyVlanId, 
+                  luxlLldpConfigMedPolicyL2Priority, luxlLldpConfigMedPolicyDscp, 
+                  luxlLldpConfigMedPolicyAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 4 }
+
+luxlLldpConfigMedPolicyListInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpConfigMedPolicyListLldpmedPoliciesList }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 5 }
+
+luxlLldpConfigMedGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpConfigMedGlobalFastRepeatCount, 
+                  luxlLldpConfigMedGlobalLatitude, 
+                  luxlLldpConfigMedGlobalLongitude, 
+                  luxlLldpConfigMedGlobalAltitudeType, 
+                  luxlLldpConfigMedGlobalAltitude, 
+                  luxlLldpConfigMedGlobalElinAddr, luxlLldpConfigMedGlobalDatum, 
+                  luxlLldpConfigMedGlobalCountryCode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 6 }
+
+luxlLldpConfigMedLocationInformationInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpConfigMedLocationInformationCivicAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 7 }
+
+luxlLldpConfigMedPolicyRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpConfigMedPolicyRowEditorLldpmedPolicy, 
+                  luxlLldpConfigMedPolicyRowEditorApplicationType, 
+                  luxlLldpConfigMedPolicyRowEditorTagged, 
+                  luxlLldpConfigMedPolicyRowEditorVlanId, 
+                  luxlLldpConfigMedPolicyRowEditorL2Priority, 
+                  luxlLldpConfigMedPolicyRowEditorDscp, 
+                  luxlLldpConfigMedPolicyRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 8 }
+
+luxlLldpStatusStatisticsGlobalCountersInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpStatusStatisticsGlobalCountersTableInserts, 
+                  luxlLldpStatusStatisticsGlobalCountersTableDeletes, 
+                  luxlLldpStatusStatisticsGlobalCountersTableDrops, 
+                  luxlLldpStatusStatisticsGlobalCountersTableAgeOuts, 
+                  luxlLldpStatusStatisticsGlobalCountersLastChangeTime }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 9 }
+
+luxlLldpStatusStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpStatusStatisticsTxTotal, 
+                  luxlLldpStatusStatisticsRxTotal, 
+                  luxlLldpStatusStatisticsRxError, 
+                  luxlLldpStatusStatisticsRxDiscarded, 
+                  luxlLldpStatusStatisticsTLVsDiscarded, 
+                  luxlLldpStatusStatisticsTLVsUnrecognized, 
+                  luxlLldpStatusStatisticsTLVsOrgDiscarded, 
+                  luxlLldpStatusStatisticsAgeOuts }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 10 }
+
+luxlLldpStatusNeighborsInformationInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpStatusNeighborsInformationChassisId, 
+                  luxlLldpStatusNeighborsInformationPortId, 
+                  luxlLldpStatusNeighborsInformationPortDescription, 
+                  luxlLldpStatusNeighborsInformationSystemName, 
+                  luxlLldpStatusNeighborsInformationSystemDescription, 
+                  luxlLldpStatusNeighborsInformationSystemCapabilities, 
+                  luxlLldpStatusNeighborsInformationSystemCapabilitiesEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 11 }
+
+luxlLldpStatusNeighborsMgmtInformationInfoGroup OBJECT-GROUP
+    OBJECTS     { 
+                  luxlLldpStatusNeighborsMgmtInformationSystemMgmAddressSubtype, 
+                  luxlLldpStatusNeighborsMgmtInformationSystemMgmtAddress, 
+                  luxlLldpStatusNeighborsMgmtInformationSystemMgmtInterfaceSubtype, 
+                  luxlLldpStatusNeighborsMgmtInformationSystemMgmtInterface, 
+                  luxlLldpStatusNeighborsMgmtInformationSystemMgmtOid }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 12 }
+
+luxlLldpStatusMedRemoteDeviceInfoInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpStatusMedRemoteDeviceInfoCapabilities, 
+                  luxlLldpStatusMedRemoteDeviceInfoCapabilitiesEnabled, 
+                  luxlLldpStatusMedRemoteDeviceInfoLatitude, 
+                  luxlLldpStatusMedRemoteDeviceInfoLongitude, 
+                  luxlLldpStatusMedRemoteDeviceInfoAltitudeType, 
+                  luxlLldpStatusMedRemoteDeviceInfoAltitude, 
+                  luxlLldpStatusMedRemoteDeviceInfoDatum, 
+                  luxlLldpStatusMedRemoteDeviceInfoElinaddr, 
+                  luxlLldpStatusMedRemoteDeviceInfoDeviceType, 
+                  luxlLldpStatusMedRemoteDeviceInfoHwRev, 
+                  luxlLldpStatusMedRemoteDeviceInfoFwRev, 
+                  luxlLldpStatusMedRemoteDeviceInfoSwRev, 
+                  luxlLldpStatusMedRemoteDeviceInfoSerialNo, 
+                  luxlLldpStatusMedRemoteDeviceInfoManufacturerName, 
+                  luxlLldpStatusMedRemoteDeviceInfoModelName, 
+                  luxlLldpStatusMedRemoteDeviceInfoAssetId, 
+                  luxlLldpStatusMedRemoteDeviceInfoEeeRxTwSys, 
+                  luxlLldpStatusMedRemoteDeviceInfoEeeTxTwSys, 
+                  luxlLldpStatusMedRemoteDeviceInfoEeeFbTwSys, 
+                  luxlLldpStatusMedRemoteDeviceInfoEeeTxTwSysEcho, 
+                  luxlLldpStatusMedRemoteDeviceInfoEeeRxTwSysEcho }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 13 }
+
+luxlLldpStatusMedRemoteDeviceLocInfoInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpStatusMedRemoteDeviceLocInfoState, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoCounty, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoCity, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoDistrict, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoBlock, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoStreet, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoLeadingStreetDirection, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoTrailingStreetSuffix, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoStreetSuffix, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoHouseNo, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoHouseNoSuffix, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoLandmark, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoAdditionalInfo, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoName, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoZipCode, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoBuilding, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoApartment, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoFloor, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoRoomNumber, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoPlaceType, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoPostalCommunityName, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoPoBox, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoAdditionalCode, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoCountryCode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 14 }
+
+luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoInfoGroup OBJECT-GROUP
+    OBJECTS     { 
+                  luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoApplicationType, 
+                  luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoUnknownPolicy, 
+                  luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoTagged, 
+                  luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoVlanId, 
+                  luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoL2Priority, 
+                  luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoDscp }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 15 }
+
+luxlLldpControlStatisticsClearTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpControlStatisticsClearStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 16 }
+
+luxlLldpControlStatisticsClearGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLldpControlStatisticsClearGlobalClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLldpMibGroups 17 }
+
+luxlLldpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlLldpConfigGlobalInfoGroup, 
+                  luxlLldpConfigInfoGroup, luxlLldpConfigMedInfoGroup, 
+                  luxlLldpConfigMedPolicyInfoGroup, 
+                  luxlLldpConfigMedPolicyListInfoGroup, 
+                  luxlLldpConfigMedGlobalInfoGroup, 
+                  luxlLldpConfigMedLocationInformationInfoGroup, 
+                  luxlLldpConfigMedPolicyRowEditorInfoGroup, 
+                  luxlLldpStatusStatisticsGlobalCountersInfoGroup, 
+                  luxlLldpStatusStatisticsTableInfoGroup, 
+                  luxlLldpStatusNeighborsInformationInfoGroup, 
+                  luxlLldpStatusNeighborsMgmtInformationInfoGroup, 
+                  luxlLldpStatusMedRemoteDeviceInfoInfoGroup, 
+                  luxlLldpStatusMedRemoteDeviceLocInfoInfoGroup, 
+                  luxlLldpStatusMedRemoteDeviceNetworkPolicyInfoInfoGroup, 
+                  luxlLldpControlStatisticsClearTableInfoGroup, 
+                  luxlLldpControlStatisticsClearGlobalInfoGroup }
+
+    ::= { luxlLldpMibCompliances 1 }
+
+END

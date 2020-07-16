@@ -1,0 +1,1362 @@
+-- *****************************************************************
+-- PORT-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-PORT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Counter64 FROM SNMPv2-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLSfpTransceiver FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlPortMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the PORT MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 11 }
+
+
+LUXLPortFc ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration controls the interface flow control."
+    SYNTAX      INTEGER { off(0), on(1) }
+
+LUXLPortMedia ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration controls the interface media type."
+    SYNTAX      INTEGER { rj45(0), sfp(1), dual(2) }
+
+LUXLPortPhyVeriPhyStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumerations show the VeriPhy status."
+    SYNTAX      INTEGER { correctlyTerminatedPair(0), openPair(1), shortPair(2), abnormalTermination(4), crossPairShortToPairA(8), crossPairShortToPairB(9), crossPairShortToPairC(10), crossPairShortToPairD(11), abnormalCrossPairCouplingToPairA(12), abnormalCrossPairCouplingToPairB(13), abnormalCrossPairCouplingToPairC(14), abnormalCrossPairCouplingToPairD(15), unknownResult(16), veriPhyRunning(17) }
+
+LUXLPortSpeed ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration controls the interface speed. E.g force10ModeFdx means
+         force 10Mbs full duplex."
+    SYNTAX      INTEGER { force10ModeFdx(0), force10ModeHdx(1), force100ModeFdx(2), force100ModeHdx(3), force1GModeFdx(4), autoNegMode(5), force2G5ModeFdx(6), force5GModeFdx(7), force10GModeFdx(8), force12GModeFdx(9) }
+
+LUXLPortStatusSpeed ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumerations show the current interface speed."
+    SYNTAX      INTEGER { undefined(0), speed10M(1), speed100M(2), speed1G(3), speed2G5(4), speed5G(5), speed10G(6), speed12G(7) }
+
+luxlPortMibObjects OBJECT IDENTIFIER
+    ::= { luxlPortMib 1 }
+
+luxlPortConfig OBJECT IDENTIFIER
+    ::= { luxlPortMibObjects 2 }
+
+luxlPortConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPortConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of the port interface parameters"
+    ::= { luxlPortConfig 1 }
+
+luxlPortConfigEntry OBJECT-TYPE
+    SYNTAX      LUXLPortConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port interface has a set of parameters"
+    INDEX       { luxlPortConfigIfIndex }
+    ::= { luxlPortConfigTable 1 }
+
+LUXLPortConfigEntry ::= SEQUENCE {
+    luxlPortConfigIfIndex   LUXLInterfaceIndex,
+    luxlPortConfigShutdown      TruthValue,
+    luxlPortConfigSpeed     LUXLPortSpeed,
+    luxlPortConfigAdvertiseDisabled     LUXLUnsigned8,
+    luxlPortConfigMediaType     LUXLPortMedia,
+    luxlPortConfigFC    LUXLPortFc,
+    luxlPortConfigMTU   Unsigned32,
+    luxlPortConfigExcessiveRestart      TruthValue,
+    luxlPortConfigPFC   LUXLUnsigned8
+}
+
+luxlPortConfigIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPortConfigEntry 1 }
+
+luxlPortConfigShutdown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls whether interface is shutdown or powered up. Set to TRUE in
+         order to power down the interface."
+    ::= { luxlPortConfigEntry 2 }
+
+luxlPortConfigSpeed OBJECT-TYPE
+    SYNTAX      LUXLPortSpeed
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls the port speed and duplex."
+    ::= { luxlPortConfigEntry 3 }
+
+luxlPortConfigAdvertiseDisabled OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "In auto mode, bitmask that allows features not to be advertised.
+         
+         Bit 0: Disable half duplex advertising.
+         
+         Bit 1: Disable full duplex advertising.
+         
+         Bit 4: Disable 1G advertising.
+         
+         Bit 6: Disable 100M advertising.
+         
+         Bit 7: Disable 10M advertising.
+         
+         When not in auto mode, the value shall be zero."
+    ::= { luxlPortConfigEntry 4 }
+
+luxlPortConfigMediaType OBJECT-TYPE
+    SYNTAX      LUXLPortMedia
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls the port media type."
+    ::= { luxlPortConfigEntry 5 }
+
+luxlPortConfigFC OBJECT-TYPE
+    SYNTAX      LUXLPortFc
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls the port flow control mode."
+    ::= { luxlPortConfigEntry 6 }
+
+luxlPortConfigMTU OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls the port's Maximum Transmission Unit."
+    ::= { luxlPortConfigEntry 7 }
+
+luxlPortConfigExcessiveRestart OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE to restart half-duplex back-off algorithm after 16 collisions.
+         FALSE to discard frame after 16 collisions"
+    ::= { luxlPortConfigEntry 8 }
+
+luxlPortConfigPFC OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "802.1Qbb Priority Flow Control bitmask, one bit for each prioritet.E.g.
+         0x01 = prio 0, 0x80 = prio 7, 0xFF = prio 0-7"
+    ::= { luxlPortConfigEntry 9 }
+
+luxlPortStatus OBJECT IDENTIFIER
+    ::= { luxlPortMibObjects 3 }
+
+luxlPortStatusInformationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPortStatusInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents the status of the ports"
+    ::= { luxlPortStatus 1 }
+
+luxlPortStatusInformationEntry OBJECT-TYPE
+    SYNTAX      LUXLPortStatusInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port interface has a set of status parameters"
+    INDEX       { luxlPortStatusInformationIfIndex }
+    ::= { luxlPortStatusInformationTable 1 }
+
+LUXLPortStatusInformationEntry ::= SEQUENCE {
+    luxlPortStatusInformationIfIndex    LUXLInterfaceIndex,
+    luxlPortStatusInformationLink   TruthValue,
+    luxlPortStatusInformationFdx    TruthValue,
+    luxlPortStatusInformationFiber      TruthValue,
+    luxlPortStatusInformationSpeed      LUXLPortStatusSpeed,
+    luxlPortStatusInformationSFPType    LUXLSfpTransceiver,
+    luxlPortStatusInformationSFPVendorName      LUXLDisplayString,
+    luxlPortStatusInformationSFPVendorPN    LUXLDisplayString,
+    luxlPortStatusInformationSFPVendorRev   LUXLDisplayString
+}
+
+luxlPortStatusInformationIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPortStatusInformationEntry 1 }
+
+luxlPortStatusInformationLink OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows whether interface has link."
+    ::= { luxlPortStatusInformationEntry 2 }
+
+luxlPortStatusInformationFdx OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows whether interface is running in full duplex."
+    ::= { luxlPortStatusInformationEntry 3 }
+
+luxlPortStatusInformationFiber OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows whether interface is a fiber link (fiber SFP or cu SFP)."
+    ::= { luxlPortStatusInformationEntry 4 }
+
+luxlPortStatusInformationSpeed OBJECT-TYPE
+    SYNTAX      LUXLPortStatusSpeed
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the current interface speed."
+    ::= { luxlPortStatusInformationEntry 5 }
+
+luxlPortStatusInformationSFPType OBJECT-TYPE
+    SYNTAX      LUXLSfpTransceiver
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the current interface SFP type."
+    ::= { luxlPortStatusInformationEntry 6 }
+
+luxlPortStatusInformationSFPVendorName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..19))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the SFP vendor name."
+    ::= { luxlPortStatusInformationEntry 7 }
+
+luxlPortStatusInformationSFPVendorPN OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..19))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the SFP vendor Product Number."
+    ::= { luxlPortStatusInformationEntry 8 }
+
+luxlPortStatusInformationSFPVendorRev OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..5))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the SFP vendor Revision."
+    ::= { luxlPortStatusInformationEntry 9 }
+
+luxlPortStatusVeriPhyResult OBJECT IDENTIFIER
+    ::= { luxlPortStatus 3 }
+
+luxlPortStatusVeriPhyResultTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPortStatusVeriPhyResultEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents the VeriPhy result from the last VeriPhy run for
+         the interface"
+    ::= { luxlPortStatusVeriPhyResult 1 }
+
+luxlPortStatusVeriPhyResultEntry OBJECT-TYPE
+    SYNTAX      LUXLPortStatusVeriPhyResultEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of VeriPhy results"
+    INDEX       { luxlPortStatusVeriPhyResultIfIndex }
+    ::= { luxlPortStatusVeriPhyResultTable 1 }
+
+LUXLPortStatusVeriPhyResultEntry ::= SEQUENCE {
+    luxlPortStatusVeriPhyResultIfIndex      LUXLInterfaceIndex,
+    luxlPortStatusVeriPhyResultVeriPhyStatusPairA   LUXLPortPhyVeriPhyStatus,
+    luxlPortStatusVeriPhyResultVeriPhyStatusPairB   LUXLPortPhyVeriPhyStatus,
+    luxlPortStatusVeriPhyResultVeriPhyStatusPairC   LUXLPortPhyVeriPhyStatus,
+    luxlPortStatusVeriPhyResultVeriPhyStatusPairD   LUXLPortPhyVeriPhyStatus,
+    luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairA     LUXLUnsigned8,
+    luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairB     LUXLUnsigned8,
+    luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairC     LUXLUnsigned8,
+    luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairD     LUXLUnsigned8
+}
+
+luxlPortStatusVeriPhyResultIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPortStatusVeriPhyResultEntry 1 }
+
+luxlPortStatusVeriPhyResultVeriPhyStatusPairA OBJECT-TYPE
+    SYNTAX      LUXLPortPhyVeriPhyStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VeriPhy status for the cable pair
+         
+         0 - Cable is Correctly terminated pair
+         
+         1 - Open pair
+         
+         2 - Shorted pair
+         
+         4 - Abnormal termination
+         
+         8 - Cross-pair short to pair A
+         
+         9 - Cross-pair short to pair B
+         
+         10 - Cross-pair short to pair C
+         
+         11 - Cross-pair short to pair D
+         
+         12 - Abnormal cross-pair coupling - pair A
+         
+         13 - Abnormal cross-pair coupling - pair B
+         
+         14 - Abnormal cross-pair coupling - pair C
+         
+         15 - Abnormal cross-pair coupling - pair D"
+    ::= { luxlPortStatusVeriPhyResultEntry 2 }
+
+luxlPortStatusVeriPhyResultVeriPhyStatusPairB OBJECT-TYPE
+    SYNTAX      LUXLPortPhyVeriPhyStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VeriPhy status for the cable pair
+         
+         0 - Cable is Correctly terminated pair
+         
+         1 - Open pair
+         
+         2 - Shorted pair
+         
+         4 - Abnormal termination
+         
+         8 - Cross-pair short to pair A
+         
+         9 - Cross-pair short to pair B
+         
+         10 - Cross-pair short to pair C
+         
+         11 - Cross-pair short to pair D
+         
+         12 - Abnormal cross-pair coupling - pair A
+         
+         13 - Abnormal cross-pair coupling - pair B
+         
+         14 - Abnormal cross-pair coupling - pair C
+         
+         15 - Abnormal cross-pair coupling - pair D"
+    ::= { luxlPortStatusVeriPhyResultEntry 3 }
+
+luxlPortStatusVeriPhyResultVeriPhyStatusPairC OBJECT-TYPE
+    SYNTAX      LUXLPortPhyVeriPhyStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VeriPhy status for the cable pair
+         
+         0 - Cable is Correctly terminated pair
+         
+         1 - Open pair
+         
+         2 - Shorted pair
+         
+         4 - Abnormal termination
+         
+         8 - Cross-pair short to pair A
+         
+         9 - Cross-pair short to pair B
+         
+         10 - Cross-pair short to pair C
+         
+         11 - Cross-pair short to pair D
+         
+         12 - Abnormal cross-pair coupling - pair A
+         
+         13 - Abnormal cross-pair coupling - pair B
+         
+         14 - Abnormal cross-pair coupling - pair C
+         
+         15 - Abnormal cross-pair coupling - pair D"
+    ::= { luxlPortStatusVeriPhyResultEntry 4 }
+
+luxlPortStatusVeriPhyResultVeriPhyStatusPairD OBJECT-TYPE
+    SYNTAX      LUXLPortPhyVeriPhyStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VeriPhy status for the cable pair
+         
+         0 - Cable is Correctly terminated pair
+         
+         1 - Open pair
+         
+         2 - Shorted pair
+         
+         4 - Abnormal termination
+         
+         8 - Cross-pair short to pair A
+         
+         9 - Cross-pair short to pair B
+         
+         10 - Cross-pair short to pair C
+         
+         11 - Cross-pair short to pair D
+         
+         12 - Abnormal cross-pair coupling - pair A
+         
+         13 - Abnormal cross-pair coupling - pair B
+         
+         14 - Abnormal cross-pair coupling - pair C
+         
+         15 - Abnormal cross-pair coupling - pair D"
+    ::= { luxlPortStatusVeriPhyResultEntry 5 }
+
+luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairA OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VeriPhy status cable length i meters for the cable pair. When VeriPhy
+         is completed, the cable diagnostics results is shown in the VeriPhy
+         status table. Note that VeriPHY is only accurate for cables of length 7
+         - 140 meters.
+         
+         The resolution is 3 meters"
+    ::= { luxlPortStatusVeriPhyResultEntry 6 }
+
+luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairB OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VeriPhy status cable length i meters for the cable pair. When VeriPhy
+         is completed, the cable diagnostics results is shown in the VeriPhy
+         status table. Note that VeriPHY is only accurate for cables of length 7
+         - 140 meters.
+         
+         The resolution is 3 meters"
+    ::= { luxlPortStatusVeriPhyResultEntry 7 }
+
+luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairC OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VeriPhy status cable length i meters for the cable pair. When VeriPhy
+         is completed, the cable diagnostics results is shown in the VeriPhy
+         status table. Note that VeriPHY is only accurate for cables of length 7
+         - 140 meters.
+         
+         The resolution is 3 meters"
+    ::= { luxlPortStatusVeriPhyResultEntry 8 }
+
+luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairD OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VeriPhy status cable length i meters for the cable pair. When VeriPhy
+         is completed, the cable diagnostics results is shown in the VeriPhy
+         status table. Note that VeriPHY is only accurate for cables of length 7
+         - 140 meters.
+         
+         The resolution is 3 meters"
+    ::= { luxlPortStatusVeriPhyResultEntry 9 }
+
+luxlPortControl OBJECT IDENTIFIER
+    ::= { luxlPortMibObjects 4 }
+
+luxlPortControlStatisticsClear OBJECT IDENTIFIER
+    ::= { luxlPortControl 1 }
+
+luxlPortControlStatisticsClearTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPortControlStatisticsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to clear port Interface statistics"
+    ::= { luxlPortControlStatisticsClear 1 }
+
+luxlPortControlStatisticsClearEntry OBJECT-TYPE
+    SYNTAX      LUXLPortControlStatisticsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of control parameters"
+    INDEX       { luxlPortControlStatisticsClearIfIndex }
+    ::= { luxlPortControlStatisticsClearTable 1 }
+
+LUXLPortControlStatisticsClearEntry ::= SEQUENCE {
+    luxlPortControlStatisticsClearIfIndex   LUXLInterfaceIndex,
+    luxlPortControlStatisticsClearStatisticsClear   TruthValue
+}
+
+luxlPortControlStatisticsClearIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPortControlStatisticsClearEntry 1 }
+
+luxlPortControlStatisticsClearStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE to clear the statistics of an interface."
+    ::= { luxlPortControlStatisticsClearEntry 2 }
+
+luxlPortControlVeriPhyStart OBJECT IDENTIFIER
+    ::= { luxlPortControl 2 }
+
+luxlPortControlVeriPhyStartTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPortControlVeriPhyStartEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to start VeriPhy for the interface"
+    ::= { luxlPortControlVeriPhyStart 1 }
+
+luxlPortControlVeriPhyStartEntry OBJECT-TYPE
+    SYNTAX      LUXLPortControlVeriPhyStartEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of control parameters"
+    INDEX       { luxlPortControlVeriPhyStartIfIndex }
+    ::= { luxlPortControlVeriPhyStartTable 1 }
+
+LUXLPortControlVeriPhyStartEntry ::= SEQUENCE {
+    luxlPortControlVeriPhyStartIfIndex      LUXLInterfaceIndex,
+    luxlPortControlVeriPhyStartStart    TruthValue
+}
+
+luxlPortControlVeriPhyStartIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPortControlVeriPhyStartEntry 1 }
+
+luxlPortControlVeriPhyStartStart OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE to start VeriPHy for the interface.
+         
+         When running 10 and 100 Mbps, ports will be linked down while running
+         VeriPHY. Therefore, running VeriPHY on a 10 or 100 Mbps management port
+         will cause the switch to stop responding until VeriPHY is complete."
+    ::= { luxlPortControlVeriPhyStartEntry 2 }
+
+luxlPortStatistics OBJECT IDENTIFIER
+    ::= { luxlPortMibObjects 5 }
+
+luxlPortStatisticsRmonStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPortStatisticsRmonStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents the port interface RMON statistics counters"
+    ::= { luxlPortStatistics 1 }
+
+luxlPortStatisticsRmonStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLPortStatisticsRmonStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port interface has a set of statistics counters"
+    INDEX       { luxlPortStatisticsRmonStatisticsIfIndex }
+    ::= { luxlPortStatisticsRmonStatisticsTable 1 }
+
+LUXLPortStatisticsRmonStatisticsEntry ::= SEQUENCE {
+    luxlPortStatisticsRmonStatisticsIfIndex     LUXLInterfaceIndex,
+    luxlPortStatisticsRmonStatisticsRxDropEvents    Counter64,
+    luxlPortStatisticsRmonStatisticsRxOctets    Counter64,
+    luxlPortStatisticsRmonStatisticsRxPkts      Counter64,
+    luxlPortStatisticsRmonStatisticsRxBroadcastPkts     Counter64,
+    luxlPortStatisticsRmonStatisticsRxMulticastPkts     Counter64,
+    luxlPortStatisticsRmonStatisticsRxCrcAlignErrPkts   Counter64,
+    luxlPortStatisticsRmonStatisticsRxUndersizePkts     Counter64,
+    luxlPortStatisticsRmonStatisticsRxOversizePkts      Counter64,
+    luxlPortStatisticsRmonStatisticsRxFragmentsPkts     Counter64,
+    luxlPortStatisticsRmonStatisticsRxJabbersPkts   Counter64,
+    luxlPortStatisticsRmonStatisticsRx64Pkts    Counter64,
+    luxlPortStatisticsRmonStatisticsRx65to127Pkts   Counter64,
+    luxlPortStatisticsRmonStatisticsRx128to255Pkts      Counter64,
+    luxlPortStatisticsRmonStatisticsRx256to511Pkts      Counter64,
+    luxlPortStatisticsRmonStatisticsRx512to1023Pkts     Counter64,
+    luxlPortStatisticsRmonStatisticsRx1024to1518Pkts    Counter64,
+    luxlPortStatisticsRmonStatisticsRx1519PktsToMax     Counter64,
+    luxlPortStatisticsRmonStatisticsTxDropEvents    Counter64,
+    luxlPortStatisticsRmonStatisticsTxOctets    Counter64,
+    luxlPortStatisticsRmonStatisticsTxPkts      Counter64,
+    luxlPortStatisticsRmonStatisticsTxBroadcastPkts     Counter64,
+    luxlPortStatisticsRmonStatisticsTxMulticastPkts     Counter64,
+    luxlPortStatisticsRmonStatisticsTx64Pkts    Counter64,
+    luxlPortStatisticsRmonStatisticsTx65to127Pkts   Counter64,
+    luxlPortStatisticsRmonStatisticsTx128to255Pkts      Counter64,
+    luxlPortStatisticsRmonStatisticsTx256to511Pkts      Counter64,
+    luxlPortStatisticsRmonStatisticsTx512to1023Pkts     Counter64,
+    luxlPortStatisticsRmonStatisticsTx1024to1518Pkts    Counter64,
+    luxlPortStatisticsRmonStatisticsTx1519PktsToMax     Counter64
+}
+
+luxlPortStatisticsRmonStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 1 }
+
+luxlPortStatisticsRmonStatisticsRxDropEvents OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of frames discarded due to ingress congestion."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 2 }
+
+luxlPortStatisticsRmonStatisticsRxOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of received (good and bad) bytes. Includes FCS, but
+         excludes framing bits."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 3 }
+
+luxlPortStatisticsRmonStatisticsRxPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of received (good and bad) packets."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 4 }
+
+luxlPortStatisticsRmonStatisticsRxBroadcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of received (good and bad) broadcast packets."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 5 }
+
+luxlPortStatisticsRmonStatisticsRxMulticastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of received (good and bad) multicast packets."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 6 }
+
+luxlPortStatisticsRmonStatisticsRxCrcAlignErrPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of frames received with CRC or alignment errors."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 7 }
+
+luxlPortStatisticsRmonStatisticsRxUndersizePkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of short frames (frames that are smaller than 64
+         bytes) received with valid CRC."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 8 }
+
+luxlPortStatisticsRmonStatisticsRxOversizePkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of long frames received with valid CRC."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 9 }
+
+luxlPortStatisticsRmonStatisticsRxFragmentsPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of short frames (frames that are smaller than 64
+         bytes) received with invalid CRC."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 10 }
+
+luxlPortStatisticsRmonStatisticsRxJabbersPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of long frames (frames that are longer than the configured
+         maximum frame length for this interface) received with invalid CRC."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 11 }
+
+luxlPortStatisticsRmonStatisticsRx64Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of 64 bytes frames received."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 12 }
+
+luxlPortStatisticsRmonStatisticsRx65to127Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of received frames with size within 65 to 127 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 13 }
+
+luxlPortStatisticsRmonStatisticsRx128to255Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of received frames with size within 128 to 255 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 14 }
+
+luxlPortStatisticsRmonStatisticsRx256to511Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of received frames with size within 256 to 511 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 15 }
+
+luxlPortStatisticsRmonStatisticsRx512to1023Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of received frames with size within 512 to 1023 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 16 }
+
+luxlPortStatisticsRmonStatisticsRx1024to1518Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of received frames with size within 1024 to 1518 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 17 }
+
+luxlPortStatisticsRmonStatisticsRx1519PktsToMax OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of received frames with size larger than 1518 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 18 }
+
+luxlPortStatisticsRmonStatisticsTxDropEvents OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of frames discarded due to egress congestion."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 19 }
+
+luxlPortStatisticsRmonStatisticsTxOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of transmitted (good and bad) bytes. Includes FCS, but
+         excludes framing bits."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 20 }
+
+luxlPortStatisticsRmonStatisticsTxPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of transmitted (good and bad) packets."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 21 }
+
+luxlPortStatisticsRmonStatisticsTxBroadcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of transmitted (good and bad) broadcast packets."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 22 }
+
+luxlPortStatisticsRmonStatisticsTxMulticastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of transmitted (good and bad) multicast packets."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 23 }
+
+luxlPortStatisticsRmonStatisticsTx64Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of 64 bytes frames transmitted."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 24 }
+
+luxlPortStatisticsRmonStatisticsTx65to127Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of transmitted frames with size within 65 to 127 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 25 }
+
+luxlPortStatisticsRmonStatisticsTx128to255Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of transmitted frames with size within 128 to 255 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 26 }
+
+luxlPortStatisticsRmonStatisticsTx256to511Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of transmitted frames with size within 256 to 511 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 27 }
+
+luxlPortStatisticsRmonStatisticsTx512to1023Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of transmitted frames with size within 512 to 1023 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 28 }
+
+luxlPortStatisticsRmonStatisticsTx1024to1518Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of transmitted frames with size within 1024 to 1518 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 29 }
+
+luxlPortStatisticsRmonStatisticsTx1519PktsToMax OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of transmitted frames with size larger than 1518 bytes."
+    ::= { luxlPortStatisticsRmonStatisticsEntry 30 }
+
+luxlPortStatisticsIfGroupStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPortStatisticsIfGroupStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents the port interfaces group (RFC 2863) counters"
+    ::= { luxlPortStatistics 2 }
+
+luxlPortStatisticsIfGroupStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLPortStatisticsIfGroupStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port interface has a set of statistics counters"
+    INDEX       { luxlPortStatisticsIfGroupStatisticsIfIndex }
+    ::= { luxlPortStatisticsIfGroupStatisticsTable 1 }
+
+LUXLPortStatisticsIfGroupStatisticsEntry ::= SEQUENCE {
+    luxlPortStatisticsIfGroupStatisticsIfIndex      LUXLInterfaceIndex,
+    luxlPortStatisticsIfGroupStatisticsRxOctets     Counter64,
+    luxlPortStatisticsIfGroupStatisticsRxUnicastPkts    Counter64,
+    luxlPortStatisticsIfGroupStatisticsRxMulticastPkts      Counter64,
+    luxlPortStatisticsIfGroupStatisticsRxBroadcastPkts      Counter64,
+    luxlPortStatisticsIfGroupStatisticsRxNonUnicastPkts     Counter64,
+    luxlPortStatisticsIfGroupStatisticsRxDiscards   Counter64,
+    luxlPortStatisticsIfGroupStatisticsRxErrors     Counter64,
+    luxlPortStatisticsIfGroupStatisticsTxOctets     Counter64,
+    luxlPortStatisticsIfGroupStatisticsTxUnicastPkts    Counter64,
+    luxlPortStatisticsIfGroupStatisticsTxMulticastPkts      Counter64,
+    luxlPortStatisticsIfGroupStatisticsTxBroadcastPkts      Counter64,
+    luxlPortStatisticsIfGroupStatisticsTxNonUnicastPkts     Counter64,
+    luxlPortStatisticsIfGroupStatisticsTxDiscardPkts    Counter64,
+    luxlPortStatisticsIfGroupStatisticsTxErrorPkts      Counter64
+}
+
+luxlPortStatisticsIfGroupStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 1 }
+
+luxlPortStatisticsIfGroupStatisticsRxOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of bytes received."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 2 }
+
+luxlPortStatisticsIfGroupStatisticsRxUnicastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of uni-cast frames received."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 3 }
+
+luxlPortStatisticsIfGroupStatisticsRxMulticastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of multi-cast frames received."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 4 }
+
+luxlPortStatisticsIfGroupStatisticsRxBroadcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of broad-cast frames received."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 5 }
+
+luxlPortStatisticsIfGroupStatisticsRxNonUnicastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of non uni-cast frames received."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 6 }
+
+luxlPortStatisticsIfGroupStatisticsRxDiscards OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of received frames discarded."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 7 }
+
+luxlPortStatisticsIfGroupStatisticsRxErrors OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of frames with errors received."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 8 }
+
+luxlPortStatisticsIfGroupStatisticsTxOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of bytes transmitted."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 9 }
+
+luxlPortStatisticsIfGroupStatisticsTxUnicastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of uni-cast frames transmitted."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 10 }
+
+luxlPortStatisticsIfGroupStatisticsTxMulticastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of multi-cast frames transmitted."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 11 }
+
+luxlPortStatisticsIfGroupStatisticsTxBroadcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of broad-cast frames transmitted."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 12 }
+
+luxlPortStatisticsIfGroupStatisticsTxNonUnicastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of non uni-cast frames transmitted."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 13 }
+
+luxlPortStatisticsIfGroupStatisticsTxDiscardPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of discard frames which should been transmitted."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 14 }
+
+luxlPortStatisticsIfGroupStatisticsTxErrorPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Shows the number of frames transmit with error."
+    ::= { luxlPortStatisticsIfGroupStatisticsEntry 15 }
+
+luxlPortStatisticsEthernetLikeStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPortStatisticsEthernetLikeStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents the port Ethernet-like interfaces counters"
+    ::= { luxlPortStatistics 3 }
+
+luxlPortStatisticsEthernetLikeStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLPortStatisticsEthernetLikeStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port interface has a set of statistics counters"
+    INDEX       { luxlPortStatisticsEthernetLikeStatisticsIfIndex }
+    ::= { luxlPortStatisticsEthernetLikeStatisticsTable 1 }
+
+LUXLPortStatisticsEthernetLikeStatisticsEntry ::= SEQUENCE {
+    luxlPortStatisticsEthernetLikeStatisticsIfIndex     LUXLInterfaceIndex,
+    luxlPortStatisticsEthernetLikeStatisticsRxPauseFrames   Counter64,
+    luxlPortStatisticsEthernetLikeStatisticsTxPauseFrames   Counter64
+}
+
+luxlPortStatisticsEthernetLikeStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPortStatisticsEthernetLikeStatisticsEntry 1 }
+
+luxlPortStatisticsEthernetLikeStatisticsRxPauseFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of pause frames received."
+    ::= { luxlPortStatisticsEthernetLikeStatisticsEntry 2 }
+
+luxlPortStatisticsEthernetLikeStatisticsTxPauseFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of pause frames transmitted."
+    ::= { luxlPortStatisticsEthernetLikeStatisticsEntry 3 }
+
+luxlPortStatisticsQueuesStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPortStatisticsQueuesStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents the port interfaces queues counters"
+    ::= { luxlPortStatistics 4 }
+
+luxlPortStatisticsQueuesStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLPortStatisticsQueuesStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port interface has a set of statistics counters"
+    INDEX       { luxlPortStatisticsQueuesStatisticsIfIndex, luxlPortStatisticsQueuesStatisticsQueue }
+    ::= { luxlPortStatisticsQueuesStatisticsTable 1 }
+
+LUXLPortStatisticsQueuesStatisticsEntry ::= SEQUENCE {
+    luxlPortStatisticsQueuesStatisticsIfIndex   LUXLInterfaceIndex,
+    luxlPortStatisticsQueuesStatisticsQueue     Integer32,
+    luxlPortStatisticsQueuesStatisticsRxPrio    Counter64,
+    luxlPortStatisticsQueuesStatisticsTxPrio    Counter64
+}
+
+luxlPortStatisticsQueuesStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPortStatisticsQueuesStatisticsEntry 1 }
+
+luxlPortStatisticsQueuesStatisticsQueue OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Queue index."
+    ::= { luxlPortStatisticsQueuesStatisticsEntry 2 }
+
+luxlPortStatisticsQueuesStatisticsRxPrio OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of frames received for the queue."
+    ::= { luxlPortStatisticsQueuesStatisticsEntry 3 }
+
+luxlPortStatisticsQueuesStatisticsTxPrio OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of frames transmitted for the queue."
+    ::= { luxlPortStatisticsQueuesStatisticsEntry 4 }
+
+luxlPortStatisticsBridgeStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPortStatisticsBridgeStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents the port interface bridge counters"
+    ::= { luxlPortStatistics 5 }
+
+luxlPortStatisticsBridgeStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLPortStatisticsBridgeStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port interface has a set of statistics counters"
+    INDEX       { luxlPortStatisticsBridgeStatisticsIfIndex }
+    ::= { luxlPortStatisticsBridgeStatisticsTable 1 }
+
+LUXLPortStatisticsBridgeStatisticsEntry ::= SEQUENCE {
+    luxlPortStatisticsBridgeStatisticsIfIndex   LUXLInterfaceIndex,
+    luxlPortStatisticsBridgeStatisticsRxBridgeDiscard   Counter64
+}
+
+luxlPortStatisticsBridgeStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPortStatisticsBridgeStatisticsEntry 1 }
+
+luxlPortStatisticsBridgeStatisticsRxBridgeDiscard OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of bridge frames discarded."
+    ::= { luxlPortStatisticsBridgeStatisticsEntry 2 }
+
+luxlPortMibConformance OBJECT IDENTIFIER
+    ::= { luxlPortMib 2 }
+
+luxlPortMibCompliances OBJECT IDENTIFIER
+    ::= { luxlPortMibConformance 1 }
+
+luxlPortMibGroups OBJECT IDENTIFIER
+    ::= { luxlPortMibConformance 2 }
+
+luxlPortConfigInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPortConfigShutdown, luxlPortConfigSpeed, 
+                  luxlPortConfigAdvertiseDisabled, luxlPortConfigMediaType, 
+                  luxlPortConfigFC, luxlPortConfigMTU, 
+                  luxlPortConfigExcessiveRestart, luxlPortConfigPFC }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPortMibGroups 1 }
+
+luxlPortStatusInformationTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPortStatusInformationLink, luxlPortStatusInformationFdx, 
+                  luxlPortStatusInformationFiber, luxlPortStatusInformationSpeed, 
+                  luxlPortStatusInformationSFPType, 
+                  luxlPortStatusInformationSFPVendorName, 
+                  luxlPortStatusInformationSFPVendorPN, 
+                  luxlPortStatusInformationSFPVendorRev }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPortMibGroups 2 }
+
+luxlPortStatusVeriPhyResultTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPortStatusVeriPhyResultVeriPhyStatusPairA, 
+                  luxlPortStatusVeriPhyResultVeriPhyStatusPairB, 
+                  luxlPortStatusVeriPhyResultVeriPhyStatusPairC, 
+                  luxlPortStatusVeriPhyResultVeriPhyStatusPairD, 
+                  luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairA, 
+                  luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairB, 
+                  luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairC, 
+                  luxlPortStatusVeriPhyResultVeriPhyLengthStatusPairD }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPortMibGroups 3 }
+
+luxlPortControlStatisticsClearTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPortControlStatisticsClearStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPortMibGroups 4 }
+
+luxlPortControlVeriPhyStartTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPortControlVeriPhyStartStart }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPortMibGroups 5 }
+
+luxlPortStatisticsRmonStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPortStatisticsRmonStatisticsRxDropEvents, 
+                  luxlPortStatisticsRmonStatisticsRxOctets, 
+                  luxlPortStatisticsRmonStatisticsRxPkts, 
+                  luxlPortStatisticsRmonStatisticsRxBroadcastPkts, 
+                  luxlPortStatisticsRmonStatisticsRxMulticastPkts, 
+                  luxlPortStatisticsRmonStatisticsRxCrcAlignErrPkts, 
+                  luxlPortStatisticsRmonStatisticsRxUndersizePkts, 
+                  luxlPortStatisticsRmonStatisticsRxOversizePkts, 
+                  luxlPortStatisticsRmonStatisticsRxFragmentsPkts, 
+                  luxlPortStatisticsRmonStatisticsRxJabbersPkts, 
+                  luxlPortStatisticsRmonStatisticsRx64Pkts, 
+                  luxlPortStatisticsRmonStatisticsRx65to127Pkts, 
+                  luxlPortStatisticsRmonStatisticsRx128to255Pkts, 
+                  luxlPortStatisticsRmonStatisticsRx256to511Pkts, 
+                  luxlPortStatisticsRmonStatisticsRx512to1023Pkts, 
+                  luxlPortStatisticsRmonStatisticsRx1024to1518Pkts, 
+                  luxlPortStatisticsRmonStatisticsRx1519PktsToMax, 
+                  luxlPortStatisticsRmonStatisticsTxDropEvents, 
+                  luxlPortStatisticsRmonStatisticsTxOctets, 
+                  luxlPortStatisticsRmonStatisticsTxPkts, 
+                  luxlPortStatisticsRmonStatisticsTxBroadcastPkts, 
+                  luxlPortStatisticsRmonStatisticsTxMulticastPkts, 
+                  luxlPortStatisticsRmonStatisticsTx64Pkts, 
+                  luxlPortStatisticsRmonStatisticsTx65to127Pkts, 
+                  luxlPortStatisticsRmonStatisticsTx128to255Pkts, 
+                  luxlPortStatisticsRmonStatisticsTx256to511Pkts, 
+                  luxlPortStatisticsRmonStatisticsTx512to1023Pkts, 
+                  luxlPortStatisticsRmonStatisticsTx1024to1518Pkts, 
+                  luxlPortStatisticsRmonStatisticsTx1519PktsToMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPortMibGroups 6 }
+
+luxlPortStatisticsIfGroupStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPortStatisticsIfGroupStatisticsRxOctets, 
+                  luxlPortStatisticsIfGroupStatisticsRxUnicastPkts, 
+                  luxlPortStatisticsIfGroupStatisticsRxMulticastPkts, 
+                  luxlPortStatisticsIfGroupStatisticsRxBroadcastPkts, 
+                  luxlPortStatisticsIfGroupStatisticsRxNonUnicastPkts, 
+                  luxlPortStatisticsIfGroupStatisticsRxDiscards, 
+                  luxlPortStatisticsIfGroupStatisticsRxErrors, 
+                  luxlPortStatisticsIfGroupStatisticsTxOctets, 
+                  luxlPortStatisticsIfGroupStatisticsTxUnicastPkts, 
+                  luxlPortStatisticsIfGroupStatisticsTxMulticastPkts, 
+                  luxlPortStatisticsIfGroupStatisticsTxBroadcastPkts, 
+                  luxlPortStatisticsIfGroupStatisticsTxNonUnicastPkts, 
+                  luxlPortStatisticsIfGroupStatisticsTxDiscardPkts, 
+                  luxlPortStatisticsIfGroupStatisticsTxErrorPkts }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPortMibGroups 7 }
+
+luxlPortStatisticsEthernetLikeStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPortStatisticsEthernetLikeStatisticsRxPauseFrames, 
+                  luxlPortStatisticsEthernetLikeStatisticsTxPauseFrames }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPortMibGroups 8 }
+
+luxlPortStatisticsQueuesStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPortStatisticsQueuesStatisticsRxPrio, 
+                  luxlPortStatisticsQueuesStatisticsTxPrio }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPortMibGroups 9 }
+
+luxlPortStatisticsBridgeStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPortStatisticsBridgeStatisticsRxBridgeDiscard }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPortMibGroups 10 }
+
+luxlPortMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlPortConfigInfoGroup, 
+                  luxlPortStatusInformationTableInfoGroup, 
+                  luxlPortStatusVeriPhyResultTableInfoGroup, 
+                  luxlPortControlStatisticsClearTableInfoGroup, 
+                  luxlPortControlVeriPhyStartTableInfoGroup, 
+                  luxlPortStatisticsRmonStatisticsTableInfoGroup, 
+                  luxlPortStatisticsIfGroupStatisticsTableInfoGroup, 
+                  luxlPortStatisticsEthernetLikeStatisticsTableInfoGroup, 
+                  luxlPortStatisticsQueuesStatisticsTableInfoGroup, 
+                  luxlPortStatisticsBridgeStatisticsTableInfoGroup }
+
+    ::= { luxlPortMibCompliances 1 }
+
+END

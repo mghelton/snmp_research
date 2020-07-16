@@ -1,0 +1,1232 @@
+-- *****************************************************************
+-- MSTP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-MSTP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlMstpMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the 802.1Q-2005 MSTP MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 20 }
+
+
+LUXLMSTPForceVersion ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration control the STP protocol variant to run."
+    SYNTAX      INTEGER { stp(0), rstp(2), mstp(3) }
+
+LUXLMstpPoint2Point ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration describe the values of adminPointToPointMAC and
+         operPointToPointMAC parameters. (Full duplex port administrative and
+         operational status.) See 6.4.3 of IEEE Std 802.1D."
+    SYNTAX      INTEGER { forceTrue(0), forceFalse(1), auto(2) }
+
+LUXLMstpPortState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration describe the forwarding state of an interface."
+    SYNTAX      INTEGER { disabled(0), discarding(1), learning(2), forwarding(3) }
+
+luxlMstpMibObjects OBJECT IDENTIFIER
+    ::= { luxlMstpMib 1 }
+
+luxlMstpConfig OBJECT IDENTIFIER
+    ::= { luxlMstpMibObjects 2 }
+
+luxlMstpConfigBridgeParams OBJECT IDENTIFIER
+    ::= { luxlMstpConfig 1 }
+
+luxlMstpConfigBridgeParamsBridgeMaxAge OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Bridge Max Age, IEEE-802.1D-2004 sect 13.23.4"
+    ::= { luxlMstpConfigBridgeParams 1 }
+
+luxlMstpConfigBridgeParamsBridgeHelloTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Bridge Hello Time, 13.25.7 of IEEE-802.1Q-2005. Fixed value of two
+         seconds by the standard, but this implementation allow a compatibility
+         range from 1 to 2 seconds, in stipulated in 802.1Q-2005"
+    ::= { luxlMstpConfigBridgeParams 2 }
+
+luxlMstpConfigBridgeParamsBridgeForwardDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Bridge Forward Delay, IEEE-802.1D-2004 sect 17.20"
+    ::= { luxlMstpConfigBridgeParams 3 }
+
+luxlMstpConfigBridgeParamsForceVersion OBJECT-TYPE
+    SYNTAX      LUXLMSTPForceVersion
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "value of the Force Protocol Version parameter - 13.6.2 of
+         IEEE-802.1Q-2005"
+    ::= { luxlMstpConfigBridgeParams 4 }
+
+luxlMstpConfigBridgeParamsTxHoldCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TxHoldCount - 17.13.12 of IEEE Std 802.1D"
+    ::= { luxlMstpConfigBridgeParams 5 }
+
+luxlMstpConfigBridgeParamsMaxHops OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MaxHops - 13.22.1 of IEEE-802.1Q-2005"
+    ::= { luxlMstpConfigBridgeParams 6 }
+
+luxlMstpConfigBridgeParamsBpduFiltering OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "BPDU filtering for edge ports. Control whether a port explicitly
+         configured as Edge will transmit and receive BPDUs"
+    ::= { luxlMstpConfigBridgeParams 7 }
+
+luxlMstpConfigBridgeParamsBpduGuard OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "BPDU guard for edge ports. Control whether a port explicitly configured
+         as Edge will disable itself upon reception of a BPDU. The port will
+         enter the error-disabled state, and will be removed from the active
+         topology. "
+    ::= { luxlMstpConfigBridgeParams 8 }
+
+luxlMstpConfigBridgeParamsErrorRecoveryDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The number of seconds until a STP inconsistent port is recovered. Valid
+         values are zero (recovery disabled) or between 30 and 86400 (24 hours)"
+    ::= { luxlMstpConfigBridgeParams 9 }
+
+luxlMstpConfigMstiParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMstpConfigMstiParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of the bridge instance (MSTIs) parameters"
+    ::= { luxlMstpConfig 2 }
+
+luxlMstpConfigMstiParamEntry OBJECT-TYPE
+    SYNTAX      LUXLMstpConfigMstiParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each MSTI has a set of parameters"
+    INDEX       { luxlMstpConfigMstiParamInstance }
+    ::= { luxlMstpConfigMstiParamTable 1 }
+
+LUXLMstpConfigMstiParamEntry ::= SEQUENCE {
+    luxlMstpConfigMstiParamInstance     Integer32,
+    luxlMstpConfigMstiParamPriority     LUXLUnsigned8
+}
+
+luxlMstpConfigMstiParamInstance OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Bridge instance number. The CIST = 0, MSTI1 = 1, etc"
+    ::= { luxlMstpConfigMstiParamEntry 1 }
+
+luxlMstpConfigMstiParamPriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Bridge Priority"
+    ::= { luxlMstpConfigMstiParamEntry 2 }
+
+luxlMstpConfigMstiConfig OBJECT IDENTIFIER
+    ::= { luxlMstpConfig 3 }
+
+luxlMstpConfigMstiConfigId OBJECT IDENTIFIER
+    ::= { luxlMstpConfigMstiConfig 1 }
+
+luxlMstpConfigMstiConfigIdName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The configuration name"
+    ::= { luxlMstpConfigMstiConfigId 1 }
+
+luxlMstpConfigMstiConfigIdRevision OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The configuration revision"
+    ::= { luxlMstpConfigMstiConfigId 2 }
+
+luxlMstpConfigMstiConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMstpConfigMstiConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the 802.1Q - 8.9 MST Configuration table
+         
+         For the purposes of calculating the Configuration Digest, the MST
+         Configuration Table is considered to contain 4096 consecutive single
+         octet elements, where each element of the table (with the exception of
+         the first and last) contains an MSTID value."
+    ::= { luxlMstpConfigMstiConfig 2 }
+
+luxlMstpConfigMstiConfigEntry OBJECT-TYPE
+    SYNTAX      LUXLMstpConfigMstiConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The first element of the table contains the value 0, the second element
+         the MSTID value corresponding to VID 1, the third element the MSTID
+         value corresponding to VID 2, and so on, with the next to last element
+         of the table containing the MSTID value corresponding to VID 4094, and
+         the last element containing the value 0."
+    INDEX       { luxlMstpConfigMstiConfigVid }
+    ::= { luxlMstpConfigMstiConfigTable 1 }
+
+LUXLMstpConfigMstiConfigEntry ::= SEQUENCE {
+    luxlMstpConfigMstiConfigVid     Integer32,
+    luxlMstpConfigMstiConfigMstid   LUXLUnsigned8
+}
+
+luxlMstpConfigMstiConfigVid OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id"
+    ::= { luxlMstpConfigMstiConfigEntry 1 }
+
+luxlMstpConfigMstiConfigMstid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MSTID value associated with the vlan id"
+    ::= { luxlMstpConfigMstiConfigEntry 2 }
+
+luxlMstpConfigCistInterfaceParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMstpConfigCistInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of the CIST physical interface parameters"
+    ::= { luxlMstpConfig 4 }
+
+luxlMstpConfigCistInterfaceParamEntry OBJECT-TYPE
+    SYNTAX      LUXLMstpConfigCistInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each CIST physical interface has a set of parameters"
+    INDEX       { luxlMstpConfigCistInterfaceParamInterfaceNo }
+    ::= { luxlMstpConfigCistInterfaceParamTable 1 }
+
+LUXLMstpConfigCistInterfaceParamEntry ::= SEQUENCE {
+    luxlMstpConfigCistInterfaceParamInterfaceNo     LUXLInterfaceIndex,
+    luxlMstpConfigCistInterfaceParamEnable      TruthValue,
+    luxlMstpConfigCistInterfaceParamAdminEdgePort   TruthValue,
+    luxlMstpConfigCistInterfaceParamAdminAutoEdgePort   TruthValue,
+    luxlMstpConfigCistInterfaceParamAdminPointToPointMAC    LUXLMstpPoint2Point,
+    luxlMstpConfigCistInterfaceParamRestrictedRole      TruthValue,
+    luxlMstpConfigCistInterfaceParamRestrictedTcn   TruthValue,
+    luxlMstpConfigCistInterfaceParamBpduGuard   TruthValue
+}
+
+luxlMstpConfigCistInterfaceParamInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlMstpConfigCistInterfaceParamEntry 1 }
+
+luxlMstpConfigCistInterfaceParamEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Control whether port is controlled by xSTP. If disabled, the port
+         forwarding state follow the MAC state"
+    ::= { luxlMstpConfigCistInterfaceParamEntry 2 }
+
+luxlMstpConfigCistInterfaceParamAdminEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "adminEdgePort parameter - 18.3.3 of IEEE Std 802.1D"
+    ::= { luxlMstpConfigCistInterfaceParamEntry 3 }
+
+luxlMstpConfigCistInterfaceParamAdminAutoEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "adminAutoEdgePort parameter - 17.13.3 of IEEE Std 802.1D"
+    ::= { luxlMstpConfigCistInterfaceParamEntry 4 }
+
+luxlMstpConfigCistInterfaceParamAdminPointToPointMAC OBJECT-TYPE
+    SYNTAX      LUXLMstpPoint2Point
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "adminPointToPointMAC parameter - 6.4.3 of IEEE Std 802.1D"
+    ::= { luxlMstpConfigCistInterfaceParamEntry 5 }
+
+luxlMstpConfigCistInterfaceParamRestrictedRole OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "restrictedRole parameter - 13.25.14 of IEEE Std 802.1Q-2005"
+    ::= { luxlMstpConfigCistInterfaceParamEntry 6 }
+
+luxlMstpConfigCistInterfaceParamRestrictedTcn OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "restrictedRole parameter - 13.25.15 of IEEE Std 802.1Q-2005"
+    ::= { luxlMstpConfigCistInterfaceParamEntry 7 }
+
+luxlMstpConfigCistInterfaceParamBpduGuard OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If enabled, causes the port to disable itself upon receiving valid
+         BPDU's. Contrary to the similar bridge setting, the port Edge status
+         does not effect this setting. A port entering error-disabled state due
+         to this setting is subject to the bridge ErrorRecoveryDelay setting as
+         well"
+    ::= { luxlMstpConfigCistInterfaceParamEntry 8 }
+
+luxlMstpConfigAggrParams OBJECT IDENTIFIER
+    ::= { luxlMstpConfig 5 }
+
+luxlMstpConfigAggrParamsEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Control whether port is controlled by xSTP. If disabled, the port
+         forwarding state follow the MAC state"
+    ::= { luxlMstpConfigAggrParams 1 }
+
+luxlMstpConfigAggrParamsAdminEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "adminEdgePort parameter - 18.3.3 of IEEE Std 802.1D"
+    ::= { luxlMstpConfigAggrParams 2 }
+
+luxlMstpConfigAggrParamsAdminAutoEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "adminAutoEdgePort parameter - 17.13.3 of IEEE Std 802.1D"
+    ::= { luxlMstpConfigAggrParams 3 }
+
+luxlMstpConfigAggrParamsAdminPointToPointMAC OBJECT-TYPE
+    SYNTAX      LUXLMstpPoint2Point
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "adminPointToPointMAC parameter - 6.4.3 of IEEE Std 802.1D"
+    ::= { luxlMstpConfigAggrParams 4 }
+
+luxlMstpConfigAggrParamsRestrictedRole OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "restrictedRole parameter - 13.25.14 of IEEE Std 802.1Q-2005"
+    ::= { luxlMstpConfigAggrParams 5 }
+
+luxlMstpConfigAggrParamsRestrictedTcn OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "restrictedRole parameter - 13.25.15 of IEEE Std 802.1Q-2005"
+    ::= { luxlMstpConfigAggrParams 6 }
+
+luxlMstpConfigAggrParamsBpduGuard OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If enabled, causes the port to disable itself upon receiving valid
+         BPDU's. Contrary to the similar bridge setting, the port Edge status
+         does not effect this setting. A port entering error-disabled state due
+         to this setting is subject to the bridge ErrorRecoveryDelay setting as
+         well"
+    ::= { luxlMstpConfigAggrParams 7 }
+
+luxlMstpConfigMstiInterfaceParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMstpConfigMstiInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of the MSTI interface parameters"
+    ::= { luxlMstpConfig 6 }
+
+luxlMstpConfigMstiInterfaceParamEntry OBJECT-TYPE
+    SYNTAX      LUXLMstpConfigMstiInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each MSTI interface has a set of parameters"
+    INDEX       { luxlMstpConfigMstiInterfaceParamInterfaceNo, luxlMstpConfigMstiInterfaceParamInstance }
+    ::= { luxlMstpConfigMstiInterfaceParamTable 1 }
+
+LUXLMstpConfigMstiInterfaceParamEntry ::= SEQUENCE {
+    luxlMstpConfigMstiInterfaceParamInterfaceNo     LUXLInterfaceIndex,
+    luxlMstpConfigMstiInterfaceParamInstance    Integer32,
+    luxlMstpConfigMstiInterfaceParamAdminPathCost   Unsigned32,
+    luxlMstpConfigMstiInterfaceParamAdminPortPriority   LUXLUnsigned8
+}
+
+luxlMstpConfigMstiInterfaceParamInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlMstpConfigMstiInterfaceParamEntry 1 }
+
+luxlMstpConfigMstiInterfaceParamInstance OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Bridge instance number. The CIST = 0, MSTI1 = 1, etc"
+    ::= { luxlMstpConfigMstiInterfaceParamEntry 2 }
+
+luxlMstpConfigMstiInterfaceParamAdminPathCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Path Cost - 13.37.1 of 802.1Q-2005"
+    ::= { luxlMstpConfigMstiInterfaceParamEntry 3 }
+
+luxlMstpConfigMstiInterfaceParamAdminPortPriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "priority field for the Port Identifier - 13.24.12 of 802.1Q-2005"
+    ::= { luxlMstpConfigMstiInterfaceParamEntry 4 }
+
+luxlMstpConfigMstiAggrParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMstpConfigMstiAggrParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of the MSTI aggregations parameters"
+    ::= { luxlMstpConfig 7 }
+
+luxlMstpConfigMstiAggrParamEntry OBJECT-TYPE
+    SYNTAX      LUXLMstpConfigMstiAggrParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The aggregations for each MSTI has a set of parameters"
+    INDEX       { luxlMstpConfigMstiAggrParamInstance }
+    ::= { luxlMstpConfigMstiAggrParamTable 1 }
+
+LUXLMstpConfigMstiAggrParamEntry ::= SEQUENCE {
+    luxlMstpConfigMstiAggrParamInstance     Integer32,
+    luxlMstpConfigMstiAggrParamAdminPathCost    Unsigned32,
+    luxlMstpConfigMstiAggrParamAdminPortPriority    LUXLUnsigned8
+}
+
+luxlMstpConfigMstiAggrParamInstance OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Bridge instance number. The CIST = 0, MSTI1 = 1, etc"
+    ::= { luxlMstpConfigMstiAggrParamEntry 1 }
+
+luxlMstpConfigMstiAggrParamAdminPathCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Path Cost - 13.37.1 of 802.1Q-2005"
+    ::= { luxlMstpConfigMstiAggrParamEntry 3 }
+
+luxlMstpConfigMstiAggrParamAdminPortPriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "priority field for the Port Identifier - 13.24.12 of 802.1Q-2005"
+    ::= { luxlMstpConfigMstiAggrParamEntry 4 }
+
+luxlMstpStatus OBJECT IDENTIFIER
+    ::= { luxlMstpMibObjects 3 }
+
+luxlMstpStatusBridgeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMstpStatusBridgeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represent the status of the bridge instances"
+    ::= { luxlMstpStatus 1 }
+
+luxlMstpStatusBridgeEntry OBJECT-TYPE
+    SYNTAX      LUXLMstpStatusBridgeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "A MSTP Bridge instance set of status objects"
+    INDEX       { luxlMstpStatusBridgeInstance }
+    ::= { luxlMstpStatusBridgeTable 1 }
+
+LUXLMstpStatusBridgeEntry ::= SEQUENCE {
+    luxlMstpStatusBridgeInstance    Integer32,
+    luxlMstpStatusBridgeBridgeId    OCTET STRING,
+    luxlMstpStatusBridgeTimeSinceTopologyChange     Unsigned32,
+    luxlMstpStatusBridgeTopologyChangeCount     Unsigned32,
+    luxlMstpStatusBridgeTopologyChange      TruthValue,
+    luxlMstpStatusBridgeDesignatedRoot      OCTET STRING,
+    luxlMstpStatusBridgeRootPathCost    Unsigned32,
+    luxlMstpStatusBridgeRootPort    Unsigned32,
+    luxlMstpStatusBridgeMaxAge      Unsigned32,
+    luxlMstpStatusBridgeForwardDelay    Unsigned32,
+    luxlMstpStatusBridgeBridgeMaxAge    Unsigned32,
+    luxlMstpStatusBridgeBridgeHelloTime     Unsigned32,
+    luxlMstpStatusBridgeBridgeForwardDelay      Unsigned32,
+    luxlMstpStatusBridgeTxHoldCount     Unsigned32,
+    luxlMstpStatusBridgeForceVersion    LUXLMSTPForceVersion,
+    luxlMstpStatusBridgeCistRegionalRoot    OCTET STRING,
+    luxlMstpStatusBridgeCistInternalPathCost    Unsigned32,
+    luxlMstpStatusBridgeMaxHops     LUXLUnsigned8
+}
+
+luxlMstpStatusBridgeInstance OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Bridge instance number. The CIST = 0, MSTI1 = 1, etc"
+    ::= { luxlMstpStatusBridgeEntry 1 }
+
+luxlMstpStatusBridgeBridgeId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Bridge Identifier of this bridge"
+    ::= { luxlMstpStatusBridgeEntry 2 }
+
+luxlMstpStatusBridgeTimeSinceTopologyChange OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The count in seconds of the time elapsed since the Topology Change flag
+         was last True"
+    ::= { luxlMstpStatusBridgeEntry 3 }
+
+luxlMstpStatusBridgeTopologyChangeCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The count of the times the Topology Change flag parameter for the
+         Bridge has been set since the Bridge was powered on or initialized"
+    ::= { luxlMstpStatusBridgeEntry 4 }
+
+luxlMstpStatusBridgeTopologyChange OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Topology Change Flag current status"
+    ::= { luxlMstpStatusBridgeEntry 5 }
+
+luxlMstpStatusBridgeDesignatedRoot OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Designated Root Bridge"
+    ::= { luxlMstpStatusBridgeEntry 6 }
+
+luxlMstpStatusBridgeRootPathCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Root Path Cost"
+    ::= { luxlMstpStatusBridgeEntry 7 }
+
+luxlMstpStatusBridgeRootPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Root Port"
+    ::= { luxlMstpStatusBridgeEntry 8 }
+
+luxlMstpStatusBridgeMaxAge OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Max Age, IEEE-802.1D-2004 sect 13.23.7"
+    ::= { luxlMstpStatusBridgeEntry 9 }
+
+luxlMstpStatusBridgeForwardDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Forward Delay, IEEE-802.1D-2004 sect 13.23.7"
+    ::= { luxlMstpStatusBridgeEntry 10 }
+
+luxlMstpStatusBridgeBridgeMaxAge OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Bridge Max Age, IEEE-802.1D-2004 sect 13.23.4"
+    ::= { luxlMstpStatusBridgeEntry 11 }
+
+luxlMstpStatusBridgeBridgeHelloTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Bridge Hello Time, IEEE-802.1D-2004 sect 13.23.4"
+    ::= { luxlMstpStatusBridgeEntry 12 }
+
+luxlMstpStatusBridgeBridgeForwardDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Bridge Forward Delay, IEEE-802.1D-2004 sect 13.23.4"
+    ::= { luxlMstpStatusBridgeEntry 13 }
+
+luxlMstpStatusBridgeTxHoldCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Hold Time / Transmission Limit, IEEE-802.1D-2004 sect 13.22"
+    ::= { luxlMstpStatusBridgeEntry 14 }
+
+luxlMstpStatusBridgeForceVersion OBJECT-TYPE
+    SYNTAX      LUXLMSTPForceVersion
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Value of the Force Protocol Version parameter - IEEE-802.1D-2004 sect
+         17.16.1"
+    ::= { luxlMstpStatusBridgeEntry 15 }
+
+luxlMstpStatusBridgeCistRegionalRoot OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "CIST Regional Root Identifier (13.16.4)"
+    ::= { luxlMstpStatusBridgeEntry 16 }
+
+luxlMstpStatusBridgeCistInternalPathCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "CIST Path Cost"
+    ::= { luxlMstpStatusBridgeEntry 17 }
+
+luxlMstpStatusBridgeMaxHops OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MaxHops (13.22.1)"
+    ::= { luxlMstpStatusBridgeEntry 18 }
+
+luxlMstpStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMstpStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represent the status of the interface instances"
+    ::= { luxlMstpStatus 2 }
+
+luxlMstpStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLMstpStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "A MSTP interface instance set of status objects"
+    INDEX       { luxlMstpStatusInterfaceInterfaceNo, luxlMstpStatusInterfaceInstance }
+    ::= { luxlMstpStatusInterfaceTable 1 }
+
+LUXLMstpStatusInterfaceEntry ::= SEQUENCE {
+    luxlMstpStatusInterfaceInterfaceNo      LUXLInterfaceIndex,
+    luxlMstpStatusInterfaceInstance     Integer32,
+    luxlMstpStatusInterfaceEnabled      TruthValue,
+    luxlMstpStatusInterfaceActive   TruthValue,
+    luxlMstpStatusInterfaceParentPort   Unsigned32,
+    luxlMstpStatusInterfaceUpTime   Unsigned32,
+    luxlMstpStatusInterfacePortState    LUXLMstpPortState,
+    luxlMstpStatusInterfacePortId   OCTET STRING,
+    luxlMstpStatusInterfacePathCost     Unsigned32,
+    luxlMstpStatusInterfaceDesignatedRoot   OCTET STRING,
+    luxlMstpStatusInterfaceDesignatedCost   Unsigned32,
+    luxlMstpStatusInterfaceDesignatedBridge     OCTET STRING,
+    luxlMstpStatusInterfaceDesignatedPort   OCTET STRING,
+    luxlMstpStatusInterfaceTcAck    TruthValue,
+    luxlMstpStatusInterfaceHelloTime    Unsigned32,
+    luxlMstpStatusInterfaceAdminEdgePort    TruthValue,
+    luxlMstpStatusInterfaceOperEdgePort     TruthValue,
+    luxlMstpStatusInterfaceAutoEdgePort     TruthValue,
+    luxlMstpStatusInterfaceMacOperational   TruthValue,
+    luxlMstpStatusInterfaceAdminPointToPointMAC     LUXLMstpPoint2Point,
+    luxlMstpStatusInterfaceOperPointToPointMAC      TruthValue,
+    luxlMstpStatusInterfaceRestrictedRole   TruthValue,
+    luxlMstpStatusInterfaceRestrictedTcn    TruthValue,
+    luxlMstpStatusInterfacePortRole     LUXLDisplayString,
+    luxlMstpStatusInterfaceDisputed     TruthValue
+}
+
+luxlMstpStatusInterfaceInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlMstpStatusInterfaceEntry 1 }
+
+luxlMstpStatusInterfaceInstance OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Bridge instance number. The CIST = 0, MSTI1 = 1, etc"
+    ::= { luxlMstpStatusInterfaceEntry 2 }
+
+luxlMstpStatusInterfaceEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Whether port is controlled by xSTP"
+    ::= { luxlMstpStatusInterfaceEntry 3 }
+
+luxlMstpStatusInterfaceActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Whether port is active"
+    ::= { luxlMstpStatusInterfaceEntry 4 }
+
+luxlMstpStatusInterfaceParentPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Parent port if physical port is aggregated. (Otherwise 0xffff)"
+    ::= { luxlMstpStatusInterfaceEntry 5 }
+
+luxlMstpStatusInterfaceUpTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "seconds of the time elapsed since the Port was last reset or
+         initialized"
+    ::= { luxlMstpStatusInterfaceEntry 6 }
+
+luxlMstpStatusInterfacePortState OBJECT-TYPE
+    SYNTAX      LUXLMstpPortState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current state of the Port"
+    ::= { luxlMstpStatusInterfaceEntry 7 }
+
+luxlMstpStatusInterfacePortId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(2))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Unique Port identifier comprising two parts, the Port Number and the
+         Port Priority field"
+    ::= { luxlMstpStatusInterfaceEntry 8 }
+
+luxlMstpStatusInterfacePathCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Path Cost (17.16.5 of IEEE Std 802.1D)"
+    ::= { luxlMstpStatusInterfaceEntry 9 }
+
+luxlMstpStatusInterfaceDesignatedRoot OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Designated Root"
+    ::= { luxlMstpStatusInterfaceEntry 10 }
+
+luxlMstpStatusInterfaceDesignatedCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Designated Cost"
+    ::= { luxlMstpStatusInterfaceEntry 11 }
+
+luxlMstpStatusInterfaceDesignatedBridge OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Designated Bridge"
+    ::= { luxlMstpStatusInterfaceEntry 12 }
+
+luxlMstpStatusInterfaceDesignatedPort OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(2))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Designated Port"
+    ::= { luxlMstpStatusInterfaceEntry 13 }
+
+luxlMstpStatusInterfaceTcAck OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Topology Change Acknowledge"
+    ::= { luxlMstpStatusInterfaceEntry 14 }
+
+luxlMstpStatusInterfaceHelloTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Hello Time"
+    ::= { luxlMstpStatusInterfaceEntry 15 }
+
+luxlMstpStatusInterfaceAdminEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "adminEdgePort (18.3.3 of IEEE Std 802.1D)"
+    ::= { luxlMstpStatusInterfaceEntry 16 }
+
+luxlMstpStatusInterfaceOperEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "operEdgePort (18.3.4 of IEEE Std 802.1D)"
+    ::= { luxlMstpStatusInterfaceEntry 17 }
+
+luxlMstpStatusInterfaceAutoEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "autoEdgePort (17.13.3 of IEEE Std 802.1D)"
+    ::= { luxlMstpStatusInterfaceEntry 18 }
+
+luxlMstpStatusInterfaceMacOperational OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current state of the MAC Operational parameter (6.4.2 of IEEE Std
+         802.1D,)"
+    ::= { luxlMstpStatusInterfaceEntry 19 }
+
+luxlMstpStatusInterfaceAdminPointToPointMAC OBJECT-TYPE
+    SYNTAX      LUXLMstpPoint2Point
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current state of the adminPointToPointMAC parameter (6.4.3 of IEEE Std
+         802.1D)"
+    ::= { luxlMstpStatusInterfaceEntry 20 }
+
+luxlMstpStatusInterfaceOperPointToPointMAC OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current state of the operPointToPointMAC parameter (6.4.3 of IEEE Std
+         802.1D)"
+    ::= { luxlMstpStatusInterfaceEntry 21 }
+
+luxlMstpStatusInterfaceRestrictedRole OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current state of the restrictedRole parameter for the Port (13.25.14)"
+    ::= { luxlMstpStatusInterfaceEntry 22 }
+
+luxlMstpStatusInterfaceRestrictedTcn OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current state of the restrictedTcn parameter for the Port (13.25.15)"
+    ::= { luxlMstpStatusInterfaceEntry 23 }
+
+luxlMstpStatusInterfacePortRole OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..15))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current Port Role"
+    ::= { luxlMstpStatusInterfaceEntry 24 }
+
+luxlMstpStatusInterfaceDisputed OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current value of the disputed variable for the CIST Port"
+    ::= { luxlMstpStatusInterfaceEntry 25 }
+
+luxlMstpStatusInterfaceStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMstpStatusInterfaceStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represent the statistics of the CIST interfaces"
+    ::= { luxlMstpStatus 3 }
+
+luxlMstpStatusInterfaceStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLMstpStatusInterfaceStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "A CIST interface set of statistics"
+    INDEX       { luxlMstpStatusInterfaceStatisticsInterfaceNo }
+    ::= { luxlMstpStatusInterfaceStatisticsTable 1 }
+
+LUXLMstpStatusInterfaceStatisticsEntry ::= SEQUENCE {
+    luxlMstpStatusInterfaceStatisticsInterfaceNo    LUXLInterfaceIndex,
+    luxlMstpStatusInterfaceStatisticsStpFrameXmits      Unsigned32,
+    luxlMstpStatusInterfaceStatisticsStpFrameReceived   Unsigned32,
+    luxlMstpStatusInterfaceStatisticsRstpFrameXmits     Unsigned32,
+    luxlMstpStatusInterfaceStatisticsRstpFrameReceived      Unsigned32,
+    luxlMstpStatusInterfaceStatisticsMstpFrameXmits     Unsigned32,
+    luxlMstpStatusInterfaceStatisticsMstpFrameReceived      Unsigned32,
+    luxlMstpStatusInterfaceStatisticsUnknownFramesReceived      Unsigned32,
+    luxlMstpStatusInterfaceStatisticsIllegalFrameReceived   Unsigned32
+}
+
+luxlMstpStatusInterfaceStatisticsInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlMstpStatusInterfaceStatisticsEntry 1 }
+
+luxlMstpStatusInterfaceStatisticsStpFrameXmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of STP frames transmitted"
+    ::= { luxlMstpStatusInterfaceStatisticsEntry 2 }
+
+luxlMstpStatusInterfaceStatisticsStpFrameReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of STP frames received"
+    ::= { luxlMstpStatusInterfaceStatisticsEntry 3 }
+
+luxlMstpStatusInterfaceStatisticsRstpFrameXmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of RSTP frames transmitted"
+    ::= { luxlMstpStatusInterfaceStatisticsEntry 4 }
+
+luxlMstpStatusInterfaceStatisticsRstpFrameReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of RSTP frames received"
+    ::= { luxlMstpStatusInterfaceStatisticsEntry 5 }
+
+luxlMstpStatusInterfaceStatisticsMstpFrameXmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of MSTP frames transmitted"
+    ::= { luxlMstpStatusInterfaceStatisticsEntry 6 }
+
+luxlMstpStatusInterfaceStatisticsMstpFrameReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of MSTP frames received"
+    ::= { luxlMstpStatusInterfaceStatisticsEntry 7 }
+
+luxlMstpStatusInterfaceStatisticsUnknownFramesReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of unknown frames received and discarded in error"
+    ::= { luxlMstpStatusInterfaceStatisticsEntry 8 }
+
+luxlMstpStatusInterfaceStatisticsIllegalFrameReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of illegal frames received and discarded in error"
+    ::= { luxlMstpStatusInterfaceStatisticsEntry 9 }
+
+luxlMstpMibConformance OBJECT IDENTIFIER
+    ::= { luxlMstpMib 2 }
+
+luxlMstpMibCompliances OBJECT IDENTIFIER
+    ::= { luxlMstpMibConformance 1 }
+
+luxlMstpMibGroups OBJECT IDENTIFIER
+    ::= { luxlMstpMibConformance 2 }
+
+luxlMstpConfigBridgeParamsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpConfigBridgeParamsBridgeMaxAge, 
+                  luxlMstpConfigBridgeParamsBridgeHelloTime, 
+                  luxlMstpConfigBridgeParamsBridgeForwardDelay, 
+                  luxlMstpConfigBridgeParamsForceVersion, 
+                  luxlMstpConfigBridgeParamsTxHoldCount, 
+                  luxlMstpConfigBridgeParamsMaxHops, 
+                  luxlMstpConfigBridgeParamsBpduFiltering, 
+                  luxlMstpConfigBridgeParamsBpduGuard, 
+                  luxlMstpConfigBridgeParamsErrorRecoveryDelay }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 1 }
+
+luxlMstpConfigMstiParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpConfigMstiParamPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 2 }
+
+luxlMstpConfigMstiConfigIdInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpConfigMstiConfigIdName, 
+                  luxlMstpConfigMstiConfigIdRevision }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 3 }
+
+luxlMstpConfigMstiConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpConfigMstiConfigMstid }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 4 }
+
+luxlMstpConfigCistInterfaceParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpConfigCistInterfaceParamEnable, 
+                  luxlMstpConfigCistInterfaceParamAdminEdgePort, 
+                  luxlMstpConfigCistInterfaceParamAdminAutoEdgePort, 
+                  luxlMstpConfigCistInterfaceParamAdminPointToPointMAC, 
+                  luxlMstpConfigCistInterfaceParamRestrictedRole, 
+                  luxlMstpConfigCistInterfaceParamRestrictedTcn, 
+                  luxlMstpConfigCistInterfaceParamBpduGuard }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 5 }
+
+luxlMstpConfigAggrParamsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpConfigAggrParamsEnable, 
+                  luxlMstpConfigAggrParamsAdminEdgePort, 
+                  luxlMstpConfigAggrParamsAdminAutoEdgePort, 
+                  luxlMstpConfigAggrParamsAdminPointToPointMAC, 
+                  luxlMstpConfigAggrParamsRestrictedRole, 
+                  luxlMstpConfigAggrParamsRestrictedTcn, 
+                  luxlMstpConfigAggrParamsBpduGuard }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 6 }
+
+luxlMstpConfigMstiInterfaceParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpConfigMstiInterfaceParamAdminPathCost, 
+                  luxlMstpConfigMstiInterfaceParamAdminPortPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 7 }
+
+luxlMstpConfigMstiAggrParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpConfigMstiAggrParamAdminPathCost, 
+                  luxlMstpConfigMstiAggrParamAdminPortPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 8 }
+
+luxlMstpStatusBridgeTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpStatusBridgeBridgeId, 
+                  luxlMstpStatusBridgeTimeSinceTopologyChange, 
+                  luxlMstpStatusBridgeTopologyChangeCount, 
+                  luxlMstpStatusBridgeTopologyChange, 
+                  luxlMstpStatusBridgeDesignatedRoot, 
+                  luxlMstpStatusBridgeRootPathCost, luxlMstpStatusBridgeRootPort, 
+                  luxlMstpStatusBridgeMaxAge, luxlMstpStatusBridgeForwardDelay, 
+                  luxlMstpStatusBridgeBridgeMaxAge, 
+                  luxlMstpStatusBridgeBridgeHelloTime, 
+                  luxlMstpStatusBridgeBridgeForwardDelay, 
+                  luxlMstpStatusBridgeTxHoldCount, 
+                  luxlMstpStatusBridgeForceVersion, 
+                  luxlMstpStatusBridgeCistRegionalRoot, 
+                  luxlMstpStatusBridgeCistInternalPathCost, 
+                  luxlMstpStatusBridgeMaxHops }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 9 }
+
+luxlMstpStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpStatusInterfaceEnabled, luxlMstpStatusInterfaceActive, 
+                  luxlMstpStatusInterfaceParentPort, 
+                  luxlMstpStatusInterfaceUpTime, 
+                  luxlMstpStatusInterfacePortState, 
+                  luxlMstpStatusInterfacePortId, luxlMstpStatusInterfacePathCost, 
+                  luxlMstpStatusInterfaceDesignatedRoot, 
+                  luxlMstpStatusInterfaceDesignatedCost, 
+                  luxlMstpStatusInterfaceDesignatedBridge, 
+                  luxlMstpStatusInterfaceDesignatedPort, 
+                  luxlMstpStatusInterfaceTcAck, luxlMstpStatusInterfaceHelloTime, 
+                  luxlMstpStatusInterfaceAdminEdgePort, 
+                  luxlMstpStatusInterfaceOperEdgePort, 
+                  luxlMstpStatusInterfaceAutoEdgePort, 
+                  luxlMstpStatusInterfaceMacOperational, 
+                  luxlMstpStatusInterfaceAdminPointToPointMAC, 
+                  luxlMstpStatusInterfaceOperPointToPointMAC, 
+                  luxlMstpStatusInterfaceRestrictedRole, 
+                  luxlMstpStatusInterfaceRestrictedTcn, 
+                  luxlMstpStatusInterfacePortRole, 
+                  luxlMstpStatusInterfaceDisputed }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 10 }
+
+luxlMstpStatusInterfaceStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMstpStatusInterfaceStatisticsStpFrameXmits, 
+                  luxlMstpStatusInterfaceStatisticsStpFrameReceived, 
+                  luxlMstpStatusInterfaceStatisticsRstpFrameXmits, 
+                  luxlMstpStatusInterfaceStatisticsRstpFrameReceived, 
+                  luxlMstpStatusInterfaceStatisticsMstpFrameXmits, 
+                  luxlMstpStatusInterfaceStatisticsMstpFrameReceived, 
+                  luxlMstpStatusInterfaceStatisticsUnknownFramesReceived, 
+                  luxlMstpStatusInterfaceStatisticsIllegalFrameReceived }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMstpMibGroups 11 }
+
+luxlMstpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlMstpConfigBridgeParamsInfoGroup, 
+                  luxlMstpConfigMstiParamTableInfoGroup, 
+                  luxlMstpConfigMstiConfigIdInfoGroup, 
+                  luxlMstpConfigMstiConfigTableInfoGroup, 
+                  luxlMstpConfigCistInterfaceParamTableInfoGroup, 
+                  luxlMstpConfigAggrParamsInfoGroup, 
+                  luxlMstpConfigMstiInterfaceParamTableInfoGroup, 
+                  luxlMstpConfigMstiAggrParamTableInfoGroup, 
+                  luxlMstpStatusBridgeTableInfoGroup, 
+                  luxlMstpStatusInterfaceTableInfoGroup, 
+                  luxlMstpStatusInterfaceStatisticsTableInfoGroup }
+
+    ::= { luxlMstpMibCompliances 1 }
+
+END

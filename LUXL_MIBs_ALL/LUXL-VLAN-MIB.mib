@@ -1,0 +1,685 @@
+-- *****************************************************************
+-- VLAN-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-VLAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLEtherType FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLVlan FROM LUXL-TC
+    LUXLVlanListQuarter FROM LUXL-TC
+    ;
+
+luxlVlanMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "Private MIB for VLAN."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 13 }
+
+
+LUXLVlanEgressTagging ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates how egress tagging occurs."
+    SYNTAX      INTEGER { untagThis(0), tagThis(1), tagAll(2), untagAll(3) }
+
+LUXLVlanIngressAcceptance ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates the type of frames that are not discarded on
+         ingress w.r.t. VLAN tagging."
+    SYNTAX      INTEGER { all(0), tagged(1), untagged(2) }
+
+LUXLVlanPortMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Determines the underlying port mode.
+         
+         Access ports are only members of one VLAN, the AccessVlan.
+         
+         Trunk ports are by default members of all VLANs, which can be limited
+         with TrunkVlans.
+         
+         Hybrid ports allow for changing all port VLAN parameters. As trunk
+         ports, hybrid ports are by default members of all VLANs, which can be
+         limited with HybridVlans."
+    SYNTAX      INTEGER { access(0), trunk(1), hybrid(2) }
+
+LUXLVlanPortType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates if a port is VLAN aware, and if so, to which
+         EtherType it is sensitive."
+    SYNTAX      INTEGER { unaware(0), c(1), s(2), sCustom(3) }
+
+LUXLVlanUserType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates the VLAN user type. A value of 'combined'
+         indicates the VLAN settings as programmed to hardware. A value of
+         'admin' indicates the VLAN settings as programmed by the administrative
+         user, and any other value indicates a software module that changes VLAN
+         settings 'behind the scenes'."
+    SYNTAX      INTEGER { combined(0), admin(1), dot1x(3), mvrp(4), gvrp(5), mvr(6), voiceVlan(7), mstp(8), erps(9), mep(10), evc(11), vcl(12), rmirror(13) }
+
+luxlVlanMibObjects OBJECT IDENTIFIER
+    ::= { luxlVlanMib 1 }
+
+luxlVlanCapabilities OBJECT IDENTIFIER
+    ::= { luxlVlanMibObjects 1 }
+
+luxlVlanCapabilitiesVlanIdMin OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum VLAN ID that can be configured on the device."
+    ::= { luxlVlanCapabilities 1 }
+
+luxlVlanCapabilitiesVlanIdMax OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum VLAN ID that can be configured on the device."
+    ::= { luxlVlanCapabilities 2 }
+
+luxlVlanConfig OBJECT IDENTIFIER
+    ::= { luxlVlanMibObjects 2 }
+
+luxlVlanConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlVlanConfig 1 }
+
+luxlVlanConfigGlobalsMain OBJECT IDENTIFIER
+    ::= { luxlVlanConfigGlobals 1 }
+
+luxlVlanConfigGlobalsMainCustomSPortEtherType OBJECT-TYPE
+    SYNTAX      LUXLEtherType (1536..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TPID (EtherType) for ports marked as Custom-S tag aware."
+    ::= { luxlVlanConfigGlobalsMain 1 }
+
+luxlVlanConfigGlobalsMainAccessVlans0To1K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "First quarter of bit-array indicating the enabled access VLANs."
+    ::= { luxlVlanConfigGlobalsMain 2 }
+
+luxlVlanConfigGlobalsMainAccessVlans1KTo2K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Second quarter of bit-array indicating the enabled access VLANs."
+    ::= { luxlVlanConfigGlobalsMain 3 }
+
+luxlVlanConfigGlobalsMainAccessVlans2KTo3K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Third quarter of bit-array indicating the enabled access VLANs."
+    ::= { luxlVlanConfigGlobalsMain 4 }
+
+luxlVlanConfigGlobalsMainAccessVlans3KTo4K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Last quarter of bit-array indicating the enabled access VLANs."
+    ::= { luxlVlanConfigGlobalsMain 5 }
+
+luxlVlanConfigGlobalsNameTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLVlanConfigGlobalsNameEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table of VLAN names."
+    ::= { luxlVlanConfigGlobals 2 }
+
+luxlVlanConfigGlobalsNameEntry OBJECT-TYPE
+    SYNTAX      LUXLVlanConfigGlobalsNameEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the name of a given VLAN."
+    INDEX       { luxlVlanConfigGlobalsNameVlanId }
+    ::= { luxlVlanConfigGlobalsNameTable 1 }
+
+LUXLVlanConfigGlobalsNameEntry ::= SEQUENCE {
+    luxlVlanConfigGlobalsNameVlanId     LUXLVlan,
+    luxlVlanConfigGlobalsNameName   LUXLDisplayString
+}
+
+luxlVlanConfigGlobalsNameVlanId OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "VLAN ID. Valid range is 1 - 4095."
+    ::= { luxlVlanConfigGlobalsNameEntry 1 }
+
+luxlVlanConfigGlobalsNameName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN Name. Default for VLAN 1 is 'default'. Default for any other VLAN
+         is 'VLANxxxx', where 'xxxx' is a decimal representation of the VLAN ID
+         with leading zeroes."
+    ::= { luxlVlanConfigGlobalsNameEntry 2 }
+
+luxlVlanConfigInterfaces OBJECT IDENTIFIER
+    ::= { luxlVlanConfig 2 }
+
+luxlVlanConfigInterfacesTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLVlanConfigInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table of per-port configuration."
+    ::= { luxlVlanConfigInterfaces 1 }
+
+luxlVlanConfigInterfacesEntry OBJECT-TYPE
+    SYNTAX      LUXLVlanConfigInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the VLAN configuration for a port interface."
+    INDEX       { luxlVlanConfigInterfacesIfIndex }
+    ::= { luxlVlanConfigInterfacesTable 1 }
+
+LUXLVlanConfigInterfacesEntry ::= SEQUENCE {
+    luxlVlanConfigInterfacesIfIndex     LUXLInterfaceIndex,
+    luxlVlanConfigInterfacesMode    LUXLVlanPortMode,
+    luxlVlanConfigInterfacesAccessVlan      LUXLVlan,
+    luxlVlanConfigInterfacesTrunkNativeVlan     LUXLVlan,
+    luxlVlanConfigInterfacesTrunkTagNativeVlan      TruthValue,
+    luxlVlanConfigInterfacesTrunkVlans0KTo1K    LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesTrunkVlans1KTo2K    LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesTrunkVlans2KTo3K    LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesTrunkVlans3KTo4K    LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesHybridNativeVlan    LUXLVlan,
+    luxlVlanConfigInterfacesHybridPortType      LUXLVlanPortType,
+    luxlVlanConfigInterfacesHybridIngressFiltering      TruthValue,
+    luxlVlanConfigInterfacesHybridIngressAcceptance     LUXLVlanIngressAcceptance,
+    luxlVlanConfigInterfacesHybridEgressTagging     LUXLVlanEgressTagging,
+    luxlVlanConfigInterfacesHybridVlans0KTo1K   LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesHybridVlans1KTo2K   LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesHybridVlans2KTo3K   LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesHybridVlans3KTo4K   LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesForbiddenVlans0KTo1K    LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesForbiddenVlans1KTo2K    LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesForbiddenVlans2KTo3K    LUXLVlanListQuarter,
+    luxlVlanConfigInterfacesForbiddenVlans3KTo4K    LUXLVlanListQuarter
+}
+
+luxlVlanConfigInterfacesIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlVlanConfigInterfacesEntry 1 }
+
+luxlVlanConfigInterfacesMode OBJECT-TYPE
+    SYNTAX      LUXLVlanPortMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN mode of the port."
+    ::= { luxlVlanConfigInterfacesEntry 2 }
+
+luxlVlanConfigInterfacesAccessVlan OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The port VLAN ID the port will be assigned when Mode is Access."
+    ::= { luxlVlanConfigInterfacesEntry 3 }
+
+luxlVlanConfigInterfacesTrunkNativeVlan OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The port VLAN ID the port will be assigned when Mode is trunk."
+    ::= { luxlVlanConfigInterfacesEntry 4 }
+
+luxlVlanConfigInterfacesTrunkTagNativeVlan OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls whether frames classified to TrunkNativeVlan get tagged on
+         egress. Used when Mode is trunk."
+    ::= { luxlVlanConfigInterfacesEntry 5 }
+
+luxlVlanConfigInterfacesTrunkVlans0KTo1K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "First quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is trunk."
+    ::= { luxlVlanConfigInterfacesEntry 6 }
+
+luxlVlanConfigInterfacesTrunkVlans1KTo2K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Second quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is trunk."
+    ::= { luxlVlanConfigInterfacesEntry 7 }
+
+luxlVlanConfigInterfacesTrunkVlans2KTo3K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Third quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is trunk."
+    ::= { luxlVlanConfigInterfacesEntry 8 }
+
+luxlVlanConfigInterfacesTrunkVlans3KTo4K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Last quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is trunk."
+    ::= { luxlVlanConfigInterfacesEntry 9 }
+
+luxlVlanConfigInterfacesHybridNativeVlan OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The port VLAN ID the port will be assigned when Mode is hybrid."
+    ::= { luxlVlanConfigInterfacesEntry 10 }
+
+luxlVlanConfigInterfacesHybridPortType OBJECT-TYPE
+    SYNTAX      LUXLVlanPortType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls awareness and whether it reacts to C-tags, S-tags,
+         Custom-S-tags. Used when Mode is hybrid."
+    ::= { luxlVlanConfigInterfacesEntry 11 }
+
+luxlVlanConfigInterfacesHybridIngressFiltering OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls whether frames classified to a certain VLAN ID get discarded
+         (true) or not (false) if the port is not member of the VLAN ID. Used
+         when Mode is hybrid."
+    ::= { luxlVlanConfigInterfacesEntry 12 }
+
+luxlVlanConfigInterfacesHybridIngressAcceptance OBJECT-TYPE
+    SYNTAX      LUXLVlanIngressAcceptance
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls whether frames are accepted on ingress depending on VLAN tag
+         in frame. Used when Mode is hybrid."
+    ::= { luxlVlanConfigInterfacesEntry 13 }
+
+luxlVlanConfigInterfacesHybridEgressTagging OBJECT-TYPE
+    SYNTAX      LUXLVlanEgressTagging
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Controls tagging of frames on egress. tagThis(1) is not allowed. Used
+         when Mode is hybrid."
+    ::= { luxlVlanConfigInterfacesEntry 14 }
+
+luxlVlanConfigInterfacesHybridVlans0KTo1K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "First quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is hybrid."
+    ::= { luxlVlanConfigInterfacesEntry 15 }
+
+luxlVlanConfigInterfacesHybridVlans1KTo2K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Second quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is hybrid."
+    ::= { luxlVlanConfigInterfacesEntry 16 }
+
+luxlVlanConfigInterfacesHybridVlans2KTo3K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Third quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is hybrid."
+    ::= { luxlVlanConfigInterfacesEntry 17 }
+
+luxlVlanConfigInterfacesHybridVlans3KTo4K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Last quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is hybrid."
+    ::= { luxlVlanConfigInterfacesEntry 18 }
+
+luxlVlanConfigInterfacesForbiddenVlans0KTo1K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "First quarter of bit-array indicating whether the port can ever become
+         a member of a VLAN ('0') or not ('1'). Used in all modes."
+    ::= { luxlVlanConfigInterfacesEntry 19 }
+
+luxlVlanConfigInterfacesForbiddenVlans1KTo2K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Second quarter of bit-array indicating whether the port can ever become
+         a member of a VLAN ('0') or not ('1'). Used in all modes."
+    ::= { luxlVlanConfigInterfacesEntry 20 }
+
+luxlVlanConfigInterfacesForbiddenVlans2KTo3K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Third quarter of bit-array indicating whether the port can ever become
+         a member of a VLAN ('0') or not ('1'). Used in all modes."
+    ::= { luxlVlanConfigInterfacesEntry 21 }
+
+luxlVlanConfigInterfacesForbiddenVlans3KTo4K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Last quarter of bit-array indicating whether the port can ever become a
+         member of a VLAN ('0') or not ('1'). Used in all modes."
+    ::= { luxlVlanConfigInterfacesEntry 22 }
+
+luxlVlanStatus OBJECT IDENTIFIER
+    ::= { luxlVlanMibObjects 3 }
+
+luxlVlanStatusInterfaces OBJECT IDENTIFIER
+    ::= { luxlVlanStatus 1 }
+
+luxlVlanStatusInterfacesTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLVlanStatusInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table of per-interface (port) status."
+    ::= { luxlVlanStatusInterfaces 1 }
+
+luxlVlanStatusInterfacesEntry OBJECT-TYPE
+    SYNTAX      LUXLVlanStatusInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the VLAN configuration for a port interface for a
+         given VLAN user."
+    INDEX       { luxlVlanStatusInterfacesIfIndex, luxlVlanStatusInterfacesVlanUser }
+    ::= { luxlVlanStatusInterfacesTable 1 }
+
+LUXLVlanStatusInterfacesEntry ::= SEQUENCE {
+    luxlVlanStatusInterfacesIfIndex     LUXLInterfaceIndex,
+    luxlVlanStatusInterfacesVlanUser    LUXLVlanUserType,
+    luxlVlanStatusInterfacesPvid    LUXLVlan,
+    luxlVlanStatusInterfacesUvid    LUXLVlan,
+    luxlVlanStatusInterfacesPortType    LUXLVlanPortType,
+    luxlVlanStatusInterfacesIngressFiltering    TruthValue,
+    luxlVlanStatusInterfacesIngressAcceptance   LUXLVlanIngressAcceptance,
+    luxlVlanStatusInterfacesEgressTagging   LUXLVlanEgressTagging
+}
+
+luxlVlanStatusInterfacesIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlVlanStatusInterfacesEntry 1 }
+
+luxlVlanStatusInterfacesVlanUser OBJECT-TYPE
+    SYNTAX      LUXLVlanUserType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "VLAN user."
+    ::= { luxlVlanStatusInterfacesEntry 2 }
+
+luxlVlanStatusInterfacesPvid OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Port VLAN ID set by this user."
+    ::= { luxlVlanStatusInterfacesEntry 3 }
+
+luxlVlanStatusInterfacesUvid OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Untagged VLAN ID set by a user. This may only be populated by non-admin
+         users."
+    ::= { luxlVlanStatusInterfacesEntry 4 }
+
+luxlVlanStatusInterfacesPortType OBJECT-TYPE
+    SYNTAX      LUXLVlanPortType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VLAN Awareness and tag reaction set by this user."
+    ::= { luxlVlanStatusInterfacesEntry 5 }
+
+luxlVlanStatusInterfacesIngressFiltering OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Ingress filtering enabled or disabled by this user."
+    ::= { luxlVlanStatusInterfacesEntry 6 }
+
+luxlVlanStatusInterfacesIngressAcceptance OBJECT-TYPE
+    SYNTAX      LUXLVlanIngressAcceptance
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VLAN tagging accepted upon ingress configured by this user."
+    ::= { luxlVlanStatusInterfacesEntry 7 }
+
+luxlVlanStatusInterfacesEgressTagging OBJECT-TYPE
+    SYNTAX      LUXLVlanEgressTagging
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Egress tagging configured by this user."
+    ::= { luxlVlanStatusInterfacesEntry 8 }
+
+luxlVlanStatusMemberships OBJECT IDENTIFIER
+    ::= { luxlVlanStatus 2 }
+
+luxlVlanStatusMembershipsVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLVlanStatusMembershipsVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table of per-VLAN, per-VLAN user port memberships."
+    ::= { luxlVlanStatusMemberships 1 }
+
+luxlVlanStatusMembershipsVlanEntry OBJECT-TYPE
+    SYNTAX      LUXLVlanStatusMembershipsVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains a port list of VLAN memberships for a given VLAN and
+         VLAN user.The table is sparsely populated, so if a VLAN user doesn't
+         contribute, the row is non-existent."
+    INDEX       { luxlVlanStatusMembershipsVlanVlanId, luxlVlanStatusMembershipsVlanVlanUser }
+    ::= { luxlVlanStatusMembershipsVlanTable 1 }
+
+LUXLVlanStatusMembershipsVlanEntry ::= SEQUENCE {
+    luxlVlanStatusMembershipsVlanVlanId     LUXLVlan,
+    luxlVlanStatusMembershipsVlanVlanUser   LUXLVlanUserType,
+    luxlVlanStatusMembershipsVlanPortList   LUXLPortList
+}
+
+luxlVlanStatusMembershipsVlanVlanId OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "VLAN ID. Valid range is 1 - 4095."
+    ::= { luxlVlanStatusMembershipsVlanEntry 1 }
+
+luxlVlanStatusMembershipsVlanVlanUser OBJECT-TYPE
+    SYNTAX      LUXLVlanUserType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "VLAN user."
+    ::= { luxlVlanStatusMembershipsVlanEntry 2 }
+
+luxlVlanStatusMembershipsVlanPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Port list."
+    ::= { luxlVlanStatusMembershipsVlanEntry 3 }
+
+luxlVlanMibConformance OBJECT IDENTIFIER
+    ::= { luxlVlanMib 2 }
+
+luxlVlanMibCompliances OBJECT IDENTIFIER
+    ::= { luxlVlanMibConformance 1 }
+
+luxlVlanMibGroups OBJECT IDENTIFIER
+    ::= { luxlVlanMibConformance 2 }
+
+luxlVlanCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVlanCapabilitiesVlanIdMin, luxlVlanCapabilitiesVlanIdMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVlanMibGroups 1 }
+
+luxlVlanConfigGlobalsMainInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVlanConfigGlobalsMainCustomSPortEtherType, 
+                  luxlVlanConfigGlobalsMainAccessVlans0To1K, 
+                  luxlVlanConfigGlobalsMainAccessVlans1KTo2K, 
+                  luxlVlanConfigGlobalsMainAccessVlans2KTo3K, 
+                  luxlVlanConfigGlobalsMainAccessVlans3KTo4K }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVlanMibGroups 2 }
+
+luxlVlanConfigGlobalsNameTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVlanConfigGlobalsNameName }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVlanMibGroups 3 }
+
+luxlVlanConfigInterfacesTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVlanConfigInterfacesMode, 
+                  luxlVlanConfigInterfacesAccessVlan, 
+                  luxlVlanConfigInterfacesTrunkNativeVlan, 
+                  luxlVlanConfigInterfacesTrunkTagNativeVlan, 
+                  luxlVlanConfigInterfacesTrunkVlans0KTo1K, 
+                  luxlVlanConfigInterfacesTrunkVlans1KTo2K, 
+                  luxlVlanConfigInterfacesTrunkVlans2KTo3K, 
+                  luxlVlanConfigInterfacesTrunkVlans3KTo4K, 
+                  luxlVlanConfigInterfacesHybridNativeVlan, 
+                  luxlVlanConfigInterfacesHybridPortType, 
+                  luxlVlanConfigInterfacesHybridIngressFiltering, 
+                  luxlVlanConfigInterfacesHybridIngressAcceptance, 
+                  luxlVlanConfigInterfacesHybridEgressTagging, 
+                  luxlVlanConfigInterfacesHybridVlans0KTo1K, 
+                  luxlVlanConfigInterfacesHybridVlans1KTo2K, 
+                  luxlVlanConfigInterfacesHybridVlans2KTo3K, 
+                  luxlVlanConfigInterfacesHybridVlans3KTo4K, 
+                  luxlVlanConfigInterfacesForbiddenVlans0KTo1K, 
+                  luxlVlanConfigInterfacesForbiddenVlans1KTo2K, 
+                  luxlVlanConfigInterfacesForbiddenVlans2KTo3K, 
+                  luxlVlanConfigInterfacesForbiddenVlans3KTo4K }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVlanMibGroups 4 }
+
+luxlVlanStatusInterfacesTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVlanStatusInterfacesPvid, luxlVlanStatusInterfacesUvid, 
+                  luxlVlanStatusInterfacesPortType, 
+                  luxlVlanStatusInterfacesIngressFiltering, 
+                  luxlVlanStatusInterfacesIngressAcceptance, 
+                  luxlVlanStatusInterfacesEgressTagging }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVlanMibGroups 5 }
+
+luxlVlanStatusMembershipsVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVlanStatusMembershipsVlanPortList }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVlanMibGroups 6 }
+
+luxlVlanMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlVlanCapabilitiesInfoGroup, 
+                  luxlVlanConfigGlobalsMainInfoGroup, 
+                  luxlVlanConfigGlobalsNameTableInfoGroup, 
+                  luxlVlanConfigInterfacesTableInfoGroup, 
+                  luxlVlanStatusInterfacesTableInfoGroup, 
+                  luxlVlanStatusMembershipsVlanTableInfoGroup }
+
+    ::= { luxlVlanMibCompliances 1 }
+
+END

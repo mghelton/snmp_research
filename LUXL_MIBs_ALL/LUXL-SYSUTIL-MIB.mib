@@ -1,0 +1,254 @@
+-- *****************************************************************
+-- SYSUTIL-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-SYSUTIL-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    ;
+
+luxlSysutilMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of SysUtil"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 24 }
+
+
+LUXLSysutilPowerSupplyStateType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of power supply state."
+    SYNTAX      INTEGER { active(0), standby(1), notPresent(2) }
+
+LUXLSysutilRebootType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of reboot."
+    SYNTAX      INTEGER { noReboot(0), coldReboot(1), warmReboot(2) }
+
+luxlSysutilMibObjects OBJECT IDENTIFIER
+    ::= { luxlSysutilMib 1 }
+
+luxlSysutilCapabilities OBJECT IDENTIFIER
+    ::= { luxlSysutilMibObjects 1 }
+
+luxlSysutilCapabilitiesWarmRebootSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicate if warm restart is supported or not. true means it is
+         supported. false means it is not supported."
+    ::= { luxlSysutilCapabilities 1 }
+
+luxlSysutilStatus OBJECT IDENTIFIER
+    ::= { luxlSysutilMibObjects 3 }
+
+luxlSysutilStatusCpuLoad OBJECT IDENTIFIER
+    ::= { luxlSysutilStatus 1 }
+
+luxlSysutilStatusCpuLoadAverage100msec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Average CPU load (%) in 100 milli-seconds."
+    ::= { luxlSysutilStatusCpuLoad 1 }
+
+luxlSysutilStatusCpuLoadAverage1sec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Average CPU load (%) in 1 second."
+    ::= { luxlSysutilStatusCpuLoad 2 }
+
+luxlSysutilStatusCpuLoadAverage10sec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Average CPU load (%) in 10 seconds."
+    ::= { luxlSysutilStatusCpuLoad 3 }
+
+luxlSysutilStatusPowerSupplyTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSysutilStatusPowerSupplyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table of power supply status."
+    ::= { luxlSysutilStatus 2 }
+
+luxlSysutilStatusPowerSupplyEntry OBJECT-TYPE
+    SYNTAX      LUXLSysutilStatusPowerSupplyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the power supply status."
+    INDEX       { luxlSysutilStatusPowerSupplySwitchId, luxlSysutilStatusPowerSupplyPsuId }
+    ::= { luxlSysutilStatusPowerSupplyTable 1 }
+
+LUXLSysutilStatusPowerSupplyEntry ::= SEQUENCE {
+    luxlSysutilStatusPowerSupplySwitchId    Integer32,
+    luxlSysutilStatusPowerSupplyPsuId   Integer32,
+    luxlSysutilStatusPowerSupplyState   LUXLSysutilPowerSupplyStateType,
+    luxlSysutilStatusPowerSupplyDescription     LUXLDisplayString
+}
+
+luxlSysutilStatusPowerSupplySwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The identification of switch."
+    ::= { luxlSysutilStatusPowerSupplyEntry 1 }
+
+luxlSysutilStatusPowerSupplyPsuId OBJECT-TYPE
+    SYNTAX      Integer32 (1..2)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The identification of power supply."
+    ::= { luxlSysutilStatusPowerSupplyEntry 2 }
+
+luxlSysutilStatusPowerSupplyState OBJECT-TYPE
+    SYNTAX      LUXLSysutilPowerSupplyStateType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The state of power supply."
+    ::= { luxlSysutilStatusPowerSupplyEntry 3 }
+
+luxlSysutilStatusPowerSupplyDescription OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..30))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The description of power supply."
+    ::= { luxlSysutilStatusPowerSupplyEntry 4 }
+
+luxlSysutilControl OBJECT IDENTIFIER
+    ::= { luxlSysutilMibObjects 4 }
+
+luxlSysutilControlRebootTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSysutilControlRebootEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to reboot a swicth"
+    ::= { luxlSysutilControl 1 }
+
+luxlSysutilControlRebootEntry OBJECT-TYPE
+    SYNTAX      LUXLSysutilControlRebootEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each switch has a set of parameters"
+    INDEX       { luxlSysutilControlRebootSwitchId }
+    ::= { luxlSysutilControlRebootTable 1 }
+
+LUXLSysutilControlRebootEntry ::= SEQUENCE {
+    luxlSysutilControlRebootSwitchId    Integer32,
+    luxlSysutilControlRebootType    LUXLSysutilRebootType
+}
+
+luxlSysutilControlRebootSwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The identification of switch."
+    ::= { luxlSysutilControlRebootEntry 1 }
+
+luxlSysutilControlRebootType OBJECT-TYPE
+    SYNTAX      LUXLSysutilRebootType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of reboot. noReboot(0) does not reboot. coldReboot(1) is to do
+         cold reboot. warmReboot(2) is to do warm reboot, but this is optional.
+         The OID of luxlSysutilCapabilitiesWarmRebootSupported tells if warm
+         reboot is supported or not."
+    ::= { luxlSysutilControlRebootEntry 2 }
+
+luxlSysutilMibConformance OBJECT IDENTIFIER
+    ::= { luxlSysutilMib 2 }
+
+luxlSysutilMibCompliances OBJECT IDENTIFIER
+    ::= { luxlSysutilMibConformance 1 }
+
+luxlSysutilMibGroups OBJECT IDENTIFIER
+    ::= { luxlSysutilMibConformance 2 }
+
+luxlSysutilCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSysutilCapabilitiesWarmRebootSupported }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSysutilMibGroups 1 }
+
+luxlSysutilStatusCpuLoadInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSysutilStatusCpuLoadAverage100msec, 
+                  luxlSysutilStatusCpuLoadAverage1sec, 
+                  luxlSysutilStatusCpuLoadAverage10sec }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSysutilMibGroups 2 }
+
+luxlSysutilStatusPowerSupplyInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSysutilStatusPowerSupplyState, 
+                  luxlSysutilStatusPowerSupplyDescription }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSysutilMibGroups 3 }
+
+luxlSysutilControlRebootInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSysutilControlRebootType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSysutilMibGroups 4 }
+
+luxlSysutilMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlSysutilCapabilitiesInfoGroup, 
+                  luxlSysutilStatusCpuLoadInfoGroup, 
+                  luxlSysutilStatusPowerSupplyInfoGroup, 
+                  luxlSysutilControlRebootInfoGroup }
+
+    ::= { luxlSysutilMibCompliances 1 }
+
+END

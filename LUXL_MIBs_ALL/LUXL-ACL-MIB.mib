@@ -1,0 +1,2816 @@
+-- *****************************************************************
+-- ACL-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-ACL-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLASRType FROM LUXL-TC
+    LUXLASType FROM LUXL-TC
+    LUXLAdvDestMacType FROM LUXL-TC
+    LUXLBitType FROM LUXL-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    LUXLVlanTagPriority FROM LUXL-TC
+    ;
+
+luxlAclMib MODULE-IDENTITY
+    LAST-UPDATED "201411130000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of ACL"
+    REVISION    "201411130000Z"
+    DESCRIPTION
+        "Add ACE Ingress parameters"
+    REVISION    "201408050000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 17 }
+
+
+LUXLAclAceArpOp ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "ARP opcode."
+    SYNTAX      INTEGER { any(0), arp(1), rarp(2), other(3) }
+
+LUXLAclAceFrameType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The frame type of the ACE."
+    SYNTAX      INTEGER { any(0), etype(1), arp(4), ipv4(5), ipv6(6) }
+
+LUXLAclAceIngressPortListMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The ingress port list mode of the ACE."
+    SYNTAX      INTEGER { any(0), specific(1), switch(2), switchport(3) }
+
+LUXLAclAceVlanTagged ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "VLAN tagged/untagged."
+    SYNTAX      INTEGER { any(0), untagged(1), tagged(2) }
+
+LUXLAclHitAction ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The hit action."
+    SYNTAX      INTEGER { permit(0), deny(1), redirect(2), egress(3) }
+
+luxlAclMibObjects OBJECT IDENTIFIER
+    ::= { luxlAclMib 1 }
+
+luxlAclCapabilities OBJECT IDENTIFIER
+    ::= { luxlAclMibObjects 1 }
+
+luxlAclCapabilitiesAceIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum ID of ACE."
+    ::= { luxlAclCapabilities 1 }
+
+luxlAclCapabilitiesPolicyIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum ID of policy."
+    ::= { luxlAclCapabilities 2 }
+
+luxlAclCapabilitiesRateLimiterIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum ID of rate limiter."
+    ::= { luxlAclCapabilities 3 }
+
+luxlAclCapabilitiesEvcPolicerIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum ID of EVC policer."
+    ::= { luxlAclCapabilities 4 }
+
+luxlAclCapabilitiesRateLimiterBitRateSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, the rate limiter can be configured by bit rate."
+    ::= { luxlAclCapabilities 5 }
+
+luxlAclCapabilitiesEvcPolicerSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, EVC policer can be configured."
+    ::= { luxlAclCapabilities 6 }
+
+luxlAclCapabilitiesMirrorSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, mirror action is supported."
+    ::= { luxlAclCapabilities 7 }
+
+luxlAclCapabilitiesMultipleRedirectPortsSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, redirect port list can be configured with multiple ports. If
+         false, redirect port list can be configured with only one single port."
+    ::= { luxlAclCapabilities 8 }
+
+luxlAclCapabilitiesSecondLookupSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, second lookup can be configured."
+    ::= { luxlAclCapabilities 9 }
+
+luxlAclCapabilitiesMultipleIngressPortsSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, ingress port list can be configured with multiple ports. If
+         false, ingress port list can be configured with only one single port."
+    ::= { luxlAclCapabilities 10 }
+
+luxlAclCapabilitiesEgressPortSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, egress port list can be configured."
+    ::= { luxlAclCapabilities 11 }
+
+luxlAclCapabilitiesVlanTaggedSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, VLAN tagged can be configured."
+    ::= { luxlAclCapabilities 12 }
+
+luxlAclCapabilitiesStackableAceSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If true, stackable ACE is supported. The 'switch' and 'switchport' ACE
+         ingress type can be configured. Otherwize, only 'any' and 'specific'
+         ACE ingress type can be configured."
+    ::= { luxlAclCapabilities 13 }
+
+luxlAclConfig OBJECT IDENTIFIER
+    ::= { luxlAclMibObjects 2 }
+
+luxlAclConfigInterface OBJECT IDENTIFIER
+    ::= { luxlAclConfig 2 }
+
+luxlAclConfigInterfaceConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAclConfigInterfaceConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of interface configuration"
+    ::= { luxlAclConfigInterface 1 }
+
+luxlAclConfigInterfaceConfigEntry OBJECT-TYPE
+    SYNTAX      LUXLAclConfigInterfaceConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of parameters"
+    INDEX       { luxlAclConfigInterfaceConfigIfIndex }
+    ::= { luxlAclConfigInterfaceConfigTable 1 }
+
+LUXLAclConfigInterfaceConfigEntry ::= SEQUENCE {
+    luxlAclConfigInterfaceConfigIfIndex     LUXLInterfaceIndex,
+    luxlAclConfigInterfaceConfigPolicyId    Unsigned32,
+    luxlAclConfigInterfaceConfigHitAction   LUXLAclHitAction,
+    luxlAclConfigInterfaceConfigRedirectPortList    LUXLPortList,
+    luxlAclConfigInterfaceConfigRateLimiterId   Unsigned32,
+    luxlAclConfigInterfaceConfigEvcPolicerId    LUXLUnsigned16,
+    luxlAclConfigInterfaceConfigMirror      TruthValue,
+    luxlAclConfigInterfaceConfigLogging     TruthValue,
+    luxlAclConfigInterfaceConfigShutdown    TruthValue
+}
+
+luxlAclConfigInterfaceConfigIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The index of logical interface."
+    ::= { luxlAclConfigInterfaceConfigEntry 1 }
+
+luxlAclConfigInterfaceConfigPolicyId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policy ID."
+    ::= { luxlAclConfigInterfaceConfigEntry 2 }
+
+luxlAclConfigInterfaceConfigHitAction OBJECT-TYPE
+    SYNTAX      LUXLAclHitAction
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The hit action operation for this interface. egress(2) is not
+         supported."
+    ::= { luxlAclConfigInterfaceConfigEntry 101 }
+
+luxlAclConfigInterfaceConfigRedirectPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The redirect port list for this interface."
+    ::= { luxlAclConfigInterfaceConfigEntry 102 }
+
+luxlAclConfigInterfaceConfigRateLimiterId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The rate limiter ID. 0 means to be disabled."
+    ::= { luxlAclConfigInterfaceConfigEntry 103 }
+
+luxlAclConfigInterfaceConfigEvcPolicerId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The EVC policer ID. 0 means to be disabled.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesEvcPolicerSupported' is True."
+    ::= { luxlAclConfigInterfaceConfigEntry 104 }
+
+luxlAclConfigInterfaceConfigMirror OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The mirror operation. Frames matching this interface rule are mirrored
+         to the destination mirror port that is configured in the mirror
+         modules.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesMirrorSupported' is True."
+    ::= { luxlAclConfigInterfaceConfigEntry 105 }
+
+luxlAclConfigInterfaceConfigLogging OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify the logging operation of the interface. Notice that the logging
+         message doesn't include the 4 bytes CRC information. The allowed values
+         are: True - Frames matching the ACE are stored in the System Log. False
+         - Frames matching the ACE are not logged. Note: The logging feature
+         only works when the packet length is less than 1518(without VLAN tags)
+         and the System Log memory size and logging rate is limited."
+    ::= { luxlAclConfigInterfaceConfigEntry 106 }
+
+luxlAclConfigInterfaceConfigShutdown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify the port shut down operation of the interface. The allowed
+         values are: True - If a frame matches the interface rule, the ingress
+         port will be disabled. False - Port shut down is disabled for the
+         interface. Note: The shutdown feature only works when the packet length
+         is less than 1518(without VLAN tags)."
+    ::= { luxlAclConfigInterfaceConfigEntry 107 }
+
+luxlAclConfigRateLimiterTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAclConfigRateLimiterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of rate limiter configuration"
+    ::= { luxlAclConfig 3 }
+
+luxlAclConfigRateLimiterEntry OBJECT-TYPE
+    SYNTAX      LUXLAclConfigRateLimiterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each rate limiter has a set of parameters"
+    INDEX       { luxlAclConfigRateLimiterRateLimiterId }
+    ::= { luxlAclConfigRateLimiterTable 1 }
+
+LUXLAclConfigRateLimiterEntry ::= SEQUENCE {
+    luxlAclConfigRateLimiterRateLimiterId   Integer32,
+    luxlAclConfigRateLimiterBitRateEnable   TruthValue,
+    luxlAclConfigRateLimiterBitRate     Unsigned32,
+    luxlAclConfigRateLimiterPacketRate      Unsigned32
+}
+
+luxlAclConfigRateLimiterRateLimiterId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The rate limter ID."
+    ::= { luxlAclConfigRateLimiterEntry 1 }
+
+luxlAclConfigRateLimiterBitRateEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Use bit rate policing instead of packet rate. True means bit rate is
+         used and false means packet rate is used.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesRateLimiterBitRateSupported' is True."
+    ::= { luxlAclConfigRateLimiterEntry 2 }
+
+luxlAclConfigRateLimiterBitRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Bit rate in kbps.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesRateLimiterBitRateSupported' is True."
+    ::= { luxlAclConfigRateLimiterEntry 3 }
+
+luxlAclConfigRateLimiterPacketRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Packet rate in pps."
+    ::= { luxlAclConfigRateLimiterEntry 4 }
+
+luxlAclConfigAce OBJECT IDENTIFIER
+    ::= { luxlAclConfig 4 }
+
+luxlAclConfigAceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAclConfigAceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The ACL ACE configuration table."
+    ::= { luxlAclConfigAce 1 }
+
+luxlAclConfigAceEntry OBJECT-TYPE
+    SYNTAX      LUXLAclConfigAceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains a set of parameters."
+    INDEX       { luxlAclConfigAceAceId }
+    ::= { luxlAclConfigAceTable 1 }
+
+LUXLAclConfigAceEntry ::= SEQUENCE {
+    luxlAclConfigAceAceId   Integer32,
+    luxlAclConfigAceNextAceId   Unsigned32,
+    luxlAclConfigAceHitAction   LUXLAclHitAction,
+    luxlAclConfigAceRedirectPortList    LUXLPortList,
+    luxlAclConfigAceRedirectPortListSwitchPort      Unsigned32,
+    luxlAclConfigAceEgressPortList      LUXLPortList,
+    luxlAclConfigAceRateLimiterId   Unsigned32,
+    luxlAclConfigAceEvcPolicerId    LUXLUnsigned16,
+    luxlAclConfigAceMirror      TruthValue,
+    luxlAclConfigAceLogging     TruthValue,
+    luxlAclConfigAceShutdown    TruthValue,
+    luxlAclConfigAceIngressPortListMode     LUXLAclAceIngressPortListMode,
+    luxlAclConfigAceIngressPortList     LUXLPortList,
+    luxlAclConfigAceIngressPortListSwitch   Unsigned32,
+    luxlAclConfigAceIngressPortListSwitchPort   Unsigned32,
+    luxlAclConfigAcePolicyValue     LUXLUnsigned8,
+    luxlAclConfigAcePolicyMask      LUXLUnsigned8,
+    luxlAclConfigAceSecondLookup    TruthValue,
+    luxlAclConfigAceVlanId      LUXLUnsigned16,
+    luxlAclConfigAceVlanTagPriority     LUXLVlanTagPriority,
+    luxlAclConfigAceVlanTagged      LUXLAclAceVlanTagged,
+    luxlAclConfigAceFrameType   LUXLAclAceFrameType,
+    luxlAclConfigAceDestMacOp   LUXLAdvDestMacType,
+    luxlAclConfigAceEtherSrcMacOp   LUXLASType,
+    luxlAclConfigAceEtherSrcMac     MacAddress,
+    luxlAclConfigAceEtherDestMac    MacAddress,
+    luxlAclConfigAceEtherType   LUXLUnsigned16,
+    luxlAclConfigAceArpSrcMacOp     LUXLASType,
+    luxlAclConfigAceArpSrcMac   MacAddress,
+    luxlAclConfigAceArpSenderIp     IpAddress,
+    luxlAclConfigAceArpSenderIpMask     IpAddress,
+    luxlAclConfigAceArpTargetIp     IpAddress,
+    luxlAclConfigAceArpTargetIpMask     IpAddress,
+    luxlAclConfigAceArpOpcode   LUXLAclAceArpOp,
+    luxlAclConfigAceArpFlagReq      LUXLBitType,
+    luxlAclConfigAceArpFlagSha      LUXLBitType,
+    luxlAclConfigAceArpFlagTha      LUXLBitType,
+    luxlAclConfigAceArpFlagHln      LUXLBitType,
+    luxlAclConfigAceArpFlagHrd      LUXLBitType,
+    luxlAclConfigAceArpFlagPro      LUXLBitType,
+    luxlAclConfigAceIpv4ProtocolOp      LUXLASType,
+    luxlAclConfigAceIpv4Protocol    LUXLUnsigned8,
+    luxlAclConfigAceIpv4SrcIp   IpAddress,
+    luxlAclConfigAceIpv4SrcIpMask   IpAddress,
+    luxlAclConfigAceIpv4DestIp      IpAddress,
+    luxlAclConfigAceIpv4DestIpMask      IpAddress,
+    luxlAclConfigAceIpv4IcmpTypeOp      LUXLASType,
+    luxlAclConfigAceIpv4IcmpType    LUXLUnsigned8,
+    luxlAclConfigAceIpv4IcmpCodeOp      LUXLASType,
+    luxlAclConfigAceIpv4IcmpCode    LUXLUnsigned8,
+    luxlAclConfigAceIpv4SrcPortOp   LUXLASRType,
+    luxlAclConfigAceIpv4SrcPort     LUXLUnsigned16,
+    luxlAclConfigAceIpv4SrcPortRange    LUXLUnsigned16,
+    luxlAclConfigAceIpv4DestPortOp      LUXLASRType,
+    luxlAclConfigAceIpv4DestPort    LUXLUnsigned16,
+    luxlAclConfigAceIpv4DestPortRange   LUXLUnsigned16,
+    luxlAclConfigAceIpv4FlagTtl     LUXLBitType,
+    luxlAclConfigAceIpv4FlagFragment    LUXLBitType,
+    luxlAclConfigAceIpv4FlagIpOption    LUXLBitType,
+    luxlAclConfigAceIpv4TcpFlagFin      LUXLBitType,
+    luxlAclConfigAceIpv4TcpFlagSyn      LUXLBitType,
+    luxlAclConfigAceIpv4TcpFlagRst      LUXLBitType,
+    luxlAclConfigAceIpv4TcpFlagPsh      LUXLBitType,
+    luxlAclConfigAceIpv4TcpFlagAck      LUXLBitType,
+    luxlAclConfigAceIpv4TcpFlagUrg      LUXLBitType,
+    luxlAclConfigAceIpv6NextHeaderOp    LUXLASType,
+    luxlAclConfigAceIpv6NextHeader      LUXLUnsigned8,
+    luxlAclConfigAceIpv6Icmpv6TypeOp    LUXLASType,
+    luxlAclConfigAceIpv6Icmpv6Type      LUXLUnsigned8,
+    luxlAclConfigAceIpv6Icmpv6CodeOp    LUXLASType,
+    luxlAclConfigAceIpv6Icmpv6Code      LUXLUnsigned8,
+    luxlAclConfigAceIpv6SrcIp   InetAddressIPv6,
+    luxlAclConfigAceIpv6SrcIpMask   InetAddressIPv6,
+    luxlAclConfigAceIpv6SrcPortOp   LUXLASRType,
+    luxlAclConfigAceIpv6SrcPort     LUXLUnsigned16,
+    luxlAclConfigAceIpv6SrcPortRange    LUXLUnsigned16,
+    luxlAclConfigAceIpv6DestPortOp      LUXLASRType,
+    luxlAclConfigAceIpv6DestPort    LUXLUnsigned16,
+    luxlAclConfigAceIpv6DestPortRange   LUXLUnsigned16,
+    luxlAclConfigAceIpv6FlagTtl     LUXLBitType,
+    luxlAclConfigAceIpv6TcpFlagFin      LUXLBitType,
+    luxlAclConfigAceIpv6TcpFlagSyn      LUXLBitType,
+    luxlAclConfigAceIpv6TcpFlagRst      LUXLBitType,
+    luxlAclConfigAceIpv6TcpFlagPsh      LUXLBitType,
+    luxlAclConfigAceIpv6TcpFlagAck      LUXLBitType,
+    luxlAclConfigAceIpv6TcpFlagUrg      LUXLBitType,
+    luxlAclConfigAceAction      LUXLRowEditorState
+}
+
+luxlAclConfigAceAceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The ACE ID."
+    ::= { luxlAclConfigAceEntry 1 }
+
+luxlAclConfigAceNextAceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ID of ACE next to this ACE."
+    ::= { luxlAclConfigAceEntry 2 }
+
+luxlAclConfigAceHitAction OBJECT-TYPE
+    SYNTAX      LUXLAclHitAction
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The hit action operation for this ACE."
+    ::= { luxlAclConfigAceEntry 101 }
+
+luxlAclConfigAceRedirectPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The redirect port list for this ACE."
+    ::= { luxlAclConfigAceEntry 102 }
+
+luxlAclConfigAceRedirectPortListSwitchPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The redirect switch port for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switchport. And it is used when this ACE
+         is applied on specific switch port of all switches in stackable
+         devices.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesStackableAceSupported' is True."
+    ::= { luxlAclConfigAceEntry 103 }
+
+luxlAclConfigAceEgressPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The egress port list. The port list is to define what ports are allowed
+         to be egress ports. If the egress port of an incoming frame is in the
+         port list then the frame will be forwared to that port. Otherwise, if
+         the egress port is not in the port list then the egress port is not
+         allowed and the incoming frame will be dropped.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesEgressPortSupported' is True."
+    ::= { luxlAclConfigAceEntry 104 }
+
+luxlAclConfigAceRateLimiterId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The rate limiter ID. 0 means to be disabled."
+    ::= { luxlAclConfigAceEntry 105 }
+
+luxlAclConfigAceEvcPolicerId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The EVC policer ID. 0 means to be disabled.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesEvcPolicerSupported' is True."
+    ::= { luxlAclConfigAceEntry 106 }
+
+luxlAclConfigAceMirror OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The mirror operation. Frames matching this ACE are mirrored to the
+         destination mirror port that is configured in the mirror module.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesMirrorSupported' is True."
+    ::= { luxlAclConfigAceEntry 107 }
+
+luxlAclConfigAceLogging OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify the logging operation of the ACE. Notice that the logging
+         message doesn't include the 4 bytes CRC information. The allowed values
+         are: True - Frames matching the ACE are stored in the System Log. False
+         - Frames matching the ACE are not logged. Note: The logging feature
+         only works when the packet length is less than 1518(without VLAN tags)
+         and the system log memory size and logging rate is limited."
+    ::= { luxlAclConfigAceEntry 108 }
+
+luxlAclConfigAceShutdown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify the port shut down operation of the ACE. The allowed values
+         are: True: If a frame matches the ACE, the ingress port will be shuted
+         down. False: Port shut down is disabled for the ACE. Note: The shutdown
+         feature only works when the packet length is less than 1518(without
+         VLAN tags)."
+    ::= { luxlAclConfigAceEntry 109 }
+
+luxlAclConfigAceIngressPortListMode OBJECT-TYPE
+    SYNTAX      LUXLAclAceIngressPortListMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ingress port list mode for this ACE. The possible mode are: 'any':
+         Indicates this ACE is applied on all switches and all ports.
+         'specific': Indicates this ACE is applied on specific switch and
+         specific ports. 'switch': Indicates this ACE is applied on all ports of
+         specific switch in stackable devices. 'switchport': Indicates this ACE
+         is applied on specific switch port of all switches in stackable
+         devices."
+    ::= { luxlAclConfigAceEntry 201 }
+
+luxlAclConfigAceIngressPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ingress port list for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is specific. And it is used when this ACE is
+         applied on specific switch and specific ports."
+    ::= { luxlAclConfigAceEntry 202 }
+
+luxlAclConfigAceIngressPortListSwitch OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ingress switch ID for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switch. And it is used when this ACE is
+         applied on specific switch port of all switches in stackable devices.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesStackableAceSupported' is True."
+    ::= { luxlAclConfigAceEntry 203 }
+
+luxlAclConfigAceIngressPortListSwitchPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ingress switch port for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switchport. And it is used when this ACE
+         is applied on specific switch port of all switches in stackable
+         devices.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesStackableAceSupported' is True."
+    ::= { luxlAclConfigAceEntry 204 }
+
+luxlAclConfigAcePolicyValue OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policy number for this ACE."
+    ::= { luxlAclConfigAceEntry 205 }
+
+luxlAclConfigAcePolicyMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policy mask for this ACE. The allowed range is 0x0 to 0xff. If the
+         binary bit value is '0', it means this bit is don't-care. The real
+         matched pattern is [policy_value & policy_bitmask]. For example, if the
+         policy value is 3 and the policy bitmask is 0x10(bit 0 is don't-care
+         bit), then policy 2 and 3 are applied to this rule."
+    ::= { luxlAclConfigAceEntry 206 }
+
+luxlAclConfigAceSecondLookup OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The second lookup operation for this ACE.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesSecondLookupSupported' is True."
+    ::= { luxlAclConfigAceEntry 207 }
+
+luxlAclConfigAceVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID for this ACE. Possible values are: 0(disabled), 1-4095."
+    ::= { luxlAclConfigAceEntry 301 }
+
+luxlAclConfigAceVlanTagPriority OBJECT-TYPE
+    SYNTAX      LUXLVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN tag priority for this ACE."
+    ::= { luxlAclConfigAceEntry 302 }
+
+luxlAclConfigAceVlanTagged OBJECT-TYPE
+    SYNTAX      LUXLAclAceVlanTagged
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The 802.1Q VLAN tagged for this ACE.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesVlanTaggedSupported' is True."
+    ::= { luxlAclConfigAceEntry 303 }
+
+luxlAclConfigAceFrameType OBJECT-TYPE
+    SYNTAX      LUXLAclAceFrameType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The frame type for this ACE."
+    ::= { luxlAclConfigAceEntry 401 }
+
+luxlAclConfigAceDestMacOp OBJECT-TYPE
+    SYNTAX      LUXLAdvDestMacType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's destination MAC address to be matched."
+    ::= { luxlAclConfigAceEntry 402 }
+
+luxlAclConfigAceEtherSrcMacOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a Ethernet type packet's source MAC address to be
+         matched. This object is only available if FrameType is ether(1)."
+    ::= { luxlAclConfigAceEntry 501 }
+
+luxlAclConfigAceEtherSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits source MAC address. This object is only available
+         if FrameType is ether(1) and EtherSrcMacOp is specific(1)."
+    ::= { luxlAclConfigAceEntry 502 }
+
+luxlAclConfigAceEtherDestMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits destination MAC address. This object is only
+         available if FrameType is ether(1) and EtherDestMacOp is specific(1)."
+    ::= { luxlAclConfigAceEntry 503 }
+
+luxlAclConfigAceEtherType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packet's 16 bit Ethernet type field. Possible values are:
+         0(disabled), 0x600-0xFFFF but excluding 0x800(IPv4), 0x806(ARP) and
+         0x86DD(IPv6). This object is only available if FrameType is ether(1)
+         and EtherDestMacOp is specific(1)."
+    ::= { luxlAclConfigAceEntry 504 }
+
+luxlAclConfigAceArpSrcMacOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's source MAC address to be matched. This
+         object is only available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 601 }
+
+luxlAclConfigAceArpSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits source MAC address. This object is only available
+         if FrameType is arp(4) and ArpSrcMacOp is specific(1)."
+    ::= { luxlAclConfigAceEntry 602 }
+
+luxlAclConfigAceArpSenderIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified ARP sender IP address. The packet's sender address is
+         AND-ed with the value of ArpSenderIpMask and then compared with the
+         value of this object. If ArpSenderIp and ArpSrcIpMask are 0.0.0.0, this
+         entry matches any sender IP address. This object is only available if
+         FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 603 }
+
+luxlAclConfigAceArpSenderIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified ARP sender IP address mask. This object is only available
+         if FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 604 }
+
+luxlAclConfigAceArpTargetIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified ARP target IP address. The packet's target address is
+         AND-ed with the value of ArpTragetIpMask and then compared with the
+         value of this object. If ArpTragetIp and ArpSrcIpMask are 0.0.0.0, this
+         entry matches any target IP address. This object is only available if
+         FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 605 }
+
+luxlAclConfigAceArpTargetIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified ARP target IP address mask. This object is only available
+         if FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 606 }
+
+luxlAclConfigAceArpOpcode OBJECT-TYPE
+    SYNTAX      LUXLAclAceArpOp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's opcode to be matched. This object is only
+         available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 607 }
+
+luxlAclConfigAceArpFlagReq OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's request/reply opcode is to be compared.
+         This object is only available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 608 }
+
+luxlAclConfigAceArpFlagSha OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's sender hardware address field (SHA) to be
+         compared. This object is only available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 609 }
+
+luxlAclConfigAceArpFlagTha OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's target hardware address field (THA) is to
+         be compared. This object is only available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 610 }
+
+luxlAclConfigAceArpFlagHln OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's s hardware address length field (HLN) is
+         to be compared. The value 0 means any HLN value is allowed (don't-care
+         field), value 1 means HLN is not equal to Ethernet (0x06) or the (PLN)
+         is not equal to IPv4 (0x04) and value 2 means HLN is equal to Ethernet
+         (0x06) or the (PLN) is not equal to IPv4 (0x04). This object is only
+         available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 611 }
+
+luxlAclConfigAceArpFlagHrd OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's hardware address space field (HRD) is to
+         be compared. The value 0 means any HRD value is allowed (don't-care
+         field), value 1 means HRD is not equal to Ethernet (1) and value 2
+         means HRD is equal to Ethernet (1). This object is only available if
+         FrameType is arp(4)."
+    ::= { luxlAclConfigAceEntry 612 }
+
+luxlAclConfigAceArpFlagPro OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's protocol address space field (PRO) is to
+         be compared. The value 0 means any PRO value is allowed (don't-care
+         field), value 1 means PRO is not equal to IP (0x800) and value 2 means
+         PRO is equal to IP (0x800). This object is only available if FrameType
+         is arp(4)."
+    ::= { luxlAclConfigAceEntry 613 }
+
+luxlAclConfigAceIpv4ProtocolOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's protocol field is to be compared. This
+         object is only available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceEntry 701 }
+
+luxlAclConfigAceIpv4Protocol OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protocol number field in the IPv4 header used to indicate a higher
+         layer protocol. Possible values are 0-255. This object is only
+         available if FrameType is ipv4(5) and Ipv4ProtocolOp is specific(1)."
+    ::= { luxlAclConfigAceEntry 702 }
+
+luxlAclConfigAceIpv4SrcIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified source IPv4 address. The packet's sender address is
+         AND-ed with the value of Ipv4SrcIpMask and then compared with the value
+         of this object. If Ipv4SrcIp and Ipv4SrcIpMask are 0.0.0.0, this entry
+         matches any source IP address. This object is only available if
+         FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceEntry 703 }
+
+luxlAclConfigAceIpv4SrcIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified source IPv4 address mask. This object is only available
+         if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceEntry 704 }
+
+luxlAclConfigAceIpv4DestIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified destination IPv4 address. The packet's sender address is
+         AND-ed with the value of Ipv4DestIpMask and then compared with the
+         value of this object. If Ipv4DestIp and Ipv4DestIpMask are 0.0.0.0,
+         this entry matches any destination IP address. This object is only
+         available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceEntry 705 }
+
+luxlAclConfigAceIpv4DestIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified destination IPv4 address mask. This object is only
+         available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceEntry 706 }
+
+luxlAclConfigAceIpv4IcmpTypeOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's ICMP type field is to be compared. This
+         object is only available if FrameType is ipv4(5) and Ipv4Protocol is
+         icmp(1)."
+    ::= { luxlAclConfigAceEntry 707 }
+
+luxlAclConfigAceIpv4IcmpType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ICMP type field in the IPv4 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv4(5), Ipv4Protocol is
+         icmp(1) and Ipv4IcmpTypeOp is specific(1)."
+    ::= { luxlAclConfigAceEntry 708 }
+
+luxlAclConfigAceIpv4IcmpCodeOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's ICMP code field is to be compared. This
+         object is only available if FrameType is ipv4(5) and Ipv4Protocol is
+         icmp(1)."
+    ::= { luxlAclConfigAceEntry 709 }
+
+luxlAclConfigAceIpv4IcmpCode OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ICMP code field in the IPv4 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv4(5), Ipv4Protocol is
+         icmp(1) and Ipv4IcmpCodeOp is specific(1)."
+    ::= { luxlAclConfigAceEntry 710 }
+
+luxlAclConfigAceIpv4SrcPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         This object is only available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceEntry 711 }
+
+luxlAclConfigAceIpv4SrcPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol. If the Ipv4SrcPortOp
+         object is range(2), this object will be the starting port number of the
+         port range. Valid range is 0-65535. This object is only available if
+         FrameType is ipv4(5) and Ipv4SrcPortOp is not any(0)."
+    ::= { luxlAclConfigAceEntry 712 }
+
+luxlAclConfigAceIpv4SrcPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol. If the Ipv4SrcPortOp
+         object is range(2), this object will be the ending port number of the
+         port range. Valid range is 0-65535. This object is only available if
+         FrameType is ipv4(5) and Ipv4SrcPortOp is range(2)."
+    ::= { luxlAclConfigAceEntry 713 }
+
+luxlAclConfigAceIpv4DestPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared. This object is only available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceEntry 714 }
+
+luxlAclConfigAceIpv4DestPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv4DestPortOp object in the same row is range(2), this object will be
+         the starting port number of the port range. Valid range is 0-65535.
+         This object is only available if FrameType is ipv4(5) and
+         Ipv4DestPortOp is not any(0)."
+    ::= { luxlAclConfigAceEntry 715 }
+
+luxlAclConfigAceIpv4DestPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv4DestPortOp object in the same row is range(2), this object will be
+         the ending port number of the port range. Valid range is 0-65535. This
+         object is only available if FrameType is ipv4(5) and Ipv4DestPortOp is
+         range(2)."
+    ::= { luxlAclConfigAceEntry 716 }
+
+luxlAclConfigAceIpv4FlagTtl OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's Time-to-Live field (TTL) is to be
+         compared. The value 0 means any TTL value is allowed (don't-care
+         field), value 1 means TTL is not equal zero and value 2 means TTL is
+         equal to zero. This object is only available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceEntry 717 }
+
+luxlAclConfigAceIpv4FlagFragment OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's More-Fragments field (MF) is to be
+         compared. The value 0 means any MF value is allowed (don't-care field),
+         value 1 means MF is not equal one (MF field isn't set) and value 2
+         means MF is equal to one (MF field is set). This object is only
+         available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceEntry 718 }
+
+luxlAclConfigAceIpv4FlagIpOption OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's options field is to be compared. This
+         object is only available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceEntry 719 }
+
+luxlAclConfigAceIpv4TcpFlagFin OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP FIN flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceEntry 720 }
+
+luxlAclConfigAceIpv4TcpFlagSyn OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP SYN flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceEntry 721 }
+
+luxlAclConfigAceIpv4TcpFlagRst OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP RST flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceEntry 722 }
+
+luxlAclConfigAceIpv4TcpFlagPsh OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP PSH flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceEntry 723 }
+
+luxlAclConfigAceIpv4TcpFlagAck OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP ACK flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceEntry 724 }
+
+luxlAclConfigAceIpv4TcpFlagUrg OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP URG flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceEntry 725 }
+
+luxlAclConfigAceIpv6NextHeaderOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify the IPv6 next header filter for this ACE. This object is only
+         available if FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceEntry 801 }
+
+luxlAclConfigAceIpv6NextHeader OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "When 'Specific' is selected for the IPv6 next header value, you can
+         enter a specific value. The allowed range is 0 to 255. A frame that
+         hits this ACE matches this IPv6 protocol value. This object is only
+         available if FrameType is ipv6(6) and Ipv6NextHeaderOp is specific(1)."
+    ::= { luxlAclConfigAceEntry 802 }
+
+luxlAclConfigAceIpv6Icmpv6TypeOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 packet's ICMPv6 type field is to be compared. This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         icmpv6(58)."
+    ::= { luxlAclConfigAceEntry 803 }
+
+luxlAclConfigAceIpv6Icmpv6Type OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ICMPv6 type field in the IPv6 header. Possible values are 0-255.
+         This object is only available if FrameType is ipv6(6), Ipv6NextHeader
+         is icmpv6(58) and Ipv6Icmpv6TypeOp is specific(1)."
+    ::= { luxlAclConfigAceEntry 804 }
+
+luxlAclConfigAceIpv6Icmpv6CodeOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 packet's ICMPv6 code field is to be compared. This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         icmpv6(58)."
+    ::= { luxlAclConfigAceEntry 805 }
+
+luxlAclConfigAceIpv6Icmpv6Code OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ICMP code field in the IPv6 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv6(6), Ipv6NextHeader is
+         icmpv6(58) and Ipv6Icmpv6CodeOp is specific(1)."
+    ::= { luxlAclConfigAceEntry 806 }
+
+luxlAclConfigAceIpv6SrcIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified source IPv6 address. The packet's sender address is
+         AND-ed with the value of Ipv6SrcIpMask and then compared with the value
+         of this object. If Ipv6SrcIp and Ipv4SrcIpMask are 0::, this entry
+         matches any source IP address. This object is only available if
+         FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceEntry 807 }
+
+luxlAclConfigAceIpv6SrcIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified source IPv6 address mask. This object is only available
+         if FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceEntry 808 }
+
+luxlAclConfigAceIpv6SrcPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         This object is only available if FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceEntry 809 }
+
+luxlAclConfigAceIpv6SrcPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol. If the Ipv6SrcPortOp
+         object in the same row is range(2), this object will be the starting
+         port number of the port range. Valid range is 0-65535. This object is
+         only available if FrameType is ipv6(6) and Ipv6SrcPortOp is not any(0)."
+    ::= { luxlAclConfigAceEntry 810 }
+
+luxlAclConfigAceIpv6SrcPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol. If the Ipv6SrcPortOp
+         object in the same row is range(2), this object will be the ending port
+         number of the port range. Valid range is 0-65535. This object is only
+         available if FrameType is ipv6(6) and Ipv6SrcPortOp is range(2)."
+    ::= { luxlAclConfigAceEntry 811 }
+
+luxlAclConfigAceIpv6DestPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared. This object is only available if FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceEntry 812 }
+
+luxlAclConfigAceIpv6DestPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv6DestPortOp object in the same row is range(2), this object will be
+         the starting port number of the port range. Valid range is 0-65535.
+         This object is only available if FrameType is ipv6(6) and
+         Ipv6DestPortOp is not any(0)."
+    ::= { luxlAclConfigAceEntry 813 }
+
+luxlAclConfigAceIpv6DestPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv6DestPortOp object in the same row is range(2), this object will be
+         the ending port number of the port range. Valid range is 0-65535. This
+         object is only available if FrameType is ipv6(6) and Ipv6DestPortOp is
+         range(2)."
+    ::= { luxlAclConfigAceEntry 814 }
+
+luxlAclConfigAceIpv6FlagTtl OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 packet's Time-to-Live field (TTL) is to be
+         compared. The value 0 means any TTL value is allowed (don't-care
+         field), value 1 means TTL is not equal zero and value 2 means TTL is
+         equal to zero. This object is only available if FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceEntry 815 }
+
+luxlAclConfigAceIpv6TcpFlagFin OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'No more data from sender' field
+         (FIN) is to be compared. The value 0 means any FIN value is allowed
+         (don't-care field), value 1 means FIN is not equal one (FIN field isn't
+         set) and value 2 means FIN is equal to one (FIN field is set). This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         tcp(6)."
+    ::= { luxlAclConfigAceEntry 816 }
+
+luxlAclConfigAceIpv6TcpFlagSyn OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'Synchronize sequence numbers' field
+         (SYN) is to be compared. The value 0 means any SYN value is allowed
+         (don't-care field), value 1 means SYN is not equal one (FIN field isn't
+         set) and value 2 means SYN is equal to one (FIN field is set). This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         tcp(6)."
+    ::= { luxlAclConfigAceEntry 817 }
+
+luxlAclConfigAceIpv6TcpFlagRst OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'Reset the connection' field (RST) is
+         to be compared. The value 0 means any RST value is allowed (don't-care
+         field), value 1 means RST is not equal one (FIN field isn't set) and
+         value 2 means RST is equal to one (FIN field is set). This object is
+         only available if FrameType is ipv6(6) and Ipv6NextHeader is tcp(6)."
+    ::= { luxlAclConfigAceEntry 818 }
+
+luxlAclConfigAceIpv6TcpFlagPsh OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'Push Function' field (PSH) is to be
+         compared. The value 0 means any PSH value is allowed (don't-care
+         field), value 1 means PSH is not equal one (FIN field isn't set) and
+         value 2 means PSH is equal to one (FIN field is set). This object is
+         only available if FrameType is ipv6(6) and Ipv6NextHeader is tcp(6)."
+    ::= { luxlAclConfigAceEntry 819 }
+
+luxlAclConfigAceIpv6TcpFlagAck OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'Acknowledgment field significant'
+         field (ACK) is to be compared. The value 0 means any FIN value is
+         allowed (don't-care field), value 1 means ACK is not equal one (FIN
+         field isn't set) and value 2 means ACK is equal to one (FIN field is
+         set). This object is only available if FrameType is ipv6(6) and
+         Ipv6NextHeader is tcp(6)."
+    ::= { luxlAclConfigAceEntry 820 }
+
+luxlAclConfigAceIpv6TcpFlagUrg OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'Urgent Pointer field significant'
+         field (URG) is to be compared. The value 0 means any URG value is
+         allowed (don't-care field), value 1 means URG is not equal one (FIN
+         field isn't set) and value 2 means URG is equal to one (FIN field is
+         set). This object is only available if FrameType is ipv6(6) and
+         Ipv6NextHeader is tcp(6)."
+    ::= { luxlAclConfigAceEntry 821 }
+
+luxlAclConfigAceAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlAclConfigAceEntry 10000 }
+
+luxlAclConfigAceRowEditor OBJECT IDENTIFIER
+    ::= { luxlAclConfigAce 2 }
+
+luxlAclConfigAceRowEditorAceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ACE ID."
+    ::= { luxlAclConfigAceRowEditor 1 }
+
+luxlAclConfigAceRowEditorNextAceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ID of ACE next to this ACE."
+    ::= { luxlAclConfigAceRowEditor 2 }
+
+luxlAclConfigAceRowEditorHitAction OBJECT-TYPE
+    SYNTAX      LUXLAclHitAction
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The hit action operation for this ACE."
+    ::= { luxlAclConfigAceRowEditor 101 }
+
+luxlAclConfigAceRowEditorRedirectPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The redirect port list for this ACE."
+    ::= { luxlAclConfigAceRowEditor 102 }
+
+luxlAclConfigAceRowEditorRedirectPortListSwitchPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The redirect switch port for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switchport. And it is used when this ACE
+         is applied on specific switch port of all switches in stackable
+         devices.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesStackableAceSupported' is True."
+    ::= { luxlAclConfigAceRowEditor 103 }
+
+luxlAclConfigAceRowEditorEgressPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The egress port list. The port list is to define what ports are allowed
+         to be egress ports. If the egress port of an incoming frame is in the
+         port list then the frame will be forwared to that port. Otherwise, if
+         the egress port is not in the port list then the egress port is not
+         allowed and the incoming frame will be dropped.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesEgressPortSupported' is True."
+    ::= { luxlAclConfigAceRowEditor 104 }
+
+luxlAclConfigAceRowEditorRateLimiterId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The rate limiter ID. 0 means to be disabled."
+    ::= { luxlAclConfigAceRowEditor 105 }
+
+luxlAclConfigAceRowEditorEvcPolicerId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The EVC policer ID. 0 means to be disabled.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesEvcPolicerSupported' is True."
+    ::= { luxlAclConfigAceRowEditor 106 }
+
+luxlAclConfigAceRowEditorMirror OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The mirror operation. Frames matching this ACE are mirrored to the
+         destination mirror port that is configured in the mirror module.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesMirrorSupported' is True."
+    ::= { luxlAclConfigAceRowEditor 107 }
+
+luxlAclConfigAceRowEditorLogging OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify the logging operation of the ACE. Notice that the logging
+         message doesn't include the 4 bytes CRC information. The allowed values
+         are: True - Frames matching the ACE are stored in the System Log. False
+         - Frames matching the ACE are not logged. Note: The logging feature
+         only works when the packet length is less than 1518(without VLAN tags)
+         and the system log memory size and logging rate is limited."
+    ::= { luxlAclConfigAceRowEditor 108 }
+
+luxlAclConfigAceRowEditorShutdown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify the port shut down operation of the ACE. The allowed values
+         are: True: If a frame matches the ACE, the ingress port will be shuted
+         down. False: Port shut down is disabled for the ACE. Note: The shutdown
+         feature only works when the packet length is less than 1518(without
+         VLAN tags)."
+    ::= { luxlAclConfigAceRowEditor 109 }
+
+luxlAclConfigAceRowEditorIngressPortListMode OBJECT-TYPE
+    SYNTAX      LUXLAclAceIngressPortListMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ingress port list mode for this ACE. The possible mode are: 'any':
+         Indicates this ACE is applied on all switches and all ports.
+         'specific': Indicates this ACE is applied on specific switch and
+         specific ports. 'switch': Indicates this ACE is applied on all ports of
+         specific switch in stackable devices. 'switchport': Indicates this ACE
+         is applied on specific switch port of all switches in stackable
+         devices."
+    ::= { luxlAclConfigAceRowEditor 201 }
+
+luxlAclConfigAceRowEditorIngressPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ingress port list for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is specific. And it is used when this ACE is
+         applied on specific switch and specific ports."
+    ::= { luxlAclConfigAceRowEditor 202 }
+
+luxlAclConfigAceRowEditorIngressPortListSwitch OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ingress switch ID for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switch. And it is used when this ACE is
+         applied on specific switch port of all switches in stackable devices.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesStackableAceSupported' is True."
+    ::= { luxlAclConfigAceRowEditor 203 }
+
+luxlAclConfigAceRowEditorIngressPortListSwitchPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ingress switch port for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switchport. And it is used when this ACE
+         is applied on specific switch port of all switches in stackable
+         devices.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesStackableAceSupported' is True."
+    ::= { luxlAclConfigAceRowEditor 204 }
+
+luxlAclConfigAceRowEditorPolicyValue OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policy number for this ACE."
+    ::= { luxlAclConfigAceRowEditor 205 }
+
+luxlAclConfigAceRowEditorPolicyMask OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The policy mask for this ACE. The allowed range is 0x0 to 0xff. If the
+         binary bit value is '0', it means this bit is don't-care. The real
+         matched pattern is [policy_value & policy_bitmask]. For example, if the
+         policy value is 3 and the policy bitmask is 0x10(bit 0 is don't-care
+         bit), then policy 2 and 3 are applied to this rule."
+    ::= { luxlAclConfigAceRowEditor 206 }
+
+luxlAclConfigAceRowEditorSecondLookup OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The second lookup operation for this ACE.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesSecondLookupSupported' is True."
+    ::= { luxlAclConfigAceRowEditor 207 }
+
+luxlAclConfigAceRowEditorVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN ID for this ACE. Possible values are: 0(disabled), 1-4095."
+    ::= { luxlAclConfigAceRowEditor 301 }
+
+luxlAclConfigAceRowEditorVlanTagPriority OBJECT-TYPE
+    SYNTAX      LUXLVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN tag priority for this ACE."
+    ::= { luxlAclConfigAceRowEditor 302 }
+
+luxlAclConfigAceRowEditorVlanTagged OBJECT-TYPE
+    SYNTAX      LUXLAclAceVlanTagged
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The 802.1Q VLAN tagged for this ACE.
+         
+         This object is only available if the capability object
+         'luxlAclCapabilitiesVlanTaggedSupported' is True."
+    ::= { luxlAclConfigAceRowEditor 303 }
+
+luxlAclConfigAceRowEditorFrameType OBJECT-TYPE
+    SYNTAX      LUXLAclAceFrameType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The frame type for this ACE."
+    ::= { luxlAclConfigAceRowEditor 401 }
+
+luxlAclConfigAceRowEditorDestMacOp OBJECT-TYPE
+    SYNTAX      LUXLAdvDestMacType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's destination MAC address to be matched."
+    ::= { luxlAclConfigAceRowEditor 402 }
+
+luxlAclConfigAceRowEditorEtherSrcMacOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a Ethernet type packet's source MAC address to be
+         matched. This object is only available if FrameType is ether(1)."
+    ::= { luxlAclConfigAceRowEditor 501 }
+
+luxlAclConfigAceRowEditorEtherSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits source MAC address. This object is only available
+         if FrameType is ether(1) and EtherSrcMacOp is specific(1)."
+    ::= { luxlAclConfigAceRowEditor 502 }
+
+luxlAclConfigAceRowEditorEtherDestMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits destination MAC address. This object is only
+         available if FrameType is ether(1) and EtherDestMacOp is specific(1)."
+    ::= { luxlAclConfigAceRowEditor 503 }
+
+luxlAclConfigAceRowEditorEtherType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the packet's 16 bit Ethernet type field. Possible values are:
+         0(disabled), 0x600-0xFFFF but excluding 0x800(IPv4), 0x806(ARP) and
+         0x86DD(IPv6). This object is only available if FrameType is ether(1)
+         and EtherDestMacOp is specific(1)."
+    ::= { luxlAclConfigAceRowEditor 504 }
+
+luxlAclConfigAceRowEditorArpSrcMacOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's source MAC address to be matched. This
+         object is only available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 601 }
+
+luxlAclConfigAceRowEditorArpSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the 48 bits source MAC address. This object is only available
+         if FrameType is arp(4) and ArpSrcMacOp is specific(1)."
+    ::= { luxlAclConfigAceRowEditor 602 }
+
+luxlAclConfigAceRowEditorArpSenderIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified ARP sender IP address. The packet's sender address is
+         AND-ed with the value of ArpSenderIpMask and then compared with the
+         value of this object. If ArpSenderIp and ArpSrcIpMask are 0.0.0.0, this
+         entry matches any sender IP address. This object is only available if
+         FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 603 }
+
+luxlAclConfigAceRowEditorArpSenderIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified ARP sender IP address mask. This object is only available
+         if FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 604 }
+
+luxlAclConfigAceRowEditorArpTargetIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified ARP target IP address. The packet's target address is
+         AND-ed with the value of ArpTragetIpMask and then compared with the
+         value of this object. If ArpTragetIp and ArpSrcIpMask are 0.0.0.0, this
+         entry matches any target IP address. This object is only available if
+         FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 605 }
+
+luxlAclConfigAceRowEditorArpTargetIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified ARP target IP address mask. This object is only available
+         if FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 606 }
+
+luxlAclConfigAceRowEditorArpOpcode OBJECT-TYPE
+    SYNTAX      LUXLAclAceArpOp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's opcode to be matched. This object is only
+         available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 607 }
+
+luxlAclConfigAceRowEditorArpFlagReq OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's request/reply opcode is to be compared.
+         This object is only available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 608 }
+
+luxlAclConfigAceRowEditorArpFlagSha OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's sender hardware address field (SHA) to be
+         compared. This object is only available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 609 }
+
+luxlAclConfigAceRowEditorArpFlagTha OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's target hardware address field (THA) is to
+         be compared. This object is only available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 610 }
+
+luxlAclConfigAceRowEditorArpFlagHln OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's s hardware address length field (HLN) is
+         to be compared. The value 0 means any HLN value is allowed (don't-care
+         field), value 1 means HLN is not equal to Ethernet (0x06) or the (PLN)
+         is not equal to IPv4 (0x04) and value 2 means HLN is equal to Ethernet
+         (0x06) or the (PLN) is not equal to IPv4 (0x04). This object is only
+         available if FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 611 }
+
+luxlAclConfigAceRowEditorArpFlagHrd OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's hardware address space field (HRD) is to
+         be compared. The value 0 means any HRD value is allowed (don't-care
+         field), value 1 means HRD is not equal to Ethernet (1) and value 2
+         means HRD is equal to Ethernet (1). This object is only available if
+         FrameType is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 612 }
+
+luxlAclConfigAceRowEditorArpFlagPro OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a ARP packet's protocol address space field (PRO) is to
+         be compared. The value 0 means any PRO value is allowed (don't-care
+         field), value 1 means PRO is not equal to IP (0x800) and value 2 means
+         PRO is equal to IP (0x800). This object is only available if FrameType
+         is arp(4)."
+    ::= { luxlAclConfigAceRowEditor 613 }
+
+luxlAclConfigAceRowEditorIpv4ProtocolOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's protocol field is to be compared. This
+         object is only available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceRowEditor 701 }
+
+luxlAclConfigAceRowEditorIpv4Protocol OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protocol number field in the IPv4 header used to indicate a higher
+         layer protocol. Possible values are 0-255. This object is only
+         available if FrameType is ipv4(5) and Ipv4ProtocolOp is specific(1)."
+    ::= { luxlAclConfigAceRowEditor 702 }
+
+luxlAclConfigAceRowEditorIpv4SrcIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified source IPv4 address. The packet's sender address is
+         AND-ed with the value of Ipv4SrcIpMask and then compared with the value
+         of this object. If Ipv4SrcIp and Ipv4SrcIpMask are 0.0.0.0, this entry
+         matches any source IP address. This object is only available if
+         FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceRowEditor 703 }
+
+luxlAclConfigAceRowEditorIpv4SrcIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified source IPv4 address mask. This object is only available
+         if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceRowEditor 704 }
+
+luxlAclConfigAceRowEditorIpv4DestIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified destination IPv4 address. The packet's sender address is
+         AND-ed with the value of Ipv4DestIpMask and then compared with the
+         value of this object. If Ipv4DestIp and Ipv4DestIpMask are 0.0.0.0,
+         this entry matches any destination IP address. This object is only
+         available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceRowEditor 705 }
+
+luxlAclConfigAceRowEditorIpv4DestIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified destination IPv4 address mask. This object is only
+         available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceRowEditor 706 }
+
+luxlAclConfigAceRowEditorIpv4IcmpTypeOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's ICMP type field is to be compared. This
+         object is only available if FrameType is ipv4(5) and Ipv4Protocol is
+         icmp(1)."
+    ::= { luxlAclConfigAceRowEditor 707 }
+
+luxlAclConfigAceRowEditorIpv4IcmpType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ICMP type field in the IPv4 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv4(5), Ipv4Protocol is
+         icmp(1) and Ipv4IcmpTypeOp is specific(1)."
+    ::= { luxlAclConfigAceRowEditor 708 }
+
+luxlAclConfigAceRowEditorIpv4IcmpCodeOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's ICMP code field is to be compared. This
+         object is only available if FrameType is ipv4(5) and Ipv4Protocol is
+         icmp(1)."
+    ::= { luxlAclConfigAceRowEditor 709 }
+
+luxlAclConfigAceRowEditorIpv4IcmpCode OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ICMP code field in the IPv4 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv4(5), Ipv4Protocol is
+         icmp(1) and Ipv4IcmpCodeOp is specific(1)."
+    ::= { luxlAclConfigAceRowEditor 710 }
+
+luxlAclConfigAceRowEditorIpv4SrcPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         This object is only available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceRowEditor 711 }
+
+luxlAclConfigAceRowEditorIpv4SrcPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol. If the Ipv4SrcPortOp
+         object is range(2), this object will be the starting port number of the
+         port range. Valid range is 0-65535. This object is only available if
+         FrameType is ipv4(5) and Ipv4SrcPortOp is not any(0)."
+    ::= { luxlAclConfigAceRowEditor 712 }
+
+luxlAclConfigAceRowEditorIpv4SrcPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol. If the Ipv4SrcPortOp
+         object is range(2), this object will be the ending port number of the
+         port range. Valid range is 0-65535. This object is only available if
+         FrameType is ipv4(5) and Ipv4SrcPortOp is range(2)."
+    ::= { luxlAclConfigAceRowEditor 713 }
+
+luxlAclConfigAceRowEditorIpv4DestPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared. This object is only available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceRowEditor 714 }
+
+luxlAclConfigAceRowEditorIpv4DestPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv4DestPortOp object in the same row is range(2), this object will be
+         the starting port number of the port range. Valid range is 0-65535.
+         This object is only available if FrameType is ipv4(5) and
+         Ipv4DestPortOp is not any(0)."
+    ::= { luxlAclConfigAceRowEditor 715 }
+
+luxlAclConfigAceRowEditorIpv4DestPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv4DestPortOp object in the same row is range(2), this object will be
+         the ending port number of the port range. Valid range is 0-65535. This
+         object is only available if FrameType is ipv4(5) and Ipv4DestPortOp is
+         range(2)."
+    ::= { luxlAclConfigAceRowEditor 716 }
+
+luxlAclConfigAceRowEditorIpv4FlagTtl OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's Time-to-Live field (TTL) is to be
+         compared. The value 0 means any TTL value is allowed (don't-care
+         field), value 1 means TTL is not equal zero and value 2 means TTL is
+         equal to zero. This object is only available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceRowEditor 717 }
+
+luxlAclConfigAceRowEditorIpv4FlagFragment OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's More-Fragments field (MF) is to be
+         compared. The value 0 means any MF value is allowed (don't-care field),
+         value 1 means MF is not equal one (MF field isn't set) and value 2
+         means MF is equal to one (MF field is set). This object is only
+         available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceRowEditor 718 }
+
+luxlAclConfigAceRowEditorIpv4FlagIpOption OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv4 packet's options field is to be compared. This
+         object is only available if FrameType is ipv4(5)."
+    ::= { luxlAclConfigAceRowEditor 719 }
+
+luxlAclConfigAceRowEditorIpv4TcpFlagFin OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP FIN flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 720 }
+
+luxlAclConfigAceRowEditorIpv4TcpFlagSyn OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP SYN flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 721 }
+
+luxlAclConfigAceRowEditorIpv4TcpFlagRst OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP RST flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 722 }
+
+luxlAclConfigAceRowEditorIpv4TcpFlagPsh OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP PSH flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 723 }
+
+luxlAclConfigAceRowEditorIpv4TcpFlagAck OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP ACK flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 724 }
+
+luxlAclConfigAceRowEditorIpv4TcpFlagUrg OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how the IPv4 TCP URG flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 725 }
+
+luxlAclConfigAceRowEditorIpv6NextHeaderOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify the IPv6 next header filter for this ACE. This object is only
+         available if FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceRowEditor 801 }
+
+luxlAclConfigAceRowEditorIpv6NextHeader OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "When 'Specific' is selected for the IPv6 next header value, you can
+         enter a specific value. The allowed range is 0 to 255. A frame that
+         hits this ACE matches this IPv6 protocol value. This object is only
+         available if FrameType is ipv6(6) and Ipv6NextHeaderOp is specific(1)."
+    ::= { luxlAclConfigAceRowEditor 802 }
+
+luxlAclConfigAceRowEditorIpv6Icmpv6TypeOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 packet's ICMPv6 type field is to be compared. This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         icmpv6(58)."
+    ::= { luxlAclConfigAceRowEditor 803 }
+
+luxlAclConfigAceRowEditorIpv6Icmpv6Type OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ICMPv6 type field in the IPv6 header. Possible values are 0-255.
+         This object is only available if FrameType is ipv6(6), Ipv6NextHeader
+         is icmpv6(58) and Ipv6Icmpv6TypeOp is specific(1)."
+    ::= { luxlAclConfigAceRowEditor 804 }
+
+luxlAclConfigAceRowEditorIpv6Icmpv6CodeOp OBJECT-TYPE
+    SYNTAX      LUXLASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 packet's ICMPv6 code field is to be compared. This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         icmpv6(58)."
+    ::= { luxlAclConfigAceRowEditor 805 }
+
+luxlAclConfigAceRowEditorIpv6Icmpv6Code OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ICMP code field in the IPv6 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv6(6), Ipv6NextHeader is
+         icmpv6(58) and Ipv6Icmpv6CodeOp is specific(1)."
+    ::= { luxlAclConfigAceRowEditor 806 }
+
+luxlAclConfigAceRowEditorIpv6SrcIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified source IPv6 address. The packet's sender address is
+         AND-ed with the value of Ipv6SrcIpMask and then compared with the value
+         of this object. If Ipv6SrcIp and Ipv4SrcIpMask are 0::, this entry
+         matches any source IP address. This object is only available if
+         FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceRowEditor 807 }
+
+luxlAclConfigAceRowEditorIpv6SrcIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The specified source IPv6 address mask. This object is only available
+         if FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceRowEditor 808 }
+
+luxlAclConfigAceRowEditorIpv6SrcPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         This object is only available if FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceRowEditor 809 }
+
+luxlAclConfigAceRowEditorIpv6SrcPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol. If the Ipv6SrcPortOp
+         object in the same row is range(2), this object will be the starting
+         port number of the port range. Valid range is 0-65535. This object is
+         only available if FrameType is ipv6(6) and Ipv6SrcPortOp is not any(0)."
+    ::= { luxlAclConfigAceRowEditor 810 }
+
+luxlAclConfigAceRowEditorIpv6SrcPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The source port number of the TCP or UDP protocol. If the Ipv6SrcPortOp
+         object in the same row is range(2), this object will be the ending port
+         number of the port range. Valid range is 0-65535. This object is only
+         available if FrameType is ipv6(6) and Ipv6SrcPortOp is range(2)."
+    ::= { luxlAclConfigAceRowEditor 811 }
+
+luxlAclConfigAceRowEditorIpv6DestPortOp OBJECT-TYPE
+    SYNTAX      LUXLASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared. This object is only available if FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceRowEditor 812 }
+
+luxlAclConfigAceRowEditorIpv6DestPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv6DestPortOp object in the same row is range(2), this object will be
+         the starting port number of the port range. Valid range is 0-65535.
+         This object is only available if FrameType is ipv6(6) and
+         Ipv6DestPortOp is not any(0)."
+    ::= { luxlAclConfigAceRowEditor 813 }
+
+luxlAclConfigAceRowEditorIpv6DestPortRange OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv6DestPortOp object in the same row is range(2), this object will be
+         the ending port number of the port range. Valid range is 0-65535. This
+         object is only available if FrameType is ipv6(6) and Ipv6DestPortOp is
+         range(2)."
+    ::= { luxlAclConfigAceRowEditor 814 }
+
+luxlAclConfigAceRowEditorIpv6FlagTtl OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 packet's Time-to-Live field (TTL) is to be
+         compared. The value 0 means any TTL value is allowed (don't-care
+         field), value 1 means TTL is not equal zero and value 2 means TTL is
+         equal to zero. This object is only available if FrameType is ipv6(6)."
+    ::= { luxlAclConfigAceRowEditor 815 }
+
+luxlAclConfigAceRowEditorIpv6TcpFlagFin OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'No more data from sender' field
+         (FIN) is to be compared. The value 0 means any FIN value is allowed
+         (don't-care field), value 1 means FIN is not equal one (FIN field isn't
+         set) and value 2 means FIN is equal to one (FIN field is set). This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 816 }
+
+luxlAclConfigAceRowEditorIpv6TcpFlagSyn OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'Synchronize sequence numbers' field
+         (SYN) is to be compared. The value 0 means any SYN value is allowed
+         (don't-care field), value 1 means SYN is not equal one (FIN field isn't
+         set) and value 2 means SYN is equal to one (FIN field is set). This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 817 }
+
+luxlAclConfigAceRowEditorIpv6TcpFlagRst OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'Reset the connection' field (RST) is
+         to be compared. The value 0 means any RST value is allowed (don't-care
+         field), value 1 means RST is not equal one (FIN field isn't set) and
+         value 2 means RST is equal to one (FIN field is set). This object is
+         only available if FrameType is ipv6(6) and Ipv6NextHeader is tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 818 }
+
+luxlAclConfigAceRowEditorIpv6TcpFlagPsh OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'Push Function' field (PSH) is to be
+         compared. The value 0 means any PSH value is allowed (don't-care
+         field), value 1 means PSH is not equal one (FIN field isn't set) and
+         value 2 means PSH is equal to one (FIN field is set). This object is
+         only available if FrameType is ipv6(6) and Ipv6NextHeader is tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 819 }
+
+luxlAclConfigAceRowEditorIpv6TcpFlagAck OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'Acknowledgment field significant'
+         field (ACK) is to be compared. The value 0 means any FIN value is
+         allowed (don't-care field), value 1 means ACK is not equal one (FIN
+         field isn't set) and value 2 means ACK is equal to one (FIN field is
+         set). This object is only available if FrameType is ipv6(6) and
+         Ipv6NextHeader is tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 820 }
+
+luxlAclConfigAceRowEditorIpv6TcpFlagUrg OBJECT-TYPE
+    SYNTAX      LUXLBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates how a IPv6 TCP packet's 'Urgent Pointer field significant'
+         field (URG) is to be compared. The value 0 means any URG value is
+         allowed (don't-care field), value 1 means URG is not equal one (FIN
+         field isn't set) and value 2 means URG is equal to one (FIN field is
+         set). This object is only available if FrameType is ipv6(6) and
+         Ipv6NextHeader is tcp(6)."
+    ::= { luxlAclConfigAceRowEditor 821 }
+
+luxlAclConfigAceRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlAclConfigAceRowEditor 10000 }
+
+luxlAclConfigAcePrecedenceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAclConfigAcePrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "It displays the sequence of ACEs to be hit."
+    ::= { luxlAclConfigAce 3 }
+
+luxlAclConfigAcePrecedenceEntry OBJECT-TYPE
+    SYNTAX      LUXLAclConfigAcePrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the corresponding ACE ID."
+    INDEX       { luxlAclConfigAcePrecedencePrecedence }
+    ::= { luxlAclConfigAcePrecedenceTable 1 }
+
+LUXLAclConfigAcePrecedenceEntry ::= SEQUENCE {
+    luxlAclConfigAcePrecedencePrecedence    Integer32,
+    luxlAclConfigAcePrecedenceAceId     Unsigned32
+}
+
+luxlAclConfigAcePrecedencePrecedence OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The ACL ACE hit precedence."
+    ::= { luxlAclConfigAcePrecedenceEntry 1 }
+
+luxlAclConfigAcePrecedenceAceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Identifier of ACE"
+    ::= { luxlAclConfigAcePrecedenceEntry 2 }
+
+luxlAclStatus OBJECT IDENTIFIER
+    ::= { luxlAclMibObjects 3 }
+
+luxlAclStatusInterface OBJECT IDENTIFIER
+    ::= { luxlAclStatus 2 }
+
+luxlAclStatusInterfaceHitCountTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAclStatusInterfaceHitCountEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table of interface hit count status."
+    ::= { luxlAclStatusInterface 1 }
+
+luxlAclStatusInterfaceHitCountEntry OBJECT-TYPE
+    SYNTAX      LUXLAclStatusInterfaceHitCountEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the hit count status per interface."
+    INDEX       { luxlAclStatusInterfaceHitCountIfIndex }
+    ::= { luxlAclStatusInterfaceHitCountTable 1 }
+
+LUXLAclStatusInterfaceHitCountEntry ::= SEQUENCE {
+    luxlAclStatusInterfaceHitCountIfIndex   LUXLInterfaceIndex,
+    luxlAclStatusInterfaceHitCountCounter   Unsigned32
+}
+
+luxlAclStatusInterfaceHitCountIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The index of logical interface."
+    ::= { luxlAclStatusInterfaceHitCountEntry 1 }
+
+luxlAclStatusInterfaceHitCountCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The hit count of this interface."
+    ::= { luxlAclStatusInterfaceHitCountEntry 2 }
+
+luxlAclStatusAce OBJECT IDENTIFIER
+    ::= { luxlAclStatus 3 }
+
+luxlAclStatusAceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAclStatusAceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table of ACE status."
+    ::= { luxlAclStatusAce 1 }
+
+luxlAclStatusAceEntry OBJECT-TYPE
+    SYNTAX      LUXLAclStatusAceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the status per switch per precedence."
+    INDEX       { luxlAclStatusAceSwitchId, luxlAclStatusAcePrecedence }
+    ::= { luxlAclStatusAceTable 1 }
+
+LUXLAclStatusAceEntry ::= SEQUENCE {
+    luxlAclStatusAceSwitchId    Integer32,
+    luxlAclStatusAcePrecedence      Integer32,
+    luxlAclStatusAceAclUser     LUXLDisplayString,
+    luxlAclStatusAceAceId   Unsigned32,
+    luxlAclStatusAceConflict    TruthValue
+}
+
+luxlAclStatusAceSwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The switch ID."
+    ::= { luxlAclStatusAceEntry 1 }
+
+luxlAclStatusAcePrecedence OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The ACL ACE hit precedence."
+    ::= { luxlAclStatusAceEntry 2 }
+
+luxlAclStatusAceAclUser OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "User of ACE"
+    ::= { luxlAclStatusAceEntry 3 }
+
+luxlAclStatusAceAceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Identifier of ACE"
+    ::= { luxlAclStatusAceEntry 4 }
+
+luxlAclStatusAceConflict OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The conflict status of this ACE. When the status value is true, it
+         means the specific ACE is not applied to the hardware due to hardware
+         limitations."
+    ::= { luxlAclStatusAceEntry 5 }
+
+luxlAclStatusAceHitCountTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAclStatusAceHitCountEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table of ACE hit count status."
+    ::= { luxlAclStatusAce 2 }
+
+luxlAclStatusAceHitCountEntry OBJECT-TYPE
+    SYNTAX      LUXLAclStatusAceHitCountEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the hit count status per ACE."
+    INDEX       { luxlAclStatusAceHitCountAceId }
+    ::= { luxlAclStatusAceHitCountTable 1 }
+
+LUXLAclStatusAceHitCountEntry ::= SEQUENCE {
+    luxlAclStatusAceHitCountAceId   Integer32,
+    luxlAclStatusAceHitCountCounter     Unsigned32
+}
+
+luxlAclStatusAceHitCountAceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The ACE ID."
+    ::= { luxlAclStatusAceHitCountEntry 1 }
+
+luxlAclStatusAceHitCountCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The hit count of this ACE."
+    ::= { luxlAclStatusAceHitCountEntry 2 }
+
+luxlAclControl OBJECT IDENTIFIER
+    ::= { luxlAclMibObjects 4 }
+
+luxlAclControlGlobals OBJECT IDENTIFIER
+    ::= { luxlAclControl 1 }
+
+luxlAclControlGlobalsClearAllHitCount OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set true to clear hit counts of all ACEs and interfaces."
+    ::= { luxlAclControlGlobals 1 }
+
+luxlAclControlInterface OBJECT IDENTIFIER
+    ::= { luxlAclControl 2 }
+
+luxlAclControlInterfaceControlTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAclControlInterfaceControlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of interface control"
+    ::= { luxlAclControlInterface 1 }
+
+luxlAclControlInterfaceControlEntry OBJECT-TYPE
+    SYNTAX      LUXLAclControlInterfaceControlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of parameters"
+    INDEX       { luxlAclControlInterfaceControlIfIndex }
+    ::= { luxlAclControlInterfaceControlTable 1 }
+
+LUXLAclControlInterfaceControlEntry ::= SEQUENCE {
+    luxlAclControlInterfaceControlIfIndex   LUXLInterfaceIndex,
+    luxlAclControlInterfaceControlState     TruthValue
+}
+
+luxlAclControlInterfaceControlIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The index of logical interface."
+    ::= { luxlAclControlInterfaceControlEntry 1 }
+
+luxlAclControlInterfaceControlState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specify the port status. True is to enable the port and false is to
+         shutdown the port"
+    ::= { luxlAclControlInterfaceControlEntry 2 }
+
+luxlAclMibConformance OBJECT IDENTIFIER
+    ::= { luxlAclMib 2 }
+
+luxlAclMibCompliances OBJECT IDENTIFIER
+    ::= { luxlAclMibConformance 1 }
+
+luxlAclMibGroups OBJECT IDENTIFIER
+    ::= { luxlAclMibConformance 2 }
+
+luxlAclCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclCapabilitiesAceIdMax, luxlAclCapabilitiesPolicyIdMax, 
+                  luxlAclCapabilitiesRateLimiterIdMax, 
+                  luxlAclCapabilitiesEvcPolicerIdMax, 
+                  luxlAclCapabilitiesRateLimiterBitRateSupported, 
+                  luxlAclCapabilitiesEvcPolicerSupported, 
+                  luxlAclCapabilitiesMirrorSupported, 
+                  luxlAclCapabilitiesMultipleRedirectPortsSupported, 
+                  luxlAclCapabilitiesSecondLookupSupported, 
+                  luxlAclCapabilitiesMultipleIngressPortsSupported, 
+                  luxlAclCapabilitiesEgressPortSupported, 
+                  luxlAclCapabilitiesVlanTaggedSupported, 
+                  luxlAclCapabilitiesStackableAceSupported }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 1 }
+
+luxlAclConfigInterfaceConfigInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclConfigInterfaceConfigPolicyId, 
+                  luxlAclConfigInterfaceConfigHitAction, 
+                  luxlAclConfigInterfaceConfigRedirectPortList, 
+                  luxlAclConfigInterfaceConfigRateLimiterId, 
+                  luxlAclConfigInterfaceConfigEvcPolicerId, 
+                  luxlAclConfigInterfaceConfigMirror, 
+                  luxlAclConfigInterfaceConfigLogging, 
+                  luxlAclConfigInterfaceConfigShutdown }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 2 }
+
+luxlAclConfigRateLimiterInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclConfigRateLimiterBitRateEnable, 
+                  luxlAclConfigRateLimiterBitRate, 
+                  luxlAclConfigRateLimiterPacketRate }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 3 }
+
+luxlAclConfigAceInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclConfigAceNextAceId, luxlAclConfigAceHitAction, 
+                  luxlAclConfigAceRedirectPortList, 
+                  luxlAclConfigAceRedirectPortListSwitchPort, 
+                  luxlAclConfigAceEgressPortList, luxlAclConfigAceRateLimiterId, 
+                  luxlAclConfigAceEvcPolicerId, luxlAclConfigAceMirror, 
+                  luxlAclConfigAceLogging, luxlAclConfigAceShutdown, 
+                  luxlAclConfigAceIngressPortListMode, 
+                  luxlAclConfigAceIngressPortList, 
+                  luxlAclConfigAceIngressPortListSwitch, 
+                  luxlAclConfigAceIngressPortListSwitchPort, 
+                  luxlAclConfigAcePolicyValue, luxlAclConfigAcePolicyMask, 
+                  luxlAclConfigAceSecondLookup, luxlAclConfigAceVlanId, 
+                  luxlAclConfigAceVlanTagPriority, luxlAclConfigAceVlanTagged, 
+                  luxlAclConfigAceFrameType, luxlAclConfigAceDestMacOp, 
+                  luxlAclConfigAceEtherSrcMacOp, luxlAclConfigAceEtherSrcMac, 
+                  luxlAclConfigAceEtherDestMac, luxlAclConfigAceEtherType, 
+                  luxlAclConfigAceArpSrcMacOp, luxlAclConfigAceArpSrcMac, 
+                  luxlAclConfigAceArpSenderIp, luxlAclConfigAceArpSenderIpMask, 
+                  luxlAclConfigAceArpTargetIp, luxlAclConfigAceArpTargetIpMask, 
+                  luxlAclConfigAceArpOpcode, luxlAclConfigAceArpFlagReq, 
+                  luxlAclConfigAceArpFlagSha, luxlAclConfigAceArpFlagTha, 
+                  luxlAclConfigAceArpFlagHln, luxlAclConfigAceArpFlagHrd, 
+                  luxlAclConfigAceArpFlagPro, luxlAclConfigAceIpv4ProtocolOp, 
+                  luxlAclConfigAceIpv4Protocol, luxlAclConfigAceIpv4SrcIp, 
+                  luxlAclConfigAceIpv4SrcIpMask, luxlAclConfigAceIpv4DestIp, 
+                  luxlAclConfigAceIpv4DestIpMask, luxlAclConfigAceIpv4IcmpTypeOp, 
+                  luxlAclConfigAceIpv4IcmpType, luxlAclConfigAceIpv4IcmpCodeOp, 
+                  luxlAclConfigAceIpv4IcmpCode, luxlAclConfigAceIpv4SrcPortOp, 
+                  luxlAclConfigAceIpv4SrcPort, luxlAclConfigAceIpv4SrcPortRange, 
+                  luxlAclConfigAceIpv4DestPortOp, luxlAclConfigAceIpv4DestPort, 
+                  luxlAclConfigAceIpv4DestPortRange, luxlAclConfigAceIpv4FlagTtl, 
+                  luxlAclConfigAceIpv4FlagFragment, 
+                  luxlAclConfigAceIpv4FlagIpOption, 
+                  luxlAclConfigAceIpv4TcpFlagFin, luxlAclConfigAceIpv4TcpFlagSyn, 
+                  luxlAclConfigAceIpv4TcpFlagRst, luxlAclConfigAceIpv4TcpFlagPsh, 
+                  luxlAclConfigAceIpv4TcpFlagAck, luxlAclConfigAceIpv4TcpFlagUrg, 
+                  luxlAclConfigAceIpv6NextHeaderOp, 
+                  luxlAclConfigAceIpv6NextHeader, 
+                  luxlAclConfigAceIpv6Icmpv6TypeOp, 
+                  luxlAclConfigAceIpv6Icmpv6Type, 
+                  luxlAclConfigAceIpv6Icmpv6CodeOp, 
+                  luxlAclConfigAceIpv6Icmpv6Code, luxlAclConfigAceIpv6SrcIp, 
+                  luxlAclConfigAceIpv6SrcIpMask, luxlAclConfigAceIpv6SrcPortOp, 
+                  luxlAclConfigAceIpv6SrcPort, luxlAclConfigAceIpv6SrcPortRange, 
+                  luxlAclConfigAceIpv6DestPortOp, luxlAclConfigAceIpv6DestPort, 
+                  luxlAclConfigAceIpv6DestPortRange, luxlAclConfigAceIpv6FlagTtl, 
+                  luxlAclConfigAceIpv6TcpFlagFin, luxlAclConfigAceIpv6TcpFlagSyn, 
+                  luxlAclConfigAceIpv6TcpFlagRst, luxlAclConfigAceIpv6TcpFlagPsh, 
+                  luxlAclConfigAceIpv6TcpFlagAck, luxlAclConfigAceIpv6TcpFlagUrg, 
+                  luxlAclConfigAceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 4 }
+
+luxlAclConfigAceRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclConfigAceRowEditorAceId, 
+                  luxlAclConfigAceRowEditorNextAceId, 
+                  luxlAclConfigAceRowEditorHitAction, 
+                  luxlAclConfigAceRowEditorRedirectPortList, 
+                  luxlAclConfigAceRowEditorRedirectPortListSwitchPort, 
+                  luxlAclConfigAceRowEditorEgressPortList, 
+                  luxlAclConfigAceRowEditorRateLimiterId, 
+                  luxlAclConfigAceRowEditorEvcPolicerId, 
+                  luxlAclConfigAceRowEditorMirror, 
+                  luxlAclConfigAceRowEditorLogging, 
+                  luxlAclConfigAceRowEditorShutdown, 
+                  luxlAclConfigAceRowEditorIngressPortListMode, 
+                  luxlAclConfigAceRowEditorIngressPortList, 
+                  luxlAclConfigAceRowEditorIngressPortListSwitch, 
+                  luxlAclConfigAceRowEditorIngressPortListSwitchPort, 
+                  luxlAclConfigAceRowEditorPolicyValue, 
+                  luxlAclConfigAceRowEditorPolicyMask, 
+                  luxlAclConfigAceRowEditorSecondLookup, 
+                  luxlAclConfigAceRowEditorVlanId, 
+                  luxlAclConfigAceRowEditorVlanTagPriority, 
+                  luxlAclConfigAceRowEditorVlanTagged, 
+                  luxlAclConfigAceRowEditorFrameType, 
+                  luxlAclConfigAceRowEditorDestMacOp, 
+                  luxlAclConfigAceRowEditorEtherSrcMacOp, 
+                  luxlAclConfigAceRowEditorEtherSrcMac, 
+                  luxlAclConfigAceRowEditorEtherDestMac, 
+                  luxlAclConfigAceRowEditorEtherType, 
+                  luxlAclConfigAceRowEditorArpSrcMacOp, 
+                  luxlAclConfigAceRowEditorArpSrcMac, 
+                  luxlAclConfigAceRowEditorArpSenderIp, 
+                  luxlAclConfigAceRowEditorArpSenderIpMask, 
+                  luxlAclConfigAceRowEditorArpTargetIp, 
+                  luxlAclConfigAceRowEditorArpTargetIpMask, 
+                  luxlAclConfigAceRowEditorArpOpcode, 
+                  luxlAclConfigAceRowEditorArpFlagReq, 
+                  luxlAclConfigAceRowEditorArpFlagSha, 
+                  luxlAclConfigAceRowEditorArpFlagTha, 
+                  luxlAclConfigAceRowEditorArpFlagHln, 
+                  luxlAclConfigAceRowEditorArpFlagHrd, 
+                  luxlAclConfigAceRowEditorArpFlagPro, 
+                  luxlAclConfigAceRowEditorIpv4ProtocolOp, 
+                  luxlAclConfigAceRowEditorIpv4Protocol, 
+                  luxlAclConfigAceRowEditorIpv4SrcIp, 
+                  luxlAclConfigAceRowEditorIpv4SrcIpMask, 
+                  luxlAclConfigAceRowEditorIpv4DestIp, 
+                  luxlAclConfigAceRowEditorIpv4DestIpMask, 
+                  luxlAclConfigAceRowEditorIpv4IcmpTypeOp, 
+                  luxlAclConfigAceRowEditorIpv4IcmpType, 
+                  luxlAclConfigAceRowEditorIpv4IcmpCodeOp, 
+                  luxlAclConfigAceRowEditorIpv4IcmpCode, 
+                  luxlAclConfigAceRowEditorIpv4SrcPortOp, 
+                  luxlAclConfigAceRowEditorIpv4SrcPort, 
+                  luxlAclConfigAceRowEditorIpv4SrcPortRange, 
+                  luxlAclConfigAceRowEditorIpv4DestPortOp, 
+                  luxlAclConfigAceRowEditorIpv4DestPort, 
+                  luxlAclConfigAceRowEditorIpv4DestPortRange, 
+                  luxlAclConfigAceRowEditorIpv4FlagTtl, 
+                  luxlAclConfigAceRowEditorIpv4FlagFragment, 
+                  luxlAclConfigAceRowEditorIpv4FlagIpOption, 
+                  luxlAclConfigAceRowEditorIpv4TcpFlagFin, 
+                  luxlAclConfigAceRowEditorIpv4TcpFlagSyn, 
+                  luxlAclConfigAceRowEditorIpv4TcpFlagRst, 
+                  luxlAclConfigAceRowEditorIpv4TcpFlagPsh, 
+                  luxlAclConfigAceRowEditorIpv4TcpFlagAck, 
+                  luxlAclConfigAceRowEditorIpv4TcpFlagUrg, 
+                  luxlAclConfigAceRowEditorIpv6NextHeaderOp, 
+                  luxlAclConfigAceRowEditorIpv6NextHeader, 
+                  luxlAclConfigAceRowEditorIpv6Icmpv6TypeOp, 
+                  luxlAclConfigAceRowEditorIpv6Icmpv6Type, 
+                  luxlAclConfigAceRowEditorIpv6Icmpv6CodeOp, 
+                  luxlAclConfigAceRowEditorIpv6Icmpv6Code, 
+                  luxlAclConfigAceRowEditorIpv6SrcIp, 
+                  luxlAclConfigAceRowEditorIpv6SrcIpMask, 
+                  luxlAclConfigAceRowEditorIpv6SrcPortOp, 
+                  luxlAclConfigAceRowEditorIpv6SrcPort, 
+                  luxlAclConfigAceRowEditorIpv6SrcPortRange, 
+                  luxlAclConfigAceRowEditorIpv6DestPortOp, 
+                  luxlAclConfigAceRowEditorIpv6DestPort, 
+                  luxlAclConfigAceRowEditorIpv6DestPortRange, 
+                  luxlAclConfigAceRowEditorIpv6FlagTtl, 
+                  luxlAclConfigAceRowEditorIpv6TcpFlagFin, 
+                  luxlAclConfigAceRowEditorIpv6TcpFlagSyn, 
+                  luxlAclConfigAceRowEditorIpv6TcpFlagRst, 
+                  luxlAclConfigAceRowEditorIpv6TcpFlagPsh, 
+                  luxlAclConfigAceRowEditorIpv6TcpFlagAck, 
+                  luxlAclConfigAceRowEditorIpv6TcpFlagUrg, 
+                  luxlAclConfigAceRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 5 }
+
+luxlAclConfigAcePrecedenceInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclConfigAcePrecedenceAceId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 6 }
+
+luxlAclStatusInterfaceHitCountInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclStatusInterfaceHitCountCounter }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 7 }
+
+luxlAclStatusAceInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclStatusAceAclUser, luxlAclStatusAceAceId, 
+                  luxlAclStatusAceConflict }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 8 }
+
+luxlAclStatusAceHitCountInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclStatusAceHitCountCounter }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 9 }
+
+luxlAclControlGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclControlGlobalsClearAllHitCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 10 }
+
+luxlAclControlInterfaceControlInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAclControlInterfaceControlState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAclMibGroups 11 }
+
+luxlAclMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlAclCapabilitiesInfoGroup, 
+                  luxlAclConfigInterfaceConfigInfoGroup, 
+                  luxlAclConfigRateLimiterInfoGroup, luxlAclConfigAceInfoGroup, 
+                  luxlAclConfigAceRowEditorInfoGroup, 
+                  luxlAclConfigAcePrecedenceInfoGroup, 
+                  luxlAclStatusInterfaceHitCountInfoGroup, 
+                  luxlAclStatusAceInfoGroup, luxlAclStatusAceHitCountInfoGroup, 
+                  luxlAclControlGlobalsInfoGroup, 
+                  luxlAclControlInterfaceControlInfoGroup }
+
+    ::= { luxlAclMibCompliances 1 }
+
+END

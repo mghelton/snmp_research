@@ -1,0 +1,556 @@
+-- *****************************************************************
+-- VCL-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-VCL-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLVclProtoEncap FROM LUXL-TC
+    ;
+
+luxlVclMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "Private VCL MIB."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 79 }
+
+
+luxlVclMibObjects OBJECT IDENTIFIER
+    ::= { luxlVclMib 1 }
+
+luxlVclConfig OBJECT IDENTIFIER
+    ::= { luxlVclMibObjects 2 }
+
+luxlVclConfigMac OBJECT IDENTIFIER
+    ::= { luxlVclConfig 1 }
+
+luxlVclConfigMacTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLVclConfigMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the MAC address to VLAN ID configuration table."
+    ::= { luxlVclConfigMac 1 }
+
+luxlVclConfigMacEntry OBJECT-TYPE
+    SYNTAX      LUXLVclConfigMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents a configured MAC-based
+         classification.
+         
+         "
+    INDEX       { luxlVclConfigMacMacAddress }
+    ::= { luxlVclConfigMacTable 1 }
+
+LUXLVclConfigMacEntry ::= SEQUENCE {
+    luxlVclConfigMacMacAddress      MacAddress,
+    luxlVclConfigMacVlanId      Integer32,
+    luxlVclConfigMacPortList    LUXLPortList,
+    luxlVclConfigMacAction      LUXLRowEditorState
+}
+
+luxlVclConfigMacMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MAC address for which this entry is applicable."
+    ::= { luxlVclConfigMacEntry 1 }
+
+luxlVclConfigMacVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id of the mapping."
+    ::= { luxlVclConfigMacEntry 2 }
+
+luxlVclConfigMacPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of stack/switch ports on which this entry is active."
+    ::= { luxlVclConfigMacEntry 3 }
+
+luxlVclConfigMacAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlVclConfigMacEntry 100 }
+
+luxlVclConfigMacRowEditor OBJECT IDENTIFIER
+    ::= { luxlVclConfigMac 2 }
+
+luxlVclConfigMacRowEditorMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MAC address for which this entry is applicable."
+    ::= { luxlVclConfigMacRowEditor 1 }
+
+luxlVclConfigMacRowEditorVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id of the mapping."
+    ::= { luxlVclConfigMacRowEditor 2 }
+
+luxlVclConfigMacRowEditorPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of stack/switch ports on which this entry is active."
+    ::= { luxlVclConfigMacRowEditor 3 }
+
+luxlVclConfigMacRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlVclConfigMacRowEditor 100 }
+
+luxlVclConfigIp OBJECT IDENTIFIER
+    ::= { luxlVclConfig 2 }
+
+luxlVclConfigIpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLVclConfigIpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the IP Subnet to VLAN ID configuration table. The key of this
+         table is the IP subnet expressed as x.x.x.x/x, where the first 4 octets
+         represent the IPv4 address and the last one is the mask length.
+         
+         NOTE#1: Inside the VCL module these entries are actually sorted based
+         on a priority defined by the mask length, so that subnets with larger
+         mask lengths are first in the list, followed by entries with smaller
+         mask lengths. SNMP cannot follow this sorting, therefore the order the
+         entries are retrieved by the iterator may not be the same as the
+         actually stored order. (This is not an issue, but should be taken into
+         consideration when using the SNMP interface to create a user interface.
+         
+         NOTE#2: Even though only the subnet address is stored in the table
+         (i.e. both 192.168.1.0/4 and 192.168.2.0/4 will end up as 192.0.0.0/4),
+         the SNMP iterator will NOT take this into consideration. So, when
+         searching the next subnet of 192.168.1.0/4, the result could be
+         193.0.0.0/4 but not 192.168.1.0/24 (granted that these entries are
+         present)"
+    ::= { luxlVclConfigIp 1 }
+
+luxlVclConfigIpEntry OBJECT-TYPE
+    SYNTAX      LUXLVclConfigIpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents a configured IP Subnet-based
+         classification.
+         
+         "
+    INDEX       { luxlVclConfigIpIpSubnetAddress, luxlVclConfigIpIpSubnetMaskLength }
+    ::= { luxlVclConfigIpTable 1 }
+
+LUXLVclConfigIpEntry ::= SEQUENCE {
+    luxlVclConfigIpIpSubnetAddress      IpAddress,
+    luxlVclConfigIpIpSubnetMaskLength   Integer32,
+    luxlVclConfigIpVlanId   Integer32,
+    luxlVclConfigIpPortList     LUXLPortList,
+    luxlVclConfigIpAction   LUXLRowEditorState
+}
+
+luxlVclConfigIpIpSubnetAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The IP subnet address for which this entry is applicable."
+    ::= { luxlVclConfigIpEntry 1 }
+
+luxlVclConfigIpIpSubnetMaskLength OBJECT-TYPE
+    SYNTAX      Integer32 (1..32)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The IP subnet mask length for which this entry is applicable."
+    ::= { luxlVclConfigIpEntry 2 }
+
+luxlVclConfigIpVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id of the mapping."
+    ::= { luxlVclConfigIpEntry 3 }
+
+luxlVclConfigIpPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of stack/switch ports on which this entry is active."
+    ::= { luxlVclConfigIpEntry 4 }
+
+luxlVclConfigIpAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlVclConfigIpEntry 100 }
+
+luxlVclConfigIpRowEditor OBJECT IDENTIFIER
+    ::= { luxlVclConfigIp 2 }
+
+luxlVclConfigIpRowEditorIpSubnetAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IP subnet address for which this entry is applicable."
+    ::= { luxlVclConfigIpRowEditor 1 }
+
+luxlVclConfigIpRowEditorIpSubnetMaskLength OBJECT-TYPE
+    SYNTAX      Integer32 (1..32)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The IP subnet mask length for which this entry is applicable."
+    ::= { luxlVclConfigIpRowEditor 2 }
+
+luxlVclConfigIpRowEditorVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id of the mapping."
+    ::= { luxlVclConfigIpRowEditor 3 }
+
+luxlVclConfigIpRowEditorPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of stack/switch ports on which this entry is active."
+    ::= { luxlVclConfigIpRowEditor 4 }
+
+luxlVclConfigIpRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlVclConfigIpRowEditor 100 }
+
+luxlVclConfigProtocol OBJECT IDENTIFIER
+    ::= { luxlVclConfig 3 }
+
+luxlVclConfigProtocolProto OBJECT IDENTIFIER
+    ::= { luxlVclConfigProtocol 1 }
+
+luxlVclConfigProtocolProtoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLVclConfigProtocolProtoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the Protocol to Protocol Group mapping table."
+    ::= { luxlVclConfigProtocolProto 1 }
+
+luxlVclConfigProtocolProtoEntry OBJECT-TYPE
+    SYNTAX      LUXLVclConfigProtocolProtoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents a Protocol to Group mapping.
+         
+         "
+    INDEX       { luxlVclConfigProtocolProtoProtocolEncapsulation }
+    ::= { luxlVclConfigProtocolProtoTable 1 }
+
+LUXLVclConfigProtocolProtoEntry ::= SEQUENCE {
+    luxlVclConfigProtocolProtoProtocolEncapsulation     LUXLVclProtoEncap,
+    luxlVclConfigProtocolProtoProtocolGroupName     LUXLDisplayString,
+    luxlVclConfigProtocolProtoAction    LUXLRowEditorState
+}
+
+luxlVclConfigProtocolProtoProtocolEncapsulation OBJECT-TYPE
+    SYNTAX      LUXLVclProtoEncap
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The protocol encapsulation of the Protocol to Group mapping."
+    ::= { luxlVclConfigProtocolProtoEntry 1 }
+
+luxlVclConfigProtocolProtoProtocolGroupName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a name identifying the protocol group."
+    ::= { luxlVclConfigProtocolProtoEntry 2 }
+
+luxlVclConfigProtocolProtoAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlVclConfigProtocolProtoEntry 100 }
+
+luxlVclConfigProtocolProtoRowEditor OBJECT IDENTIFIER
+    ::= { luxlVclConfigProtocolProto 2 }
+
+luxlVclConfigProtocolProtoRowEditorProtocolEncapsulation OBJECT-TYPE
+    SYNTAX      LUXLVclProtoEncap
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protocol encapsulation of the Protocol to Group mapping."
+    ::= { luxlVclConfigProtocolProtoRowEditor 1 }
+
+luxlVclConfigProtocolProtoRowEditorProtocolGroupName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a name identifying the protocol group."
+    ::= { luxlVclConfigProtocolProtoRowEditor 2 }
+
+luxlVclConfigProtocolProtoRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlVclConfigProtocolProtoRowEditor 100 }
+
+luxlVclConfigProtocolGroup OBJECT IDENTIFIER
+    ::= { luxlVclConfigProtocol 2 }
+
+luxlVclConfigProtocolGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLVclConfigProtocolGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the Protocol Group to VLAN ID configuration table."
+    ::= { luxlVclConfigProtocolGroup 1 }
+
+luxlVclConfigProtocolGroupEntry OBJECT-TYPE
+    SYNTAX      LUXLVclConfigProtocolGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents a Protocol Group to VLAN ID
+         mapping.
+         
+         "
+    INDEX       { luxlVclConfigProtocolGroupProtocolGroupName }
+    ::= { luxlVclConfigProtocolGroupTable 1 }
+
+LUXLVclConfigProtocolGroupEntry ::= SEQUENCE {
+    luxlVclConfigProtocolGroupProtocolGroupName     LUXLDisplayString,
+    luxlVclConfigProtocolGroupVlanId    Integer32,
+    luxlVclConfigProtocolGroupPortList      LUXLPortList,
+    luxlVclConfigProtocolGroupAction    LUXLRowEditorState
+}
+
+luxlVclConfigProtocolGroupProtocolGroupName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a name identifying the protocol group."
+    ::= { luxlVclConfigProtocolGroupEntry 1 }
+
+luxlVclConfigProtocolGroupVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id of the mapping."
+    ::= { luxlVclConfigProtocolGroupEntry 2 }
+
+luxlVclConfigProtocolGroupPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of stack/switch ports on which this entry is active."
+    ::= { luxlVclConfigProtocolGroupEntry 3 }
+
+luxlVclConfigProtocolGroupAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlVclConfigProtocolGroupEntry 100 }
+
+luxlVclConfigProtocolGroupRowEditor OBJECT IDENTIFIER
+    ::= { luxlVclConfigProtocolGroup 2 }
+
+luxlVclConfigProtocolGroupRowEditorProtocolGroupName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This is a name identifying the protocol group."
+    ::= { luxlVclConfigProtocolGroupRowEditor 1 }
+
+luxlVclConfigProtocolGroupRowEditorVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id of the mapping."
+    ::= { luxlVclConfigProtocolGroupRowEditor 2 }
+
+luxlVclConfigProtocolGroupRowEditorPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of stack/switch ports on which this entry is active."
+    ::= { luxlVclConfigProtocolGroupRowEditor 3 }
+
+luxlVclConfigProtocolGroupRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlVclConfigProtocolGroupRowEditor 100 }
+
+luxlVclMibConformance OBJECT IDENTIFIER
+    ::= { luxlVclMib 2 }
+
+luxlVclMibCompliances OBJECT IDENTIFIER
+    ::= { luxlVclMibConformance 1 }
+
+luxlVclMibGroups OBJECT IDENTIFIER
+    ::= { luxlVclMibConformance 2 }
+
+luxlVclConfigMacTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVclConfigMacVlanId, luxlVclConfigMacPortList, 
+                  luxlVclConfigMacAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVclMibGroups 1 }
+
+luxlVclConfigMacRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVclConfigMacRowEditorMacAddress, 
+                  luxlVclConfigMacRowEditorVlanId, 
+                  luxlVclConfigMacRowEditorPortList, 
+                  luxlVclConfigMacRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVclMibGroups 2 }
+
+luxlVclConfigIpTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVclConfigIpVlanId, luxlVclConfigIpPortList, 
+                  luxlVclConfigIpAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVclMibGroups 3 }
+
+luxlVclConfigIpRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVclConfigIpRowEditorIpSubnetAddress, 
+                  luxlVclConfigIpRowEditorIpSubnetMaskLength, 
+                  luxlVclConfigIpRowEditorVlanId, 
+                  luxlVclConfigIpRowEditorPortList, 
+                  luxlVclConfigIpRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVclMibGroups 4 }
+
+luxlVclConfigProtocolProtoTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVclConfigProtocolProtoProtocolGroupName, 
+                  luxlVclConfigProtocolProtoAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVclMibGroups 5 }
+
+luxlVclConfigProtocolProtoRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVclConfigProtocolProtoRowEditorProtocolEncapsulation, 
+                  luxlVclConfigProtocolProtoRowEditorProtocolGroupName, 
+                  luxlVclConfigProtocolProtoRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVclMibGroups 6 }
+
+luxlVclConfigProtocolGroupTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVclConfigProtocolGroupVlanId, 
+                  luxlVclConfigProtocolGroupPortList, 
+                  luxlVclConfigProtocolGroupAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVclMibGroups 7 }
+
+luxlVclConfigProtocolGroupRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlVclConfigProtocolGroupRowEditorProtocolGroupName, 
+                  luxlVclConfigProtocolGroupRowEditorVlanId, 
+                  luxlVclConfigProtocolGroupRowEditorPortList, 
+                  luxlVclConfigProtocolGroupRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlVclMibGroups 8 }
+
+luxlVclMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlVclConfigMacTableInfoGroup, 
+                  luxlVclConfigMacRowEditorInfoGroup, 
+                  luxlVclConfigIpTableInfoGroup, 
+                  luxlVclConfigIpRowEditorInfoGroup, 
+                  luxlVclConfigProtocolProtoTableInfoGroup, 
+                  luxlVclConfigProtocolProtoRowEditorInfoGroup, 
+                  luxlVclConfigProtocolGroupTableInfoGroup, 
+                  luxlVclConfigProtocolGroupRowEditorInfoGroup }
+
+    ::= { luxlVclMibCompliances 1 }
+
+END

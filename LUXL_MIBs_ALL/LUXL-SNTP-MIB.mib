@@ -1,0 +1,131 @@
+-- *****************************************************************
+-- SNTP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-SNTP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInetAddress FROM LUXL-TC
+    ;
+
+luxlSntpMib MODULE-IDENTITY
+    LAST-UPDATED "201405210000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Eric Lee <elee@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of SNTP"
+    REVISION    "201405210000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 105 }
+
+
+luxlSntpMibObjects OBJECT IDENTIFIER
+    ::= { luxlSntpMib 1 }
+
+luxlSntpCapabilities OBJECT IDENTIFIER
+    ::= { luxlSntpMibObjects 1 }
+
+luxlSntpCapabilitiesServerSupportIPv4 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicate if SNTP server supports Internet address type of IPv4 or not.
+         true(1) means supported. false(2) means not supported."
+    ::= { luxlSntpCapabilities 1 }
+
+luxlSntpCapabilitiesServerSupportIPv6 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicate if SNTP server supports Internet address type of IPv6 or not.
+         true(1) means supported. false(2) means not supported."
+    ::= { luxlSntpCapabilities 2 }
+
+luxlSntpCapabilitiesServerSupportDns OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicate if SNTP server supports Internet address type of DNS domain
+         name or not. true(1) means supported. false(2) means not supported."
+    ::= { luxlSntpCapabilities 3 }
+
+luxlSntpConfig OBJECT IDENTIFIER
+    ::= { luxlSntpMibObjects 2 }
+
+luxlSntpConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlSntpConfig 1 }
+
+luxlSntpConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global config mode of SNTP. true(1) is to enable SNTP function in the
+         system and false(2) is to disable it."
+    ::= { luxlSntpConfigGlobals 1 }
+
+luxlSntpConfigGlobalsServerAddress OBJECT-TYPE
+    SYNTAX      LUXLInetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Internet address of a SNTP server."
+    ::= { luxlSntpConfigGlobals 2 }
+
+luxlSntpMibConformance OBJECT IDENTIFIER
+    ::= { luxlSntpMib 2 }
+
+luxlSntpMibCompliances OBJECT IDENTIFIER
+    ::= { luxlSntpMibConformance 1 }
+
+luxlSntpMibGroups OBJECT IDENTIFIER
+    ::= { luxlSntpMibConformance 2 }
+
+luxlSntpCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSntpCapabilitiesServerSupportIPv4, 
+                  luxlSntpCapabilitiesServerSupportIPv6, 
+                  luxlSntpCapabilitiesServerSupportDns }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSntpMibGroups 1 }
+
+luxlSntpConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSntpConfigGlobalsMode, luxlSntpConfigGlobalsServerAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSntpMibGroups 2 }
+
+luxlSntpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlSntpCapabilitiesInfoGroup, 
+                  luxlSntpConfigGlobalsInfoGroup }
+
+    ::= { luxlSntpMibCompliances 1 }
+
+END

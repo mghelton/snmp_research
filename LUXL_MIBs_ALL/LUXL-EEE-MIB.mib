@@ -1,0 +1,356 @@
+-- *****************************************************************
+-- EEE-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-EEE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlEeeMib MODULE-IDENTITY
+    LAST-UPDATED "201407240000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of Energy Efficient Ethernet(EEE). "
+    REVISION    "201407240000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 74 }
+
+
+LUXLEeePreference ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the types of optimization preferences, either
+         maximum power savings or low traffic latency."
+    SYNTAX      INTEGER { latency(0), power(1) }
+
+LUXLEeeQueueType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the types of egress port queues."
+    SYNTAX      INTEGER { normal(0), urgent(1) }
+
+LUXLEeeStatusType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the feature status."
+    SYNTAX      INTEGER { no(0), yes(1), notSupported(2) }
+
+luxlEeeMibObjects OBJECT IDENTIFIER
+    ::= { luxlEeeMib 1 }
+
+luxlEeeCapabilities OBJECT IDENTIFIER
+    ::= { luxlEeeMibObjects 1 }
+
+luxlEeeCapabilitiesGlobals OBJECT IDENTIFIER
+    ::= { luxlEeeCapabilities 1 }
+
+luxlEeeCapabilitiesGlobalsOptimizationPreferences OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether device supports optimization preferences, true means
+         supported. false means not supported."
+    ::= { luxlEeeCapabilitiesGlobals 1 }
+
+luxlEeeCapabilitiesInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEeeCapabilitiesInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to interface capabilities"
+    ::= { luxlEeeCapabilities 2 }
+
+luxlEeeCapabilitiesInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLEeeCapabilitiesInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of capability parameters"
+    INDEX       { luxlEeeCapabilitiesInterfaceIfIndex }
+    ::= { luxlEeeCapabilitiesInterfaceTable 1 }
+
+LUXLEeeCapabilitiesInterfaceEntry ::= SEQUENCE {
+    luxlEeeCapabilitiesInterfaceIfIndex     LUXLInterfaceIndex,
+    luxlEeeCapabilitiesInterfaceMaxEgressQueues     LUXLUnsigned8,
+    luxlEeeCapabilitiesInterfaceEEE     TruthValue
+}
+
+luxlEeeCapabilitiesInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlEeeCapabilitiesInterfaceEntry 1 }
+
+luxlEeeCapabilitiesInterfaceMaxEgressQueues OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of supported egress port queues."
+    ::= { luxlEeeCapabilitiesInterfaceEntry 2 }
+
+luxlEeeCapabilitiesInterfaceEEE OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether interface supports EEE(IEEE 802.3az). true means EEE
+         supported. false means not supported."
+    ::= { luxlEeeCapabilitiesInterfaceEntry 3 }
+
+luxlEeeConfig OBJECT IDENTIFIER
+    ::= { luxlEeeMibObjects 2 }
+
+luxlEeeConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlEeeConfig 1 }
+
+luxlEeeConfigGlobalsOptimizationPreferences OBJECT-TYPE
+    SYNTAX      LUXLEeePreference
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "EEE optimization preferences, either maximum power saving or low
+         traffic latency."
+    ::= { luxlEeeConfigGlobals 1 }
+
+luxlEeeConfigInterface OBJECT IDENTIFIER
+    ::= { luxlEeeConfig 2 }
+
+luxlEeeConfigInterfaceParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEeeConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to configure EEE configurations for a specific
+         interface."
+    ::= { luxlEeeConfigInterface 1 }
+
+luxlEeeConfigInterfaceParamEntry OBJECT-TYPE
+    SYNTAX      LUXLEeeConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of EEE configurable parameters"
+    INDEX       { luxlEeeConfigInterfaceParamIfIndex }
+    ::= { luxlEeeConfigInterfaceParamTable 1 }
+
+LUXLEeeConfigInterfaceParamEntry ::= SEQUENCE {
+    luxlEeeConfigInterfaceParamIfIndex      LUXLInterfaceIndex,
+    luxlEeeConfigInterfaceParamEnableEEE    TruthValue
+}
+
+luxlEeeConfigInterfaceParamIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlEeeConfigInterfaceParamEntry 1 }
+
+luxlEeeConfigInterfaceParamEnableEEE OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable EEE (IEEE 802.3az) feature at a interface. true is to advertize
+         EEE(IEEE 802.3az) capabilities to partner device. false is to disable
+         it."
+    ::= { luxlEeeConfigInterfaceParamEntry 2 }
+
+luxlEeeConfigInterfaceQueueTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEeeConfigInterfaceQueueEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to configure egress port queue type, whether urgent
+         queue or normal queue. We can configure more than one egress queues as
+         urgent queues. Queues configured as urgent, en-queued data will be
+         transmitted with minimum latency. Queue configured as normal, en-queued
+         data will be transmitted with latency depending upon traffic
+         utilization."
+    ::= { luxlEeeConfigInterface 2 }
+
+luxlEeeConfigInterfaceQueueEntry OBJECT-TYPE
+    SYNTAX      LUXLEeeConfigInterfaceQueueEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has set of egress queues"
+    INDEX       { luxlEeeConfigInterfaceQueueIfIndex, luxlEeeConfigInterfaceQueueIndex }
+    ::= { luxlEeeConfigInterfaceQueueTable 1 }
+
+LUXLEeeConfigInterfaceQueueEntry ::= SEQUENCE {
+    luxlEeeConfigInterfaceQueueIfIndex      LUXLInterfaceIndex,
+    luxlEeeConfigInterfaceQueueIndex    Integer32,
+    luxlEeeConfigInterfaceQueueEgressQueueType      LUXLEeeQueueType
+}
+
+luxlEeeConfigInterfaceQueueIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlEeeConfigInterfaceQueueEntry 1 }
+
+luxlEeeConfigInterfaceQueueIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Egress port queue index."
+    ::= { luxlEeeConfigInterfaceQueueEntry 2 }
+
+luxlEeeConfigInterfaceQueueEgressQueueType OBJECT-TYPE
+    SYNTAX      LUXLEeeQueueType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress port queue is urgent queue or normal queue."
+    ::= { luxlEeeConfigInterfaceQueueEntry 3 }
+
+luxlEeeStatus OBJECT IDENTIFIER
+    ::= { luxlEeeMibObjects 3 }
+
+luxlEeeStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEeeStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to Energy Efficient Ethernet interface status"
+    ::= { luxlEeeStatus 1 }
+
+luxlEeeStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLEeeStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of status parameters"
+    INDEX       { luxlEeeStatusInterfaceIfIndex }
+    ::= { luxlEeeStatusInterfaceTable 1 }
+
+LUXLEeeStatusInterfaceEntry ::= SEQUENCE {
+    luxlEeeStatusInterfaceIfIndex   LUXLInterfaceIndex,
+    luxlEeeStatusInterfacePartnerEEE    LUXLEeeStatusType,
+    luxlEeeStatusInterfaceRxPowerSave   LUXLEeeStatusType
+}
+
+luxlEeeStatusInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlEeeStatusInterfaceEntry 1 }
+
+luxlEeeStatusInterfacePartnerEEE OBJECT-TYPE
+    SYNTAX      LUXLEeeStatusType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether link partner advertising EEE(IEEE 802.3az)
+         capabilities."
+    ::= { luxlEeeStatusInterfaceEntry 2 }
+
+luxlEeeStatusInterfaceRxPowerSave OBJECT-TYPE
+    SYNTAX      LUXLEeeStatusType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether interfcae rx path currently in power save state."
+    ::= { luxlEeeStatusInterfaceEntry 3 }
+
+luxlEeeMibConformance OBJECT IDENTIFIER
+    ::= { luxlEeeMib 2 }
+
+luxlEeeMibCompliances OBJECT IDENTIFIER
+    ::= { luxlEeeMibConformance 1 }
+
+luxlEeeMibGroups OBJECT IDENTIFIER
+    ::= { luxlEeeMibConformance 2 }
+
+luxlEeeCapabilitiesGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEeeCapabilitiesGlobalsOptimizationPreferences }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEeeMibGroups 1 }
+
+luxlEeeCapabilitiesInterfaceInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEeeCapabilitiesInterfaceMaxEgressQueues, 
+                  luxlEeeCapabilitiesInterfaceEEE }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEeeMibGroups 2 }
+
+luxlEeeConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEeeConfigGlobalsOptimizationPreferences }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEeeMibGroups 3 }
+
+luxlEeeConfigInterfaceParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEeeConfigInterfaceParamEnableEEE }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEeeMibGroups 4 }
+
+luxlEeeConfigInterfaceQueueTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEeeConfigInterfaceQueueEgressQueueType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEeeMibGroups 5 }
+
+luxlEeeStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEeeStatusInterfacePartnerEEE, 
+                  luxlEeeStatusInterfaceRxPowerSave }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEeeMibGroups 6 }
+
+luxlEeeMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlEeeCapabilitiesGlobalsInfoGroup, 
+                  luxlEeeCapabilitiesInterfaceInfoGroup, 
+                  luxlEeeConfigGlobalsInfoGroup, 
+                  luxlEeeConfigInterfaceParamTableInfoGroup, 
+                  luxlEeeConfigInterfaceQueueTableInfoGroup, 
+                  luxlEeeStatusInterfaceTableInfoGroup }
+
+    ::= { luxlEeeMibCompliances 1 }
+
+END

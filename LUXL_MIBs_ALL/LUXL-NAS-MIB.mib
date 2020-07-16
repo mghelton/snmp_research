@@ -1,0 +1,819 @@
+-- *****************************************************************
+-- NAS-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-NAS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    ;
+
+luxlNasMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is the Vitesse NAS private MIB."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 21 }
+
+
+LUXLnasPortControl ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration the NAS admin state.
+         
+         "
+    SYNTAX      INTEGER { none(0), forceAuthorized(1), auto(2), forceUnAuthorized(3), macBased(4), dot1xSingle(5), dot1xmulti(6) }
+
+LUXLnasPortStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration the NAS interface status."
+    SYNTAX      INTEGER { linkDown(0), authorized(1), unAuthorized(2), disabled(3), count(4) }
+
+LUXLnasQosClassPriority ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration the NAS QoS Class priority."
+    SYNTAX      INTEGER { none(-1), pcp0(0), pcp1(1), pcp2(2), pcp3(3), pcp4(4), pcp5(5), pcp6(6), pcp7(7) }
+
+LUXLnasVlanType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration the NAS VLAN type."
+    SYNTAX      INTEGER { none(0), radiusAssigned(1), guestVlan(2) }
+
+luxlNasMibObjects OBJECT IDENTIFIER
+    ::= { luxlNasMib 1 }
+
+luxlNasConfig OBJECT IDENTIFIER
+    ::= { luxlNasMibObjects 2 }
+
+luxlNasConfigReAuthTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLNasConfigReAuthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for port configuration"
+    ::= { luxlNasConfig 1 }
+
+luxlNasConfigReAuthEntry OBJECT-TYPE
+    SYNTAX      LUXLNasConfigReAuthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each physical interface has a set of parameters"
+    INDEX       { luxlNasConfigReAuthInterfaceNo }
+    ::= { luxlNasConfigReAuthTable 1 }
+
+LUXLNasConfigReAuthEntry ::= SEQUENCE {
+    luxlNasConfigReAuthInterfaceNo      LUXLInterfaceIndex,
+    luxlNasConfigReAuthAdminState   LUXLnasPortControl,
+    luxlNasConfigReAuthRadiusAssignedQosState   TruthValue,
+    luxlNasConfigReAuthRadiusAssignedVlanState      TruthValue,
+    luxlNasConfigReAuthGuestVlanState   TruthValue
+}
+
+luxlNasConfigReAuthInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlNasConfigReAuthEntry 1 }
+
+luxlNasConfigReAuthAdminState OBJECT-TYPE
+    SYNTAX      LUXLnasPortControl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative State.
+         
+         TypeNone : Forces an interface to be disabled.
+         
+         forceAuthorized : Forces an interface to grant access to all clients,
+         802.1X-aware or not.
+         
+         auto : Requires an 802.1X-aware client to be authorized by the
+         authentication server. Clients that are not 802.1X-aware will be denied
+         access.
+         
+         unauthorized : Forces an interface to deny access to all clients,
+         802.1X-aware or not.
+         
+         macBased : The switch authenticates on behalf of the client, using the
+         client MAC-address as the username and password and MD5 EAP method.
+         
+         dot1xSingle : At most one supplicant is allowed to authenticate, and it
+         authenticates using normal 802.1X frames.
+         
+         dot1xmulti : One or more supplicants are allowed to authenticate
+         individually using an 802.1X variant, where EAPOL frames sent from the
+         switch are directed towards the supplicants MAC address instead of
+         using the multi-cast BPDU MAC address. Unauthenticated supplicants will
+         not get access."
+    ::= { luxlNasConfigReAuthEntry 2 }
+
+luxlNasConfigReAuthRadiusAssignedQosState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE to enable RADIUS-assigned QoS for this interface."
+    ::= { luxlNasConfigReAuthEntry 3 }
+
+luxlNasConfigReAuthRadiusAssignedVlanState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE to enable RADIUS-assigned VLAN for this interface."
+    ::= { luxlNasConfigReAuthEntry 4 }
+
+luxlNasConfigReAuthGuestVlanState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE to enable Guest-VLAN for this interface."
+    ::= { luxlNasConfigReAuthEntry 5 }
+
+luxlNasConfigGlobal OBJECT IDENTIFIER
+    ::= { luxlNasConfig 2 }
+
+luxlNasConfigGlobalNasMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE to globally enabled or disabled NAS for the switch. If
+         globally disabled, all physical interfaces are allowed forwarding of
+         frames."
+    ::= { luxlNasConfigGlobal 1 }
+
+luxlNasConfigGlobalReauthenticationMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If set to TRUE, successfully authenticated supplicants/clients are
+         re-authenticated after the interval specified by the Reauthentication
+         Period. Re-authentication for 802.1X-enabled interfaces can be used to
+         detect if a new device is plugged into a switch port or if a supplicant
+         is no longer attached. For MAC-based ports, re-authentication is only
+         useful, if the RADIUS server configuration has changed. It does not
+         involve communication between the switch and the client, and therefore
+         does not imply that a client is still present on a port (see Aging
+         Period)."
+    ::= { luxlNasConfigGlobal 2 }
+
+luxlNasConfigGlobalReauthenticationPeriod OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (1..3600)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Sets the period in seconds, after which a connected client must be
+         re-authenticated. This is only active if the ReauthenticationMode is
+         set to TRUE."
+    ::= { luxlNasConfigGlobal 3 }
+
+luxlNasConfigGlobalEapolTimeout OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Determines the time for re-transmission of Request Identity EAPOL
+         frames. This has no effect for MAC-based ports."
+    ::= { luxlNasConfigGlobal 4 }
+
+luxlNasConfigGlobalAgingEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE to enable PSEC aging. See agingPeriod."
+    ::= { luxlNasConfigGlobal 5 }
+
+luxlNasConfigGlobalAgingPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32 (10..1000000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Specific the PSEC aging period in seconds. In the period the CPU starts
+         listening to frames from the given MAC address, and if none arrives
+         before period end, the entry will be removed. Only valid if agingEnable
+         is set to TRUE"
+    ::= { luxlNasConfigGlobal 6 }
+
+luxlNasConfigGlobalHoldEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE to enable PSEC failure hold. See authFailureHoldTime"
+    ::= { luxlNasConfigGlobal 7 }
+
+luxlNasConfigGlobalAuthFailureHoldTime OBJECT-TYPE
+    SYNTAX      Unsigned32 (10..1000000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Time in seconds to wait before attempting to re-authenticate if
+         re-authentication failed for a given client."
+    ::= { luxlNasConfigGlobal 8 }
+
+luxlNasConfigGlobalRadiusAssignedQosMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to true to enable RADIUS assigned QoS."
+    ::= { luxlNasConfigGlobal 9 }
+
+luxlNasConfigGlobalRadiusAssignedVlanMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to true to enable RADIUS assigned VLAN."
+    ::= { luxlNasConfigGlobal 10 }
+
+luxlNasConfigGlobalGuestVlanMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to true to enable Guest VLAN Mode."
+    ::= { luxlNasConfigGlobal 11 }
+
+luxlNasConfigGlobalGuestVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (1..4096)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Guest VLAN ID to get assigned to an interface moved to Guest VLAN mode."
+    ::= { luxlNasConfigGlobal 12 }
+
+luxlNasConfigGlobalMaxReauthrequestsCount OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Maximum re-authentication request count."
+    ::= { luxlNasConfigGlobal 13 }
+
+luxlNasConfigGlobalGuestVlanAllowEapols OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set to TRUE to allow an interface to move to Guest VLAN even when EAPOL
+         packets has been received at an interface."
+    ::= { luxlNasConfigGlobal 14 }
+
+luxlNasStatus OBJECT IDENTIFIER
+    ::= { luxlNasMibObjects 3 }
+
+luxlNasStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLNasStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to get NAS per-port status table."
+    ::= { luxlNasStatus 1 }
+
+luxlNasStatusEntry OBJECT-TYPE
+    SYNTAX      LUXLNasStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each physical interface has a set of per-port status parameters."
+    INDEX       { luxlNasStatusInterfaceNo }
+    ::= { luxlNasStatusTable 1 }
+
+LUXLNasStatusEntry ::= SEQUENCE {
+    luxlNasStatusInterfaceNo    LUXLInterfaceIndex,
+    luxlNasStatusStatus     LUXLnasPortStatus,
+    luxlNasStatusQosClass   LUXLnasQosClassPriority,
+    luxlNasStatusVlanType   LUXLnasVlanType,
+    luxlNasStatusVlanId     LUXLUnsigned16
+}
+
+luxlNasStatusInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlNasStatusEntry 1 }
+
+luxlNasStatusStatus OBJECT-TYPE
+    SYNTAX      LUXLnasPortStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "dot1x port status."
+    ::= { luxlNasStatusEntry 2 }
+
+luxlNasStatusQosClass OBJECT-TYPE
+    SYNTAX      LUXLnasQosClassPriority
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "QoS class for this port."
+    ::= { luxlNasStatusEntry 3 }
+
+luxlNasStatusVlanType OBJECT-TYPE
+    SYNTAX      LUXLnasVlanType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VLAN Type for this port."
+    ::= { luxlNasStatusEntry 4 }
+
+luxlNasStatusVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VLAN Id for this port."
+    ::= { luxlNasStatusEntry 5 }
+
+luxlNasStatusLastSupplicantTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLNasStatusLastSupplicantEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to get NAS last supplicant"
+    ::= { luxlNasStatus 2 }
+
+luxlNasStatusLastSupplicantEntry OBJECT-TYPE
+    SYNTAX      LUXLNasStatusLastSupplicantEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each physical interface has a set of parameters"
+    INDEX       { luxlNasStatusLastSupplicantInterfaceNo }
+    ::= { luxlNasStatusLastSupplicantTable 1 }
+
+LUXLNasStatusLastSupplicantEntry ::= SEQUENCE {
+    luxlNasStatusLastSupplicantInterfaceNo      LUXLInterfaceIndex,
+    luxlNasStatusLastSupplicantVlanId   LUXLUnsigned16,
+    luxlNasStatusLastSupplicantMac      MacAddress,
+    luxlNasStatusLastSupplicantMacAddrStr   LUXLDisplayString,
+    luxlNasStatusLastSupplicantIdentity     LUXLDisplayString
+}
+
+luxlNasStatusLastSupplicantInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlNasStatusLastSupplicantEntry 1 }
+
+luxlNasStatusLastSupplicantVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "VLAN ID."
+    ::= { luxlNasStatusLastSupplicantEntry 2 }
+
+luxlNasStatusLastSupplicantMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Binary version of MacAddrStr."
+    ::= { luxlNasStatusLastSupplicantEntry 3 }
+
+luxlNasStatusLastSupplicantMacAddrStr OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..17))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC address as presentable string (e.g. 'AA-BB-CC-DD-EE-FF')."
+    ::= { luxlNasStatusLastSupplicantEntry 4 }
+
+luxlNasStatusLastSupplicantIdentity OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..39))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Identity string."
+    ::= { luxlNasStatusLastSupplicantEntry 5 }
+
+luxlNasControl OBJECT IDENTIFIER
+    ::= { luxlNasMibObjects 4 }
+
+luxlNasControlPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLNasControlPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to start NAS re-authorization"
+    ::= { luxlNasControl 1 }
+
+luxlNasControlPortEntry OBJECT-TYPE
+    SYNTAX      LUXLNasControlPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each physical interface has a set of parameters"
+    INDEX       { luxlNasControlPortInterfaceNo }
+    ::= { luxlNasControlPortTable 1 }
+
+LUXLNasControlPortEntry ::= SEQUENCE {
+    luxlNasControlPortInterfaceNo   LUXLInterfaceIndex,
+    luxlNasControlPortNow   TruthValue
+}
+
+luxlNasControlPortInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlNasControlPortEntry 1 }
+
+luxlNasControlPortNow OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE to force re-authentication immediately. FALSE to refresh (restart)
+         802.1X authentication process."
+    ::= { luxlNasControlPortEntry 2 }
+
+luxlNasControlStatisticsClearTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLNasControlStatisticsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to clear NAS statistics for a specific interface."
+    ::= { luxlNasControl 2 }
+
+luxlNasControlStatisticsClearEntry OBJECT-TYPE
+    SYNTAX      LUXLNasControlStatisticsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of statistics counters"
+    INDEX       { luxlNasControlStatisticsClearInterfaceNo }
+    ::= { luxlNasControlStatisticsClearTable 1 }
+
+LUXLNasControlStatisticsClearEntry ::= SEQUENCE {
+    luxlNasControlStatisticsClearInterfaceNo    LUXLInterfaceIndex,
+    luxlNasControlStatisticsClearClear      TruthValue
+}
+
+luxlNasControlStatisticsClearInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlNasControlStatisticsClearEntry 1 }
+
+luxlNasControlStatisticsClearClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "TRUE to clear NAS statistics."
+    ::= { luxlNasControlStatisticsClearEntry 5 }
+
+luxlNasStatistics OBJECT IDENTIFIER
+    ::= { luxlNasMibObjects 5 }
+
+luxlNasStatisticsEapolTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLNasStatisticsEapolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to get NAS EAPOL statistics."
+    ::= { luxlNasStatistics 1 }
+
+luxlNasStatisticsEapolEntry OBJECT-TYPE
+    SYNTAX      LUXLNasStatisticsEapolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each physical interface has a set of EAPOL counters."
+    INDEX       { luxlNasStatisticsEapolInterfaceNo }
+    ::= { luxlNasStatisticsEapolTable 1 }
+
+LUXLNasStatisticsEapolEntry ::= SEQUENCE {
+    luxlNasStatisticsEapolInterfaceNo   LUXLInterfaceIndex,
+    luxlNasStatisticsEapolDot1xAuthEapolFramesRx    Unsigned32,
+    luxlNasStatisticsEapolDot1xAuthEapolFramesTx    Unsigned32,
+    luxlNasStatisticsEapolDot1xAuthEapolStartFramesRx   Unsigned32,
+    luxlNasStatisticsEapolDot1xAuthEapolLogoffFramesRx      Unsigned32,
+    luxlNasStatisticsEapolDot1xAuthEapolRespIdFramesRx      Unsigned32,
+    luxlNasStatisticsEapolDot1xAuthEapolRespFramesRx    Unsigned32,
+    luxlNasStatisticsEapolDot1xAuthEapolReqIdFramesTx   Unsigned32,
+    luxlNasStatisticsEapolDot1xAuthEapolReqFramesTx     Unsigned32,
+    luxlNasStatisticsEapolDot1xAuthInvalidEapolFramesRx     Unsigned32,
+    luxlNasStatisticsEapolDot1xAuthEapLengthErrorFramesRx   Unsigned32
+}
+
+luxlNasStatisticsEapolInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlNasStatisticsEapolEntry 1 }
+
+luxlNasStatisticsEapolDot1xAuthEapolFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of dot1x Auth Eapol Frames Received."
+    ::= { luxlNasStatisticsEapolEntry 5 }
+
+luxlNasStatisticsEapolDot1xAuthEapolFramesTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of dot1x Auth Eapol Frames Transmitted."
+    ::= { luxlNasStatisticsEapolEntry 6 }
+
+luxlNasStatisticsEapolDot1xAuthEapolStartFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of dot1x Auth Eapol Start Frames Received."
+    ::= { luxlNasStatisticsEapolEntry 7 }
+
+luxlNasStatisticsEapolDot1xAuthEapolLogoffFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of dot1x Auth Eapol Logoff Frames Received."
+    ::= { luxlNasStatisticsEapolEntry 8 }
+
+luxlNasStatisticsEapolDot1xAuthEapolRespIdFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of dot1x Auth Eapol RespId Frames Received."
+    ::= { luxlNasStatisticsEapolEntry 9 }
+
+luxlNasStatisticsEapolDot1xAuthEapolRespFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of dot1x Auth Eapol Resp Frames Received."
+    ::= { luxlNasStatisticsEapolEntry 10 }
+
+luxlNasStatisticsEapolDot1xAuthEapolReqIdFramesTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of dot1x Auth Eapol Req Id Frames Transmitted."
+    ::= { luxlNasStatisticsEapolEntry 11 }
+
+luxlNasStatisticsEapolDot1xAuthEapolReqFramesTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of dot1x Auth Eapol Req Frames Transmitted."
+    ::= { luxlNasStatisticsEapolEntry 12 }
+
+luxlNasStatisticsEapolDot1xAuthInvalidEapolFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of dot1x Auth Invalid Eapol Frames Received."
+    ::= { luxlNasStatisticsEapolEntry 13 }
+
+luxlNasStatisticsEapolDot1xAuthEapLengthErrorFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of dot1x Auth Eap Length Error Frames Received."
+    ::= { luxlNasStatisticsEapolEntry 14 }
+
+luxlNasStatisticsRadiusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLNasStatisticsRadiusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to get NAS EAPOL statistics."
+    ::= { luxlNasStatistics 2 }
+
+luxlNasStatisticsRadiusEntry OBJECT-TYPE
+    SYNTAX      LUXLNasStatisticsRadiusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each physical interface has a set of EAPOL counters."
+    INDEX       { luxlNasStatisticsRadiusInterfaceNo }
+    ::= { luxlNasStatisticsRadiusTable 1 }
+
+LUXLNasStatisticsRadiusEntry ::= SEQUENCE {
+    luxlNasStatisticsRadiusInterfaceNo      LUXLInterfaceIndex,
+    luxlNasStatisticsRadiusBackendResponses     Unsigned32,
+    luxlNasStatisticsRadiusBackendAccessChallenges      Unsigned32,
+    luxlNasStatisticsRadiusBackendOtherRequestsToSupplicant     Unsigned32,
+    luxlNasStatisticsRadiusBackendAuthSuccesses     Unsigned32,
+    luxlNasStatisticsRadiusBackendAuthFails     Unsigned32
+}
+
+luxlNasStatisticsRadiusInterfaceNo OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlNasStatisticsRadiusEntry 1 }
+
+luxlNasStatisticsRadiusBackendResponses OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of backend Responses."
+    ::= { luxlNasStatisticsRadiusEntry 5 }
+
+luxlNasStatisticsRadiusBackendAccessChallenges OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of backend Access Challenges."
+    ::= { luxlNasStatisticsRadiusEntry 6 }
+
+luxlNasStatisticsRadiusBackendOtherRequestsToSupplicant OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of backend Other Requests To Supplicant."
+    ::= { luxlNasStatisticsRadiusEntry 7 }
+
+luxlNasStatisticsRadiusBackendAuthSuccesses OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of backend Auth Successes."
+    ::= { luxlNasStatisticsRadiusEntry 8 }
+
+luxlNasStatisticsRadiusBackendAuthFails OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Numbers of backend Auth Fails."
+    ::= { luxlNasStatisticsRadiusEntry 9 }
+
+luxlNasMibConformance OBJECT IDENTIFIER
+    ::= { luxlNasMib 2 }
+
+luxlNasMibCompliances OBJECT IDENTIFIER
+    ::= { luxlNasMibConformance 1 }
+
+luxlNasMibGroups OBJECT IDENTIFIER
+    ::= { luxlNasMibConformance 2 }
+
+luxlNasConfigReAuthInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlNasConfigReAuthAdminState, 
+                  luxlNasConfigReAuthRadiusAssignedQosState, 
+                  luxlNasConfigReAuthRadiusAssignedVlanState, 
+                  luxlNasConfigReAuthGuestVlanState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlNasMibGroups 1 }
+
+luxlNasConfigGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlNasConfigGlobalNasMode, 
+                  luxlNasConfigGlobalReauthenticationMode, 
+                  luxlNasConfigGlobalReauthenticationPeriod, 
+                  luxlNasConfigGlobalEapolTimeout, 
+                  luxlNasConfigGlobalAgingEnable, luxlNasConfigGlobalAgingPeriod, 
+                  luxlNasConfigGlobalHoldEnable, 
+                  luxlNasConfigGlobalAuthFailureHoldTime, 
+                  luxlNasConfigGlobalRadiusAssignedQosMode, 
+                  luxlNasConfigGlobalRadiusAssignedVlanMode, 
+                  luxlNasConfigGlobalGuestVlanMode, 
+                  luxlNasConfigGlobalGuestVlanId, 
+                  luxlNasConfigGlobalMaxReauthrequestsCount, 
+                  luxlNasConfigGlobalGuestVlanAllowEapols }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlNasMibGroups 2 }
+
+luxlNasStatusTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlNasStatusStatus, luxlNasStatusQosClass, luxlNasStatusVlanType, 
+                  luxlNasStatusVlanId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlNasMibGroups 3 }
+
+luxlNasStatusLastSupplicantInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlNasStatusLastSupplicantVlanId, 
+                  luxlNasStatusLastSupplicantMac, 
+                  luxlNasStatusLastSupplicantMacAddrStr, 
+                  luxlNasStatusLastSupplicantIdentity }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlNasMibGroups 4 }
+
+luxlNasControlPortInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlNasControlPortNow }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlNasMibGroups 5 }
+
+luxlNasControlStatisticsClearInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlNasControlStatisticsClearClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlNasMibGroups 6 }
+
+luxlNasStatisticsEapolInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlNasStatisticsEapolDot1xAuthEapolFramesRx, 
+                  luxlNasStatisticsEapolDot1xAuthEapolFramesTx, 
+                  luxlNasStatisticsEapolDot1xAuthEapolStartFramesRx, 
+                  luxlNasStatisticsEapolDot1xAuthEapolLogoffFramesRx, 
+                  luxlNasStatisticsEapolDot1xAuthEapolRespIdFramesRx, 
+                  luxlNasStatisticsEapolDot1xAuthEapolRespFramesRx, 
+                  luxlNasStatisticsEapolDot1xAuthEapolReqIdFramesTx, 
+                  luxlNasStatisticsEapolDot1xAuthEapolReqFramesTx, 
+                  luxlNasStatisticsEapolDot1xAuthInvalidEapolFramesRx, 
+                  luxlNasStatisticsEapolDot1xAuthEapLengthErrorFramesRx }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlNasMibGroups 7 }
+
+luxlNasStatisticsRadiusInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlNasStatisticsRadiusBackendResponses, 
+                  luxlNasStatisticsRadiusBackendAccessChallenges, 
+                  luxlNasStatisticsRadiusBackendOtherRequestsToSupplicant, 
+                  luxlNasStatisticsRadiusBackendAuthSuccesses, 
+                  luxlNasStatisticsRadiusBackendAuthFails }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlNasMibGroups 8 }
+
+luxlNasMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlNasConfigReAuthInfoGroup, 
+                  luxlNasConfigGlobalInfoGroup, luxlNasStatusTableInfoGroup, 
+                  luxlNasStatusLastSupplicantInfoGroup, 
+                  luxlNasControlPortInfoGroup, 
+                  luxlNasControlStatisticsClearInfoGroup, 
+                  luxlNasStatisticsEapolInfoGroup, 
+                  luxlNasStatisticsRadiusInfoGroup }
+
+    ::= { luxlNasMibCompliances 1 }
+
+END

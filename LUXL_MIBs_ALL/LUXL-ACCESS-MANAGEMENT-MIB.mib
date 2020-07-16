@@ -1,0 +1,669 @@
+-- *****************************************************************
+-- ACCESS-MANAGEMENT-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-ACCESS-MANAGEMENT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    ;
+
+luxlAccessManagementMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the Access Management MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 51 }
+
+
+luxlAccessManagementMibObjects OBJECT IDENTIFIER
+    ::= { luxlAccessManagementMib 1 }
+
+luxlAccessManagementConfig OBJECT IDENTIFIER
+    ::= { luxlAccessManagementMibObjects 2 }
+
+luxlAccessManagementConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlAccessManagementConfig 1 }
+
+luxlAccessManagementConfigGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the Access Management global functionality."
+    ::= { luxlAccessManagementConfigGlobals 1 }
+
+luxlAccessManagementConfigIpv4Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAccessManagementConfigIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing Access Management per IPv4 basis"
+    ::= { luxlAccessManagementConfig 2 }
+
+luxlAccessManagementConfigIpv4Entry OBJECT-TYPE
+    SYNTAX      LUXLAccessManagementConfigIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlAccessManagementConfigIpv4AccessIndex }
+    ::= { luxlAccessManagementConfigIpv4Table 1 }
+
+LUXLAccessManagementConfigIpv4Entry ::= SEQUENCE {
+    luxlAccessManagementConfigIpv4AccessIndex   Integer32,
+    luxlAccessManagementConfigIpv4VlanId    LUXLUnsigned16,
+    luxlAccessManagementConfigIpv4StartAddress      IpAddress,
+    luxlAccessManagementConfigIpv4EndAddress    IpAddress,
+    luxlAccessManagementConfigIpv4WebServices   TruthValue,
+    luxlAccessManagementConfigIpv4SnmpServices      TruthValue,
+    luxlAccessManagementConfigIpv4TelnetServices    TruthValue,
+    luxlAccessManagementConfigIpv4Action    LUXLRowEditorState
+}
+
+luxlAccessManagementConfigIpv4AccessIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Index for Access Management IPv4/IPv6 table."
+    ::= { luxlAccessManagementConfigIpv4Entry 1 }
+
+luxlAccessManagementConfigIpv4VlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ID of specific VLAN interface that Access Management should take
+         effect for IPv4."
+    ::= { luxlAccessManagementConfigIpv4Entry 2 }
+
+luxlAccessManagementConfigIpv4StartAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The starting IPv4 address of the range that Access Management performs
+         checking."
+    ::= { luxlAccessManagementConfigIpv4Entry 3 }
+
+luxlAccessManagementConfigIpv4EndAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ending IPv4 address of the range that Access Management performs
+         checking."
+    ::= { luxlAccessManagementConfigIpv4Entry 4 }
+
+luxlAccessManagementConfigIpv4WebServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable HTTP and HTTPS functionality via Access Management. At
+         least one of WebServices/SnmpServices/TelnetServices has to be enabled
+         for a specific AccessIndex in Access Management IPv4 table."
+    ::= { luxlAccessManagementConfigIpv4Entry 5 }
+
+luxlAccessManagementConfigIpv4SnmpServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable SNMP functionality via Access Management. At least one
+         of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv4 table."
+    ::= { luxlAccessManagementConfigIpv4Entry 6 }
+
+luxlAccessManagementConfigIpv4TelnetServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable TELNET/SSH functionality via Access Management. At least
+         one of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv4 table."
+    ::= { luxlAccessManagementConfigIpv4Entry 7 }
+
+luxlAccessManagementConfigIpv4Action OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlAccessManagementConfigIpv4Entry 100 }
+
+luxlAccessManagementConfigIpv4TableRowEditor OBJECT IDENTIFIER
+    ::= { luxlAccessManagementConfig 3 }
+
+luxlAccessManagementConfigIpv4TableRowEditorAccessIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Index for Access Management IPv4/IPv6 table."
+    ::= { luxlAccessManagementConfigIpv4TableRowEditor 1 }
+
+luxlAccessManagementConfigIpv4TableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ID of specific VLAN interface that Access Management should take
+         effect for IPv4."
+    ::= { luxlAccessManagementConfigIpv4TableRowEditor 2 }
+
+luxlAccessManagementConfigIpv4TableRowEditorStartAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The starting IPv4 address of the range that Access Management performs
+         checking."
+    ::= { luxlAccessManagementConfigIpv4TableRowEditor 3 }
+
+luxlAccessManagementConfigIpv4TableRowEditorEndAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ending IPv4 address of the range that Access Management performs
+         checking."
+    ::= { luxlAccessManagementConfigIpv4TableRowEditor 4 }
+
+luxlAccessManagementConfigIpv4TableRowEditorWebServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable HTTP and HTTPS functionality via Access Management. At
+         least one of WebServices/SnmpServices/TelnetServices has to be enabled
+         for a specific AccessIndex in Access Management IPv4 table."
+    ::= { luxlAccessManagementConfigIpv4TableRowEditor 5 }
+
+luxlAccessManagementConfigIpv4TableRowEditorSnmpServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable SNMP functionality via Access Management. At least one
+         of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv4 table."
+    ::= { luxlAccessManagementConfigIpv4TableRowEditor 6 }
+
+luxlAccessManagementConfigIpv4TableRowEditorTelnetServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable TELNET/SSH functionality via Access Management. At least
+         one of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv4 table."
+    ::= { luxlAccessManagementConfigIpv4TableRowEditor 7 }
+
+luxlAccessManagementConfigIpv4TableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlAccessManagementConfigIpv4TableRowEditor 100 }
+
+luxlAccessManagementConfigIpv6Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAccessManagementConfigIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing Access Management per IPv6 basis"
+    ::= { luxlAccessManagementConfig 4 }
+
+luxlAccessManagementConfigIpv6Entry OBJECT-TYPE
+    SYNTAX      LUXLAccessManagementConfigIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlAccessManagementConfigIpv6AccessIndex }
+    ::= { luxlAccessManagementConfigIpv6Table 1 }
+
+LUXLAccessManagementConfigIpv6Entry ::= SEQUENCE {
+    luxlAccessManagementConfigIpv6AccessIndex   Integer32,
+    luxlAccessManagementConfigIpv6VlanId    LUXLUnsigned16,
+    luxlAccessManagementConfigIpv6StartAddress      InetAddressIPv6,
+    luxlAccessManagementConfigIpv6EndAddress    InetAddressIPv6,
+    luxlAccessManagementConfigIpv6WebServices   TruthValue,
+    luxlAccessManagementConfigIpv6SnmpServices      TruthValue,
+    luxlAccessManagementConfigIpv6TelnetServices    TruthValue,
+    luxlAccessManagementConfigIpv6Action    LUXLRowEditorState
+}
+
+luxlAccessManagementConfigIpv6AccessIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Index for Access Management IPv4/IPv6 table."
+    ::= { luxlAccessManagementConfigIpv6Entry 1 }
+
+luxlAccessManagementConfigIpv6VlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ID of specific VLAN interface that Access Management should take
+         effect for IPv6."
+    ::= { luxlAccessManagementConfigIpv6Entry 2 }
+
+luxlAccessManagementConfigIpv6StartAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The starting IPv6 address of the range that Access Management performs
+         checking."
+    ::= { luxlAccessManagementConfigIpv6Entry 3 }
+
+luxlAccessManagementConfigIpv6EndAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ending IPv6 address of the range that Access Management performs
+         checking."
+    ::= { luxlAccessManagementConfigIpv6Entry 4 }
+
+luxlAccessManagementConfigIpv6WebServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable HTTP and HTTPS functionality via Access Management. At
+         least one of WebServices/SnmpServices/TelnetServices has to be enabled
+         for a specific AccessIndex in Access Management IPv6 table."
+    ::= { luxlAccessManagementConfigIpv6Entry 5 }
+
+luxlAccessManagementConfigIpv6SnmpServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable SNMP functionality via Access Management. At least one
+         of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv6 table."
+    ::= { luxlAccessManagementConfigIpv6Entry 6 }
+
+luxlAccessManagementConfigIpv6TelnetServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable TELNET/SSH functionality via Access Management. At least
+         one of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv6 table."
+    ::= { luxlAccessManagementConfigIpv6Entry 7 }
+
+luxlAccessManagementConfigIpv6Action OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlAccessManagementConfigIpv6Entry 100 }
+
+luxlAccessManagementConfigIpv6TableRowEditor OBJECT IDENTIFIER
+    ::= { luxlAccessManagementConfig 5 }
+
+luxlAccessManagementConfigIpv6TableRowEditorAccessIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Index for Access Management IPv4/IPv6 table."
+    ::= { luxlAccessManagementConfigIpv6TableRowEditor 1 }
+
+luxlAccessManagementConfigIpv6TableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ID of specific VLAN interface that Access Management should take
+         effect for IPv6."
+    ::= { luxlAccessManagementConfigIpv6TableRowEditor 2 }
+
+luxlAccessManagementConfigIpv6TableRowEditorStartAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The starting IPv6 address of the range that Access Management performs
+         checking."
+    ::= { luxlAccessManagementConfigIpv6TableRowEditor 3 }
+
+luxlAccessManagementConfigIpv6TableRowEditorEndAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ending IPv6 address of the range that Access Management performs
+         checking."
+    ::= { luxlAccessManagementConfigIpv6TableRowEditor 4 }
+
+luxlAccessManagementConfigIpv6TableRowEditorWebServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable HTTP and HTTPS functionality via Access Management. At
+         least one of WebServices/SnmpServices/TelnetServices has to be enabled
+         for a specific AccessIndex in Access Management IPv6 table."
+    ::= { luxlAccessManagementConfigIpv6TableRowEditor 5 }
+
+luxlAccessManagementConfigIpv6TableRowEditorSnmpServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable SNMP functionality via Access Management. At least one
+         of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv6 table."
+    ::= { luxlAccessManagementConfigIpv6TableRowEditor 6 }
+
+luxlAccessManagementConfigIpv6TableRowEditorTelnetServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable TELNET/SSH functionality via Access Management. At least
+         one of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv6 table."
+    ::= { luxlAccessManagementConfigIpv6TableRowEditor 7 }
+
+luxlAccessManagementConfigIpv6TableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlAccessManagementConfigIpv6TableRowEditor 100 }
+
+luxlAccessManagementStatus OBJECT IDENTIFIER
+    ::= { luxlAccessManagementMibObjects 3 }
+
+luxlAccessManagementControl OBJECT IDENTIFIER
+    ::= { luxlAccessManagementMibObjects 4 }
+
+luxlAccessManagementControlStatistics OBJECT IDENTIFIER
+    ::= { luxlAccessManagementControl 1 }
+
+luxlAccessManagementControlStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "To trigger the control action (only) when TRUE."
+    ::= { luxlAccessManagementControlStatistics 1 }
+
+luxlAccessManagementStatistics OBJECT IDENTIFIER
+    ::= { luxlAccessManagementMibObjects 5 }
+
+luxlAccessManagementStatisticsHttpReceivedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received count of frames via HTTP."
+    ::= { luxlAccessManagementStatistics 1 }
+
+luxlAccessManagementStatisticsHttpAllowedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Permit count of frames via HTTP."
+    ::= { luxlAccessManagementStatistics 2 }
+
+luxlAccessManagementStatisticsHttpDiscardedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Drop count of frames via HTTP."
+    ::= { luxlAccessManagementStatistics 3 }
+
+luxlAccessManagementStatisticsHttpsReceivedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received count of frames via HTTPS."
+    ::= { luxlAccessManagementStatistics 4 }
+
+luxlAccessManagementStatisticsHttpsAllowedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Permit count of frames via HTTPS."
+    ::= { luxlAccessManagementStatistics 5 }
+
+luxlAccessManagementStatisticsHttpsDiscardedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Drop count of frames via HTTPS."
+    ::= { luxlAccessManagementStatistics 6 }
+
+luxlAccessManagementStatisticsSnmpReceivedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received count of frames via SNMP."
+    ::= { luxlAccessManagementStatistics 7 }
+
+luxlAccessManagementStatisticsSnmpAllowedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Permit count of frames via SNMP."
+    ::= { luxlAccessManagementStatistics 8 }
+
+luxlAccessManagementStatisticsSnmpDiscardedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Drop count of frames via SNMP."
+    ::= { luxlAccessManagementStatistics 9 }
+
+luxlAccessManagementStatisticsTelnetReceivedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received count of frames via TELNET."
+    ::= { luxlAccessManagementStatistics 10 }
+
+luxlAccessManagementStatisticsTelnetAllowedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Permit count of frames via TELNET."
+    ::= { luxlAccessManagementStatistics 11 }
+
+luxlAccessManagementStatisticsTelnetDiscardedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Drop count of frames via TELNET."
+    ::= { luxlAccessManagementStatistics 12 }
+
+luxlAccessManagementStatisticsSshReceivedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received count of frames via SSH."
+    ::= { luxlAccessManagementStatistics 13 }
+
+luxlAccessManagementStatisticsSshAllowedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Permit count of frames via SSH."
+    ::= { luxlAccessManagementStatistics 14 }
+
+luxlAccessManagementStatisticsSshDiscardedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Drop count of frames via SSH."
+    ::= { luxlAccessManagementStatistics 15 }
+
+luxlAccessManagementMibConformance OBJECT IDENTIFIER
+    ::= { luxlAccessManagementMib 2 }
+
+luxlAccessManagementMibCompliances OBJECT IDENTIFIER
+    ::= { luxlAccessManagementMibConformance 1 }
+
+luxlAccessManagementMibGroups OBJECT IDENTIFIER
+    ::= { luxlAccessManagementMibConformance 2 }
+
+luxlAccessManagementConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAccessManagementConfigGlobalsAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAccessManagementMibGroups 1 }
+
+luxlAccessManagementConfigIpv4TableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAccessManagementConfigIpv4VlanId, 
+                  luxlAccessManagementConfigIpv4StartAddress, 
+                  luxlAccessManagementConfigIpv4EndAddress, 
+                  luxlAccessManagementConfigIpv4WebServices, 
+                  luxlAccessManagementConfigIpv4SnmpServices, 
+                  luxlAccessManagementConfigIpv4TelnetServices, 
+                  luxlAccessManagementConfigIpv4Action }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAccessManagementMibGroups 2 }
+
+luxlAccessManagementConfigIpv4TableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAccessManagementConfigIpv4TableRowEditorAccessIndex, 
+                  luxlAccessManagementConfigIpv4TableRowEditorVlanId, 
+                  luxlAccessManagementConfigIpv4TableRowEditorStartAddress, 
+                  luxlAccessManagementConfigIpv4TableRowEditorEndAddress, 
+                  luxlAccessManagementConfigIpv4TableRowEditorWebServices, 
+                  luxlAccessManagementConfigIpv4TableRowEditorSnmpServices, 
+                  luxlAccessManagementConfigIpv4TableRowEditorTelnetServices, 
+                  luxlAccessManagementConfigIpv4TableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAccessManagementMibGroups 3 }
+
+luxlAccessManagementConfigIpv6TableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAccessManagementConfigIpv6VlanId, 
+                  luxlAccessManagementConfigIpv6StartAddress, 
+                  luxlAccessManagementConfigIpv6EndAddress, 
+                  luxlAccessManagementConfigIpv6WebServices, 
+                  luxlAccessManagementConfigIpv6SnmpServices, 
+                  luxlAccessManagementConfigIpv6TelnetServices, 
+                  luxlAccessManagementConfigIpv6Action }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAccessManagementMibGroups 4 }
+
+luxlAccessManagementConfigIpv6TableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAccessManagementConfigIpv6TableRowEditorAccessIndex, 
+                  luxlAccessManagementConfigIpv6TableRowEditorVlanId, 
+                  luxlAccessManagementConfigIpv6TableRowEditorStartAddress, 
+                  luxlAccessManagementConfigIpv6TableRowEditorEndAddress, 
+                  luxlAccessManagementConfigIpv6TableRowEditorWebServices, 
+                  luxlAccessManagementConfigIpv6TableRowEditorSnmpServices, 
+                  luxlAccessManagementConfigIpv6TableRowEditorTelnetServices, 
+                  luxlAccessManagementConfigIpv6TableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAccessManagementMibGroups 5 }
+
+luxlAccessManagementControlStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAccessManagementControlStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAccessManagementMibGroups 6 }
+
+luxlAccessManagementStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAccessManagementStatisticsHttpReceivedPkts, 
+                  luxlAccessManagementStatisticsHttpAllowedPkts, 
+                  luxlAccessManagementStatisticsHttpDiscardedPkts, 
+                  luxlAccessManagementStatisticsHttpsReceivedPkts, 
+                  luxlAccessManagementStatisticsHttpsAllowedPkts, 
+                  luxlAccessManagementStatisticsHttpsDiscardedPkts, 
+                  luxlAccessManagementStatisticsSnmpReceivedPkts, 
+                  luxlAccessManagementStatisticsSnmpAllowedPkts, 
+                  luxlAccessManagementStatisticsSnmpDiscardedPkts, 
+                  luxlAccessManagementStatisticsTelnetReceivedPkts, 
+                  luxlAccessManagementStatisticsTelnetAllowedPkts, 
+                  luxlAccessManagementStatisticsTelnetDiscardedPkts, 
+                  luxlAccessManagementStatisticsSshReceivedPkts, 
+                  luxlAccessManagementStatisticsSshAllowedPkts, 
+                  luxlAccessManagementStatisticsSshDiscardedPkts }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAccessManagementMibGroups 7 }
+
+luxlAccessManagementMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlAccessManagementConfigGlobalsInfoGroup, 
+                  luxlAccessManagementConfigIpv4TableInfoGroup, 
+                  luxlAccessManagementConfigIpv4TableRowEditorInfoGroup, 
+                  luxlAccessManagementConfigIpv6TableInfoGroup, 
+                  luxlAccessManagementConfigIpv6TableRowEditorInfoGroup, 
+                  luxlAccessManagementControlStatisticsInfoGroup, 
+                  luxlAccessManagementStatisticsInfoGroup }
+
+    ::= { luxlAccessManagementMibCompliances 1 }
+
+END

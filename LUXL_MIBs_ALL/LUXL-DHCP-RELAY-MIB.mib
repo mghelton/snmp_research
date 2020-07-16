@@ -1,0 +1,312 @@
+-- *****************************************************************
+-- DHCP-RELAY-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-DHCP-RELAY-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+luxlDhcpRelayMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the DHCP Relay MIB"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 55 }
+
+
+LUXLDhcpRelayInformationPolicyType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the DHCP relay information policy type."
+    SYNTAX      INTEGER { replace(0), keep(1), drop(2) }
+
+luxlDhcpRelayMibObjects OBJECT IDENTIFIER
+    ::= { luxlDhcpRelayMib 1 }
+
+luxlDhcpRelayConfig OBJECT IDENTIFIER
+    ::= { luxlDhcpRelayMibObjects 2 }
+
+luxlDhcpRelayConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlDhcpRelayConfig 1 }
+
+luxlDhcpRelayConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global mode of DHCP relay. true is to enable DHCP relay and false is to
+         disable it."
+    ::= { luxlDhcpRelayConfigGlobals 1 }
+
+luxlDhcpRelayConfigGlobalsServerIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Server IP address. This IP address is for DHCP server where the DHCP
+         relay will relay DHCP packets to."
+    ::= { luxlDhcpRelayConfigGlobals 2 }
+
+luxlDhcpRelayConfigGlobalsInformationMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the DHCP relay information mode option operation. Possible
+         modes are - Enabled: Enable DHCP relay information mode operation. When
+         DHCP relay information mode operation is enabled, the agent inserts
+         specific information (option 82) into a DHCP message when forwarding to
+         DHCP server and removes it from a DHCP message when transferring to
+         DHCP client. It only works when DHCP relay operation mode is enabled.
+         Disabled: Disable DHCP relay information mode operation."
+    ::= { luxlDhcpRelayConfigGlobals 3 }
+
+luxlDhcpRelayConfigGlobalsInformationPolicy OBJECT-TYPE
+    SYNTAX      LUXLDhcpRelayInformationPolicyType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the DHCP relay information option policy. When DHCP relay
+         information mode operation is enabled, if the agent receives a DHCP
+         message that already contains relay agent information it will enforce
+         the policy. The 'Replace' policy is invalid when relay information mode
+         is disabled."
+    ::= { luxlDhcpRelayConfigGlobals 4 }
+
+luxlDhcpRelayStatus OBJECT IDENTIFIER
+    ::= { luxlDhcpRelayMibObjects 3 }
+
+luxlDhcpRelayStatusStatistics OBJECT IDENTIFIER
+    ::= { luxlDhcpRelayStatus 1 }
+
+luxlDhcpRelayStatusStatisticsServerPacketsRelayed OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Packets relayed from server to client."
+    ::= { luxlDhcpRelayStatusStatistics 1 }
+
+luxlDhcpRelayStatusStatisticsServerPacketErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Errors sending packets to servers."
+    ::= { luxlDhcpRelayStatusStatistics 2 }
+
+luxlDhcpRelayStatusStatisticsClientPacketsRelayed OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Packets relayed from client to server."
+    ::= { luxlDhcpRelayStatusStatistics 3 }
+
+luxlDhcpRelayStatusStatisticsClientPacketErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Errors sending packets to clients."
+    ::= { luxlDhcpRelayStatusStatistics 4 }
+
+luxlDhcpRelayStatusStatisticsAgentOptionErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of packets forwarded without agent options because there was no
+         room."
+    ::= { luxlDhcpRelayStatusStatistics 5 }
+
+luxlDhcpRelayStatusStatisticsMissingAgentOption OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of packets dropped because no RAI option matching our ID was
+         found."
+    ::= { luxlDhcpRelayStatusStatistics 6 }
+
+luxlDhcpRelayStatusStatisticsBadCircuitId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Circuit ID option in matching RAI option did not match any known
+         circuit ID."
+    ::= { luxlDhcpRelayStatusStatistics 7 }
+
+luxlDhcpRelayStatusStatisticsMissingCircuitId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Circuit ID option in matching RAI option was missing."
+    ::= { luxlDhcpRelayStatusStatistics 8 }
+
+luxlDhcpRelayStatusStatisticsBadRemoteId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Remote ID option in matching RAI option did not match any known remote
+         ID."
+    ::= { luxlDhcpRelayStatusStatistics 9 }
+
+luxlDhcpRelayStatusStatisticsMissingRemoteId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Remote ID option in matching RAI option was missing."
+    ::= { luxlDhcpRelayStatusStatistics 10 }
+
+luxlDhcpRelayStatusStatisticsReceiveServerPackets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Receive DHCP message from server."
+    ::= { luxlDhcpRelayStatusStatistics 11 }
+
+luxlDhcpRelayStatusStatisticsReceiveClientPackets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Receive DHCP message from client."
+    ::= { luxlDhcpRelayStatusStatistics 12 }
+
+luxlDhcpRelayStatusStatisticsReceiveClientAgentOption OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Receive relay agent information option from client."
+    ::= { luxlDhcpRelayStatusStatistics 13 }
+
+luxlDhcpRelayStatusStatisticsReplaceAgentOption OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Replace relay agent information option."
+    ::= { luxlDhcpRelayStatusStatistics 14 }
+
+luxlDhcpRelayStatusStatisticsKeepAgentOption OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Keep relay agent information option."
+    ::= { luxlDhcpRelayStatusStatistics 15 }
+
+luxlDhcpRelayStatusStatisticsDropAgentOption OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Drop relay agent information option."
+    ::= { luxlDhcpRelayStatusStatistics 16 }
+
+luxlDhcpRelayControl OBJECT IDENTIFIER
+    ::= { luxlDhcpRelayMibObjects 4 }
+
+luxlDhcpRelayControlClearStatistics OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The action to clear statistics. true is to clear the statistics data.
+         false, then, does nothing."
+    ::= { luxlDhcpRelayControl 1 }
+
+luxlDhcpRelayMibConformance OBJECT IDENTIFIER
+    ::= { luxlDhcpRelayMib 2 }
+
+luxlDhcpRelayMibCompliances OBJECT IDENTIFIER
+    ::= { luxlDhcpRelayMibConformance 1 }
+
+luxlDhcpRelayMibGroups OBJECT IDENTIFIER
+    ::= { luxlDhcpRelayMibConformance 2 }
+
+luxlDhcpRelayConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpRelayConfigGlobalsMode, 
+                  luxlDhcpRelayConfigGlobalsServerIpAddress, 
+                  luxlDhcpRelayConfigGlobalsInformationMode, 
+                  luxlDhcpRelayConfigGlobalsInformationPolicy }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpRelayMibGroups 1 }
+
+luxlDhcpRelayStatusStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpRelayStatusStatisticsServerPacketsRelayed, 
+                  luxlDhcpRelayStatusStatisticsServerPacketErrors, 
+                  luxlDhcpRelayStatusStatisticsClientPacketsRelayed, 
+                  luxlDhcpRelayStatusStatisticsClientPacketErrors, 
+                  luxlDhcpRelayStatusStatisticsAgentOptionErrors, 
+                  luxlDhcpRelayStatusStatisticsMissingAgentOption, 
+                  luxlDhcpRelayStatusStatisticsBadCircuitId, 
+                  luxlDhcpRelayStatusStatisticsMissingCircuitId, 
+                  luxlDhcpRelayStatusStatisticsBadRemoteId, 
+                  luxlDhcpRelayStatusStatisticsMissingRemoteId, 
+                  luxlDhcpRelayStatusStatisticsReceiveServerPackets, 
+                  luxlDhcpRelayStatusStatisticsReceiveClientPackets, 
+                  luxlDhcpRelayStatusStatisticsReceiveClientAgentOption, 
+                  luxlDhcpRelayStatusStatisticsReplaceAgentOption, 
+                  luxlDhcpRelayStatusStatisticsKeepAgentOption, 
+                  luxlDhcpRelayStatusStatisticsDropAgentOption }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpRelayMibGroups 2 }
+
+luxlDhcpRelayControlInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpRelayControlClearStatistics }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpRelayMibGroups 3 }
+
+luxlDhcpRelayMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlDhcpRelayConfigGlobalsInfoGroup, 
+                  luxlDhcpRelayStatusStatisticsInfoGroup, 
+                  luxlDhcpRelayControlInfoGroup }
+
+    ::= { luxlDhcpRelayMibCompliances 1 }
+
+END

@@ -1,0 +1,397 @@
+-- *****************************************************************
+-- POE-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-POE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    ;
+
+luxlPoeMib MODULE-IDENTITY
+    LAST-UPDATED "201408200000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of Power over Ethernet(PoE). "
+    REVISION    "201408200000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 43 }
+
+
+LUXLpoeMgmtModeType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the types of PoE management mode."
+    SYNTAX      INTEGER { classReservedPower(0), classConsumption(1), allocatedReservedPower(2), allocatedConsumption(3), lldpReservedPower(4), lldpConsumption(5) }
+
+LUXLpoeModeType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the types of port PoE mode."
+    SYNTAX      INTEGER { disable(0), poeDot3af(1), poePlusDot3at(2) }
+
+LUXLpoePowerPriorityType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the port power priority."
+    SYNTAX      INTEGER { low(0), high(1), critical(2) }
+
+LUXLpoeStatusType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the feature status."
+    SYNTAX      INTEGER { notSupported(0), budgetExceeded(1), noPoweredDeviceDetected(2), poweredDeviceOn(3), poweredDeviceOff(4), poweredDeviceOverloaded(5), unknownState(6), disabled(7) }
+
+luxlPoeMibObjects OBJECT IDENTIFIER
+    ::= { luxlPoeMib 1 }
+
+luxlPoeCapabilities OBJECT IDENTIFIER
+    ::= { luxlPoeMibObjects 1 }
+
+luxlPoeCapabilitiesInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPoeCapabilitiesInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to interface capabilities"
+    ::= { luxlPoeCapabilities 1 }
+
+luxlPoeCapabilitiesInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLPoeCapabilitiesInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of capability parameters"
+    INDEX       { luxlPoeCapabilitiesInterfaceIfIndex }
+    ::= { luxlPoeCapabilitiesInterfaceTable 1 }
+
+LUXLPoeCapabilitiesInterfaceEntry ::= SEQUENCE {
+    luxlPoeCapabilitiesInterfaceIfIndex     LUXLInterfaceIndex,
+    luxlPoeCapabilitiesInterfacePoE     TruthValue
+}
+
+luxlPoeCapabilitiesInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPoeCapabilitiesInterfaceEntry 1 }
+
+luxlPoeCapabilitiesInterfacePoE OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether interface is PoE capable or not."
+    ::= { luxlPoeCapabilitiesInterfaceEntry 2 }
+
+luxlPoeConfig OBJECT IDENTIFIER
+    ::= { luxlPoeMibObjects 2 }
+
+luxlPoeConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlPoeConfig 1 }
+
+luxlPoeConfigGlobalsManagementMode OBJECT-TYPE
+    SYNTAX      LUXLpoeMgmtModeType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "PoE management modes, six PoE management modes are supported.
+         CLASS_RESERVED: Maximum port power determined by class, and power is
+         managed according to power consumption. CLASS_CONSUMP: Maximum port
+         power determined by class, and power is managed according to reserved
+         power. ALLOCATED_RESERVED: Maximum port power determined by allocation,
+         and power is managed according to power consumption. ALLOCATED_CONSUMP:
+         Maximum port power determined by allocation, and power is managed
+         according to reserved power. LLDPMED_RESERVED: Maximum port power
+         determined by LLDP Media protocol, and power is managed according to
+         reserved power. LLDPMED_CONSUMP: Maximum port power determined by LLDP
+         Media protocol, and power is managed according to power consumption."
+    ::= { luxlPoeConfigGlobals 1 }
+
+luxlPoeConfigSwitch OBJECT IDENTIFIER
+    ::= { luxlPoeConfig 2 }
+
+luxlPoeConfigSwitchParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPoeConfigSwitchParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to configure PoE configurations for a switch."
+    ::= { luxlPoeConfigSwitch 1 }
+
+luxlPoeConfigSwitchParamEntry OBJECT-TYPE
+    SYNTAX      LUXLPoeConfigSwitchParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each switch has a set of PoE configurable parameters"
+    INDEX       { luxlPoeConfigSwitchParamSwitchId }
+    ::= { luxlPoeConfigSwitchParamTable 1 }
+
+LUXLPoeConfigSwitchParamEntry ::= SEQUENCE {
+    luxlPoeConfigSwitchParamSwitchId    Unsigned32,
+    luxlPoeConfigSwitchParamMaxPower    Integer32,
+    luxlPoeConfigSwitchParamCapacitorDetection      TruthValue
+}
+
+luxlPoeConfigSwitchParamSwitchId OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "User Switch Id."
+    ::= { luxlPoeConfigSwitchParamEntry 1 }
+
+luxlPoeConfigSwitchParamMaxPower OBJECT-TYPE
+    SYNTAX      Integer32 (0..2000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Maximum power(in Watt) that the power sourcing equipment(such as
+         switch) can deliver."
+    ::= { luxlPoeConfigSwitchParamEntry 2 }
+
+luxlPoeConfigSwitchParamCapacitorDetection OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether switch capacitor detection feature is enabled or not."
+    ::= { luxlPoeConfigSwitchParamEntry 3 }
+
+luxlPoeConfigInterface OBJECT IDENTIFIER
+    ::= { luxlPoeConfig 3 }
+
+luxlPoeConfigInterfaceParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPoeConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to configure PoE configurations for a specific
+         interface."
+    ::= { luxlPoeConfigInterface 1 }
+
+luxlPoeConfigInterfaceParamEntry OBJECT-TYPE
+    SYNTAX      LUXLPoeConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of PoE configurable parameters"
+    INDEX       { luxlPoeConfigInterfaceParamIfIndex }
+    ::= { luxlPoeConfigInterfaceParamTable 1 }
+
+LUXLPoeConfigInterfaceParamEntry ::= SEQUENCE {
+    luxlPoeConfigInterfaceParamIfIndex      LUXLInterfaceIndex,
+    luxlPoeConfigInterfaceParamMode     LUXLpoeModeType,
+    luxlPoeConfigInterfaceParamPriority     LUXLpoePowerPriorityType,
+    luxlPoeConfigInterfaceParamMaxPower     Integer32
+}
+
+luxlPoeConfigInterfaceParamIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPoeConfigInterfaceParamEntry 1 }
+
+luxlPoeConfigInterfaceParamMode OBJECT-TYPE
+    SYNTAX      LUXLpoeModeType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set PoE mode or disable PoE feature, two PoE modes are supported. POE:
+         Enables PoE based on IEEE 802.3af standard, and provides power up to
+         15.4W(154 deciwatt) of DC power to powered device. When changing to
+         standard mode the MaxPower is automatically adjust to 15.4 W, if it
+         currently exceeds 15.4 W. POE_PLUS: Enabled PoE based on IEEE 802.3at
+         standard, and provides power up to 30W(300 deciwatt) of DC power to
+         powered device."
+    ::= { luxlPoeConfigInterfaceParamEntry 2 }
+
+luxlPoeConfigInterfaceParamPriority OBJECT-TYPE
+    SYNTAX      LUXLpoePowerPriorityType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Set port power priority. Priority determines the order in which the
+         interfaces will receive power. Interfaces with a higher priority will
+         receive power before interfaces with a lower priority. PRIORITY_LOW
+         means lowest priority. PRIORITY_HIGH means medium priority.
+         PRIORITY_CRITICAL means highest priority."
+    ::= { luxlPoeConfigInterfaceParamEntry 3 }
+
+luxlPoeConfigInterfaceParamMaxPower OBJECT-TYPE
+    SYNTAX      Integer32 (0..300)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Maximum port power(in deciwatt) that can be delivered to remote device.
+         Maximum allowed values from 0 to 154 deciwatt in POE standard mode, and
+         from 0 to 300 deciwatt in POE plus mode."
+    ::= { luxlPoeConfigInterfaceParamEntry 4 }
+
+luxlPoeStatus OBJECT IDENTIFIER
+    ::= { luxlPoeMibObjects 3 }
+
+luxlPoeStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPoeStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to Power over Ethernet interface status"
+    ::= { luxlPoeStatus 1 }
+
+luxlPoeStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLPoeStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each interface has a set of status parameters"
+    INDEX       { luxlPoeStatusInterfaceIfIndex }
+    ::= { luxlPoeStatusInterfaceTable 1 }
+
+LUXLPoeStatusInterfaceEntry ::= SEQUENCE {
+    luxlPoeStatusInterfaceIfIndex   LUXLInterfaceIndex,
+    luxlPoeStatusInterfacePDClass   Integer32,
+    luxlPoeStatusInterfaceCurrentState      LUXLpoeStatusType,
+    luxlPoeStatusInterfacePowerConsumption      Integer32,
+    luxlPoeStatusInterfaceCurrentConsumption    Integer32
+}
+
+luxlPoeStatusInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlPoeStatusInterfaceEntry 1 }
+
+luxlPoeStatusInterfacePDClass OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Powered device(PD) negotiates a power class with sourcing
+         equipment(PSE) during the time of initial connection, each class have a
+         maximum supported power. Class assigned to PD is based on PD electrical
+         characteristics. Value -1 means either PD attached to the interface can
+         not advertise its power class or no PD detected or PoE is not supported
+         or PoE feature is disabled or unsupported PD class(classes 0-4 is
+         supported)."
+    ::= { luxlPoeStatusInterfaceEntry 2 }
+
+luxlPoeStatusInterfaceCurrentState OBJECT-TYPE
+    SYNTAX      LUXLpoeStatusType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicate port status. POWER_BUDGET_EXCEEDED: PoE is turned OFF due to
+         power budget exceeded on PSE. NO_PD_DETECTED: No PD detected. PD_ON:
+         PSE supplying power to PD through PoE. PD_OVERLOAD: PD consumes more
+         power than the maximum limit configured on the PSE port."
+    ::= { luxlPoeStatusInterfaceEntry 3 }
+
+luxlPoeStatusInterfacePowerConsumption OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the power(in deciwatt) that the PD is consuming right now."
+    ::= { luxlPoeStatusInterfaceEntry 4 }
+
+luxlPoeStatusInterfaceCurrentConsumption OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the current(in mA) that the PD is consuming right now."
+    ::= { luxlPoeStatusInterfaceEntry 5 }
+
+luxlPoeMibConformance OBJECT IDENTIFIER
+    ::= { luxlPoeMib 2 }
+
+luxlPoeMibCompliances OBJECT IDENTIFIER
+    ::= { luxlPoeMibConformance 1 }
+
+luxlPoeMibGroups OBJECT IDENTIFIER
+    ::= { luxlPoeMibConformance 2 }
+
+luxlPoeCapabilitiesInterfaceInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPoeCapabilitiesInterfacePoE }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPoeMibGroups 1 }
+
+luxlPoeConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPoeConfigGlobalsManagementMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPoeMibGroups 2 }
+
+luxlPoeConfigSwitchParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPoeConfigSwitchParamMaxPower, 
+                  luxlPoeConfigSwitchParamCapacitorDetection }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPoeMibGroups 3 }
+
+luxlPoeConfigInterfaceParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPoeConfigInterfaceParamMode, 
+                  luxlPoeConfigInterfaceParamPriority, 
+                  luxlPoeConfigInterfaceParamMaxPower }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPoeMibGroups 4 }
+
+luxlPoeStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPoeStatusInterfacePDClass, 
+                  luxlPoeStatusInterfaceCurrentState, 
+                  luxlPoeStatusInterfacePowerConsumption, 
+                  luxlPoeStatusInterfaceCurrentConsumption }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPoeMibGroups 5 }
+
+luxlPoeMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlPoeCapabilitiesInterfaceInfoGroup, 
+                  luxlPoeConfigGlobalsInfoGroup, 
+                  luxlPoeConfigSwitchParamTableInfoGroup, 
+                  luxlPoeConfigInterfaceParamTableInfoGroup, 
+                  luxlPoeStatusInterfaceTableInfoGroup }
+
+    ::= { luxlPoeMibCompliances 1 }
+
+END

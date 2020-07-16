@@ -1,0 +1,649 @@
+-- *****************************************************************
+-- TOPO-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-TOPO-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    ;
+
+luxlTopoMib MODULE-IDENTITY
+    LAST-UPDATED "201410010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is the Vitesse stack topology private MIB."
+    REVISION    "201410010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 5 }
+
+
+LUXLtopoTopologyType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration reflects the current topology."
+    SYNTAX      INTEGER { back2back(0), ring(1), chain(2) }
+
+luxlTopoMibObjects OBJECT IDENTIFIER
+    ::= { luxlTopoMib 1 }
+
+luxlTopoConfig OBJECT IDENTIFIER
+    ::= { luxlTopoMibObjects 2 }
+
+luxlTopoConfigStackingTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLTopoConfigStackingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The topology configuration table."
+    ::= { luxlTopoConfig 1 }
+
+luxlTopoConfigStackingEntry OBJECT-TYPE
+    SYNTAX      LUXLTopoConfigStackingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id index."
+    INDEX       { luxlTopoConfigStackingSid }
+    ::= { luxlTopoConfigStackingTable 1 }
+
+LUXLTopoConfigStackingEntry ::= SEQUENCE {
+    luxlTopoConfigStackingSid   Integer32,
+    luxlTopoConfigStackingEnableStacking    TruthValue,
+    luxlTopoConfigStackingStackIfA      LUXLInterfaceIndex,
+    luxlTopoConfigStackingStackIfB      LUXLInterfaceIndex
+}
+
+luxlTopoConfigStackingSid OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id."
+    ::= { luxlTopoConfigStackingEntry 1 }
+
+luxlTopoConfigStackingEnableStacking OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If the stack consists of one active switch or stacking is disabled
+         (false), it is possible to configure whether stacking must be enabled
+         (true). When changing this setting, the switch must be rebooted before
+         this takes effect."
+    ::= { luxlTopoConfigStackingEntry 2 }
+
+luxlTopoConfigStackingStackIfA OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "A stack uses two interfaces for stacking, which are named interface A
+         and B. Selecting which physical interface to be used for stacking
+         interface A. Note: Not all interfaces can be used as stacking
+         interface."
+    ::= { luxlTopoConfigStackingEntry 3 }
+
+luxlTopoConfigStackingStackIfB OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "A stack uses two interfaces for stacking, which are named interface A
+         and B. Selecting which physical interface to be used for stacking
+         interface B. Note: Not all interfaces can be used as stacking
+         interface."
+    ::= { luxlTopoConfigStackingEntry 4 }
+
+luxlTopoConfigMstPrioTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLTopoConfigMstPrioEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "For stack master re-election priority configuration."
+    ::= { luxlTopoConfig 2 }
+
+luxlTopoConfigMstPrioEntry OBJECT-TYPE
+    SYNTAX      LUXLTopoConfigMstPrioEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id index."
+    INDEX       { luxlTopoConfigMstPrioSid }
+    ::= { luxlTopoConfigMstPrioTable 1 }
+
+LUXLTopoConfigMstPrioEntry ::= SEQUENCE {
+    luxlTopoConfigMstPrioSid    Integer32,
+    luxlTopoConfigMstPrioPriority   Integer32
+}
+
+luxlTopoConfigMstPrioSid OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id."
+    ::= { luxlTopoConfigMstPrioEntry 1 }
+
+luxlTopoConfigMstPrioPriority OBJECT-TYPE
+    SYNTAX      Integer32 (1..4)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Each switch in the stack has a priority which is used to determine
+         which switch in the stack that shall be the master. For setting the
+         switch priority. The lower priority number the higher priority"
+    ::= { luxlTopoConfigMstPrioEntry 2 }
+
+luxlTopoConfigMacTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLTopoConfigMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The topology configuration table for assigning a switch id to a switch
+         with a specific MAC address."
+    ::= { luxlTopoConfig 3 }
+
+luxlTopoConfigMacEntry OBJECT-TYPE
+    SYNTAX      LUXLTopoConfigMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id index."
+    INDEX       { luxlTopoConfigMacSid }
+    ::= { luxlTopoConfigMacTable 1 }
+
+LUXLTopoConfigMacEntry ::= SEQUENCE {
+    luxlTopoConfigMacSid    Integer32,
+    luxlTopoConfigMacMacAddr    OCTET STRING
+}
+
+luxlTopoConfigMacSid OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id."
+    ::= { luxlTopoConfigMacEntry 1 }
+
+luxlTopoConfigMacMacAddr OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(6))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Used to assign a switch id to a switch with a specific MAC address. For
+         changing switch id for the switches in the stack, you normally use the
+         swap function. In the case where a switch has been added to a stack,
+         but could not be assigned a switch id at detection time (e.g. due to
+         switches which is no longer in the stack still have a switch id
+         assigned), it might be necessary to assign the switch id based upon the
+         MAC address. The following must be true in order to be able to assign
+         the switch id. 1) The switch id must not already be assigned to another
+         switch. 2) The switch must have been detected (the MAC address must be
+         shown the status)."
+    ::= { luxlTopoConfigMacEntry 2 }
+
+luxlTopoStatus OBJECT IDENTIFIER
+    ::= { luxlTopoMibObjects 3 }
+
+luxlTopoStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLTopoStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The topology status and statistics counters."
+    ::= { luxlTopoStatus 1 }
+
+luxlTopoStatusEntry OBJECT-TYPE
+    SYNTAX      LUXLTopoStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id index."
+    INDEX       { luxlTopoStatusSid }
+    ::= { luxlTopoStatusTable 1 }
+
+LUXLTopoStatusEntry ::= SEQUENCE {
+    luxlTopoStatusSid   Integer32,
+    luxlTopoStatusSwitchCnt     Integer32,
+    luxlTopoStatusTopologyType      LUXLtopoTopologyType,
+    luxlTopoStatusChangeTime    LUXLDisplayString,
+    luxlTopoStatusUpdateRxCntA      Integer32,
+    luxlTopoStatusUpdatePeriodicTxCntA      Integer32,
+    luxlTopoStatusUpdateTriggeredTxCntA     Integer32,
+    luxlTopoStatusUpdateTxPolicerDropA      Integer32,
+    luxlTopoStatusUpdateRxErrCntA   Integer32,
+    luxlTopoStatusUpdateTxErrCntA   Integer32,
+    luxlTopoStatusAlertRxCntA   Integer32,
+    luxlTopoStatusAlertTxCntA   Integer32,
+    luxlTopoStatusAlertTxPolicerDropCntA    Integer32,
+    luxlTopoStatusAlertRxErrCntA    Integer32,
+    luxlTopoStatusAlertTxErrCntA    Integer32,
+    luxlTopoStatusUpdateRxCntB      Integer32,
+    luxlTopoStatusUpdatePeriodicTxCntB      Integer32,
+    luxlTopoStatusUpdateTriggeredTxCntB     Integer32,
+    luxlTopoStatusUpdateTxPolicerDropB      Integer32,
+    luxlTopoStatusUpdateRxErrCntB   Integer32,
+    luxlTopoStatusUpdateTxErrCntB   Integer32,
+    luxlTopoStatusAlertRxCntB   Integer32,
+    luxlTopoStatusAlertTxCntB   Integer32,
+    luxlTopoStatusAlertTxPolicerDropCntB    Integer32,
+    luxlTopoStatusAlertRxErrCntB    Integer32,
+    luxlTopoStatusAlertTxErrCntB    Integer32
+}
+
+luxlTopoStatusSid OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id."
+    ::= { luxlTopoStatusEntry 1 }
+
+luxlTopoStatusSwitchCnt OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current number of switches in the stack."
+    ::= { luxlTopoStatusEntry 3 }
+
+luxlTopoStatusTopologyType OBJECT-TYPE
+    SYNTAX      LUXLtopoTopologyType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current topology type:
+         
+         Back2Back - Two units connected with two stacking cables.
+         
+         Ring - Ring topology with more than two units.
+         
+         Chain - Chain topology."
+    ::= { luxlTopoStatusEntry 4 }
+
+luxlTopoStatusChangeTime OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..25))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Time of last topology change since boot in seconds."
+    ::= { luxlTopoStatusEntry 5 }
+
+luxlTopoStatusUpdateRxCntA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received updates counter, including bad ones counter for interface A."
+    ::= { luxlTopoStatusEntry 6 }
+
+luxlTopoStatusUpdatePeriodicTxCntA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted Updates, periodic (tx OK) counter for interface A."
+    ::= { luxlTopoStatusEntry 7 }
+
+luxlTopoStatusUpdateTriggeredTxCntA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted Updates, triggered (tx OK) counter for interface A."
+    ::= { luxlTopoStatusEntry 8 }
+
+luxlTopoStatusUpdateTxPolicerDropA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted Updates, triggered (tx OK) counter for interface A."
+    ::= { luxlTopoStatusEntry 9 }
+
+luxlTopoStatusUpdateRxErrCntA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received errornuous Updates counter for interface A."
+    ::= { luxlTopoStatusEntry 10 }
+
+luxlTopoStatusUpdateTxErrCntA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx of Update failed counter for interface A."
+    ::= { luxlTopoStatusEntry 11 }
+
+luxlTopoStatusAlertRxCntA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received Alerts, including bad ones counter for interface A."
+    ::= { luxlTopoStatusEntry 12 }
+
+luxlTopoStatusAlertTxCntA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted Alerts (tx OK) counter for interface A."
+    ::= { luxlTopoStatusEntry 13 }
+
+luxlTopoStatusAlertTxPolicerDropCntA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx-drops by Tx-policer counter for interface A."
+    ::= { luxlTopoStatusEntry 14 }
+
+luxlTopoStatusAlertRxErrCntA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received errornuous Alerts counter for interface A."
+    ::= { luxlTopoStatusEntry 15 }
+
+luxlTopoStatusAlertTxErrCntA OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx of Alert failed counter for interface A."
+    ::= { luxlTopoStatusEntry 16 }
+
+luxlTopoStatusUpdateRxCntB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received updates counter, including bad ones counter for interface B."
+    ::= { luxlTopoStatusEntry 17 }
+
+luxlTopoStatusUpdatePeriodicTxCntB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted Updates, periodic (tx OK) counter for interface B."
+    ::= { luxlTopoStatusEntry 18 }
+
+luxlTopoStatusUpdateTriggeredTxCntB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted Updates, triggered (tx OK) counter for interface B."
+    ::= { luxlTopoStatusEntry 19 }
+
+luxlTopoStatusUpdateTxPolicerDropB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted Updates, triggered (tx OK) counter for interface B."
+    ::= { luxlTopoStatusEntry 20 }
+
+luxlTopoStatusUpdateRxErrCntB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received errornuous Updates counter for interface B."
+    ::= { luxlTopoStatusEntry 21 }
+
+luxlTopoStatusUpdateTxErrCntB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx of Update failed counter for interface B."
+    ::= { luxlTopoStatusEntry 22 }
+
+luxlTopoStatusAlertRxCntB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received Alerts, including bad ones counter for interface B."
+    ::= { luxlTopoStatusEntry 23 }
+
+luxlTopoStatusAlertTxCntB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted Alerts (tx OK) counter for interface B."
+    ::= { luxlTopoStatusEntry 24 }
+
+luxlTopoStatusAlertTxPolicerDropCntB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx-drops by Tx-policer counter for interface B."
+    ::= { luxlTopoStatusEntry 25 }
+
+luxlTopoStatusAlertRxErrCntB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received errornuous Alerts counter for interface B."
+    ::= { luxlTopoStatusEntry 26 }
+
+luxlTopoStatusAlertTxErrCntB OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx of Alert failed counter for interface B."
+    ::= { luxlTopoStatusEntry 27 }
+
+luxlTopoStatusMaster OBJECT IDENTIFIER
+    ::= { luxlTopoStatus 2 }
+
+luxlTopoStatusMasterMasterChangeTime OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..25))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Time of last master change since boot in seconds."
+    ::= { luxlTopoStatusMaster 2 }
+
+luxlTopoStatusMasterMacAddr OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(6))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC address for the switch which is currently master."
+    ::= { luxlTopoStatusMaster 3 }
+
+luxlTopoControl OBJECT IDENTIFIER
+    ::= { luxlTopoMibObjects 4 }
+
+luxlTopoControlSwapSidTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLTopoControlSwapSidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The topology configuration for swapping switch ids"
+    ::= { luxlTopoControl 4 }
+
+luxlTopoControlSwapSidEntry OBJECT-TYPE
+    SYNTAX      LUXLTopoControlSwapSidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id index"
+    INDEX       { luxlTopoControlSwapSidSid }
+    ::= { luxlTopoControlSwapSidTable 1 }
+
+LUXLTopoControlSwapSidEntry ::= SEQUENCE {
+    luxlTopoControlSwapSidSid   Integer32,
+    luxlTopoControlSwapSidSwitchId      Integer32
+}
+
+luxlTopoControlSwapSidSid OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id."
+    ::= { luxlTopoControlSwapSidEntry 1 }
+
+luxlTopoControlSwapSidSwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Switch Id for the switch to swap id with. Each switch in the stack has
+         a switch ID. Swapping switch id between two switches in the stack."
+    ::= { luxlTopoControlSwapSidEntry 3 }
+
+luxlTopoControlMstElectSid OBJECT IDENTIFIER
+    ::= { luxlTopoControl 5 }
+
+luxlTopoControlMstElectSidReElect OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Makes the stack re-elect a master."
+    ::= { luxlTopoControlMstElectSid 1 }
+
+luxlTopoControlDelSid OBJECT IDENTIFIER
+    ::= { luxlTopoControl 6 }
+
+luxlTopoControlDelSidDel OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Deletes a switch from the stack."
+    ::= { luxlTopoControlDelSid 1 }
+
+luxlTopoMibConformance OBJECT IDENTIFIER
+    ::= { luxlTopoMib 2 }
+
+luxlTopoMibCompliances OBJECT IDENTIFIER
+    ::= { luxlTopoMibConformance 1 }
+
+luxlTopoMibGroups OBJECT IDENTIFIER
+    ::= { luxlTopoMibConformance 2 }
+
+luxlTopoConfigStackingTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTopoConfigStackingEnableStacking, 
+                  luxlTopoConfigStackingStackIfA, luxlTopoConfigStackingStackIfB }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTopoMibGroups 1 }
+
+luxlTopoConfigMstPrioInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTopoConfigMstPrioPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTopoMibGroups 2 }
+
+luxlTopoConfigMacInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTopoConfigMacMacAddr }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTopoMibGroups 3 }
+
+luxlTopoStatusInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTopoStatusSwitchCnt, luxlTopoStatusTopologyType, 
+                  luxlTopoStatusChangeTime, luxlTopoStatusUpdateRxCntA, 
+                  luxlTopoStatusUpdatePeriodicTxCntA, 
+                  luxlTopoStatusUpdateTriggeredTxCntA, 
+                  luxlTopoStatusUpdateTxPolicerDropA, 
+                  luxlTopoStatusUpdateRxErrCntA, luxlTopoStatusUpdateTxErrCntA, 
+                  luxlTopoStatusAlertRxCntA, luxlTopoStatusAlertTxCntA, 
+                  luxlTopoStatusAlertTxPolicerDropCntA, 
+                  luxlTopoStatusAlertRxErrCntA, luxlTopoStatusAlertTxErrCntA, 
+                  luxlTopoStatusUpdateRxCntB, luxlTopoStatusUpdatePeriodicTxCntB, 
+                  luxlTopoStatusUpdateTriggeredTxCntB, 
+                  luxlTopoStatusUpdateTxPolicerDropB, 
+                  luxlTopoStatusUpdateRxErrCntB, luxlTopoStatusUpdateTxErrCntB, 
+                  luxlTopoStatusAlertRxCntB, luxlTopoStatusAlertTxCntB, 
+                  luxlTopoStatusAlertTxPolicerDropCntB, 
+                  luxlTopoStatusAlertRxErrCntB, luxlTopoStatusAlertTxErrCntB }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTopoMibGroups 4 }
+
+luxlTopoStatusMasterInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTopoStatusMasterMasterChangeTime, 
+                  luxlTopoStatusMasterMacAddr }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTopoMibGroups 5 }
+
+luxlTopoControlSwapSidInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTopoControlSwapSidSwitchId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTopoMibGroups 6 }
+
+luxlTopoControlMstElectSidInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTopoControlMstElectSidReElect }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTopoMibGroups 7 }
+
+luxlTopoControlDelSidInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTopoControlDelSidDel }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTopoMibGroups 8 }
+
+luxlTopoMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlTopoConfigStackingTableInfoGroup, 
+                  luxlTopoConfigMstPrioInfoGroup, luxlTopoConfigMacInfoGroup, 
+                  luxlTopoStatusInfoGroup, luxlTopoStatusMasterInfoGroup, 
+                  luxlTopoControlSwapSidInfoGroup, 
+                  luxlTopoControlMstElectSidInfoGroup, 
+                  luxlTopoControlDelSidInfoGroup }
+
+    ::= { luxlTopoMibCompliances 1 }
+
+END

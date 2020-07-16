@@ -1,0 +1,139 @@
+-- *****************************************************************
+-- PRIVILEGE-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-PRIVILEGE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    LUXLDisplayString FROM LUXL-TC
+    ;
+
+luxlPrivilegeMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of Privilege"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 59 }
+
+
+luxlPrivilegeMibObjects OBJECT IDENTIFIER
+    ::= { luxlPrivilegeMib 1 }
+
+luxlPrivilegeConfig OBJECT IDENTIFIER
+    ::= { luxlPrivilegeMibObjects 2 }
+
+luxlPrivilegeConfigWebTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPrivilegeConfigWebEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to configure web privilege"
+    ::= { luxlPrivilegeConfig 1 }
+
+luxlPrivilegeConfigWebEntry OBJECT-TYPE
+    SYNTAX      LUXLPrivilegeConfigWebEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each module has a set of parameters"
+    INDEX       { luxlPrivilegeConfigWebModuleName }
+    ::= { luxlPrivilegeConfigWebTable 1 }
+
+LUXLPrivilegeConfigWebEntry ::= SEQUENCE {
+    luxlPrivilegeConfigWebModuleName    LUXLDisplayString,
+    luxlPrivilegeConfigWebConfigRoPriv      Unsigned32,
+    luxlPrivilegeConfigWebConfigRwPriv      Unsigned32,
+    luxlPrivilegeConfigWebStatusRoPriv      Unsigned32,
+    luxlPrivilegeConfigWebStatusRwPriv      Unsigned32
+}
+
+luxlPrivilegeConfigWebModuleName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Module name."
+    ::= { luxlPrivilegeConfigWebEntry 1 }
+
+luxlPrivilegeConfigWebConfigRoPriv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Web privilege of read-only configuration."
+    ::= { luxlPrivilegeConfigWebEntry 2 }
+
+luxlPrivilegeConfigWebConfigRwPriv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Web privilege of read-write configuration."
+    ::= { luxlPrivilegeConfigWebEntry 3 }
+
+luxlPrivilegeConfigWebStatusRoPriv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Web privilege of read-only status."
+    ::= { luxlPrivilegeConfigWebEntry 4 }
+
+luxlPrivilegeConfigWebStatusRwPriv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Web privilege of read-write status."
+    ::= { luxlPrivilegeConfigWebEntry 5 }
+
+luxlPrivilegeMibConformance OBJECT IDENTIFIER
+    ::= { luxlPrivilegeMib 2 }
+
+luxlPrivilegeMibCompliances OBJECT IDENTIFIER
+    ::= { luxlPrivilegeMibConformance 1 }
+
+luxlPrivilegeMibGroups OBJECT IDENTIFIER
+    ::= { luxlPrivilegeMibConformance 2 }
+
+luxlPrivilegeConfigWebInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPrivilegeConfigWebConfigRoPriv, 
+                  luxlPrivilegeConfigWebConfigRwPriv, 
+                  luxlPrivilegeConfigWebStatusRoPriv, 
+                  luxlPrivilegeConfigWebStatusRwPriv }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPrivilegeMibGroups 1 }
+
+luxlPrivilegeMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlPrivilegeConfigWebInfoGroup }
+
+    ::= { luxlPrivilegeMibCompliances 1 }
+
+END

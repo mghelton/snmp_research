@@ -1,0 +1,154 @@
+-- *****************************************************************
+-- LED-POWER-REDUCTION-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-LED-POWER-REDUCTION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlLedPowerReductionMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of LEDs power reduction. The LEDs power
+         consumption can be reduced by lowering the LEDs intensity"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 77 }
+
+
+luxlLedPowerReductionMibObjects OBJECT IDENTIFIER
+    ::= { luxlLedPowerReductionMib 1 }
+
+luxlLedPowerReductionConfig OBJECT IDENTIFIER
+    ::= { luxlLedPowerReductionMibObjects 2 }
+
+luxlLedPowerReductionConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlLedPowerReductionConfig 1 }
+
+luxlLedPowerReductionConfigGlobalsMaintenanceDuration OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The switch maintenance duration (in seconds). During switch maintenance
+         LEDs will glow in full intensity after either a port has changed link
+         state or the LED push button has been pushed."
+    ::= { luxlLedPowerReductionConfigGlobals 1 }
+
+luxlLedPowerReductionConfigGlobalsErrorEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Turned on LEDs at full brightness(100% intensity) when LED is blinking
+         in red because of either software error or fatal occurred. true means
+         LEDs will glow in full brightness, false means LEDs will not glow in
+         full brightness."
+    ::= { luxlLedPowerReductionConfigGlobals 2 }
+
+luxlLedPowerReductionConfigGlobalsParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLedPowerReductionConfigGlobalsParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to assign led intensity level to each clock hour(based
+         on 24-hour time notaion) of the day"
+    ::= { luxlLedPowerReductionConfig 2 }
+
+luxlLedPowerReductionConfigGlobalsParamEntry OBJECT-TYPE
+    SYNTAX      LUXLLedPowerReductionConfigGlobalsParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each clock hour of the day associates with led intensity level"
+    INDEX       { luxlLedPowerReductionConfigGlobalsParamClockTimeHour }
+    ::= { luxlLedPowerReductionConfigGlobalsParamTable 1 }
+
+LUXLLedPowerReductionConfigGlobalsParamEntry ::= SEQUENCE {
+    luxlLedPowerReductionConfigGlobalsParamClockTimeHour    Integer32,
+    luxlLedPowerReductionConfigGlobalsParamIntensityLevel   LUXLUnsigned8
+}
+
+luxlLedPowerReductionConfigGlobalsParamClockTimeHour OBJECT-TYPE
+    SYNTAX      Integer32 (0..23)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Clock time hour. Hour is based on 24-hour time notation. If hour is x
+         then LEDs will start glow at clock time x:00 of the day with associated
+         LEDs intensity level."
+    ::= { luxlLedPowerReductionConfigGlobalsParamEntry 1 }
+
+luxlLedPowerReductionConfigGlobalsParamIntensityLevel OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..100)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Led power intensity level. The LEDs brightness in percentage. 100 means
+         full intensity(maximum power consumption), 0 means LEDs are off(no
+         power consumption)."
+    ::= { luxlLedPowerReductionConfigGlobalsParamEntry 2 }
+
+luxlLedPowerReductionMibConformance OBJECT IDENTIFIER
+    ::= { luxlLedPowerReductionMib 2 }
+
+luxlLedPowerReductionMibCompliances OBJECT IDENTIFIER
+    ::= { luxlLedPowerReductionMibConformance 1 }
+
+luxlLedPowerReductionMibGroups OBJECT IDENTIFIER
+    ::= { luxlLedPowerReductionMibConformance 2 }
+
+luxlLedPowerReductionConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLedPowerReductionConfigGlobalsMaintenanceDuration, 
+                  luxlLedPowerReductionConfigGlobalsErrorEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLedPowerReductionMibGroups 1 }
+
+luxlLedPowerReductionConfigGlobalsParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLedPowerReductionConfigGlobalsParamIntensityLevel }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLedPowerReductionMibGroups 2 }
+
+luxlLedPowerReductionMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { 
+                  luxlLedPowerReductionConfigGlobalsInfoGroup, 
+                  luxlLedPowerReductionConfigGlobalsParamTableInfoGroup }
+
+    ::= { luxlLedPowerReductionMibCompliances 1 }
+
+END

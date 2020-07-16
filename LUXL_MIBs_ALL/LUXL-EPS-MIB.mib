@@ -1,0 +1,668 @@
+-- *****************************************************************
+-- EPS-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-EPS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    ;
+
+luxlEpsMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private Linear EPS (G.8031) MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 45 }
+
+
+LUXLEpsArchitecture ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The EPS protection architecture."
+    SYNTAX      INTEGER { onePlusOne(0), oneForOne(1) }
+
+LUXLEpsCommand ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "protection group command."
+    SYNTAX      INTEGER { none(0), clear(1), lockOut(2), forcedSwitch(3), manualSwitchProtection(4), manualSwitchWorking(5), exercise(6), localFreeze(7), localLockOut(8) }
+
+LUXLEpsDefectState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Flow defect state."
+    SYNTAX      INTEGER { ok(0), sd(1), sf(2) }
+
+LUXLEpsDirectional ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The EPS 1+1 directional."
+    SYNTAX      INTEGER { uniDirectional(0), biDirectional(1) }
+
+LUXLEpsProtectionState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "protection group state."
+    SYNTAX      INTEGER { disabled(0), noRequestWorking(1), noRequestProtecting(2), lockOut(3), forcedSwitch(4), signalFailWorking(5), signalFailProtecting(6), manualSwitchWorking(7), manualSwitchProtecting(8), waitToRestore(9), exerciseWorking(10), exerciseProtecting(11), reverseRequestWorking(12), reverseRequestProtecting(13), doNotRevert(14) }
+
+LUXLEpsRequest ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "APS request/state."
+    SYNTAX      INTEGER { nr(0), dnr(1), rr(2), exer(3), wtr(4), msW(5), msP(6), sd(7), sfW(8), fs(9), sfP(10), lo(11) }
+
+luxlEpsMibObjects OBJECT IDENTIFIER
+    ::= { luxlEpsMib 1 }
+
+luxlEpsCapabilities OBJECT IDENTIFIER
+    ::= { luxlEpsMibObjects 1 }
+
+luxlEpsCapabilitiesInstanceMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of created EPS instances"
+    ::= { luxlEpsCapabilities 1 }
+
+luxlEpsCapabilitiesWtrMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum WTR timer value"
+    ::= { luxlEpsCapabilities 2 }
+
+luxlEpsCapabilitiesHoldOffOff OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Hold Off timer OFF value"
+    ::= { luxlEpsCapabilities 3 }
+
+luxlEpsCapabilitiesHoldOffMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum Hold Off timer value"
+    ::= { luxlEpsCapabilities 4 }
+
+luxlEpsCapabilitiesMepMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum MEP relation instance value"
+    ::= { luxlEpsCapabilities 5 }
+
+luxlEpsCapabilitiesMepInvalid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Invalid MEP indication. This is returned when EPS has no MEP relations"
+    ::= { luxlEpsCapabilities 6 }
+
+luxlEpsConfig OBJECT IDENTIFIER
+    ::= { luxlEpsMibObjects 2 }
+
+luxlEpsConfigInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEpsConfigInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created EPS instance parameters."
+    ::= { luxlEpsConfig 1 }
+
+luxlEpsConfigInstanceEntry OBJECT-TYPE
+    SYNTAX      LUXLEpsConfigInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created EPS instance parameters. No parameters can be changed
+         after create."
+    INDEX       { luxlEpsConfigInstanceId }
+    ::= { luxlEpsConfigInstanceTable 1 }
+
+LUXLEpsConfigInstanceEntry ::= SEQUENCE {
+    luxlEpsConfigInstanceId     Integer32,
+    luxlEpsConfigInstanceArchitecture   LUXLEpsArchitecture,
+    luxlEpsConfigInstanceWorkingFlow    LUXLInterfaceIndex,
+    luxlEpsConfigInstanceProtectingFlow     LUXLInterfaceIndex,
+    luxlEpsConfigInstanceAction     LUXLRowEditorState
+}
+
+luxlEpsConfigInstanceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The EPS instance ID"
+    ::= { luxlEpsConfigInstanceEntry 1 }
+
+luxlEpsConfigInstanceArchitecture OBJECT-TYPE
+    SYNTAX      LUXLEpsArchitecture
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protection architecture. Cannot be changed after creation."
+    ::= { luxlEpsConfigInstanceEntry 2 }
+
+luxlEpsConfigInstanceWorkingFlow OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The working flow. Cannot be changed after creation."
+    ::= { luxlEpsConfigInstanceEntry 3 }
+
+luxlEpsConfigInstanceProtectingFlow OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protecting flow. Cannot be changed after creation."
+    ::= { luxlEpsConfigInstanceEntry 4 }
+
+luxlEpsConfigInstanceAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlEpsConfigInstanceEntry 100 }
+
+luxlEpsConfigInstanceRowEditor OBJECT IDENTIFIER
+    ::= { luxlEpsConfig 2 }
+
+luxlEpsConfigInstanceRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The EPS instance ID"
+    ::= { luxlEpsConfigInstanceRowEditor 1 }
+
+luxlEpsConfigInstanceRowEditorArchitecture OBJECT-TYPE
+    SYNTAX      LUXLEpsArchitecture
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protection architecture. Cannot be changed after creation."
+    ::= { luxlEpsConfigInstanceRowEditor 2 }
+
+luxlEpsConfigInstanceRowEditorWorkingFlow OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The working flow. Cannot be changed after creation."
+    ::= { luxlEpsConfigInstanceRowEditor 3 }
+
+luxlEpsConfigInstanceRowEditorProtectingFlow OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protecting flow. Cannot be changed after creation."
+    ::= { luxlEpsConfigInstanceRowEditor 4 }
+
+luxlEpsConfigInstanceRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlEpsConfigInstanceRowEditor 100 }
+
+luxlEpsConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEpsConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created EPS instance configuration parameters. When
+         an EPS instance is created in the 'InstanceTable', an entry is
+         automatically created here with default value."
+    ::= { luxlEpsConfig 3 }
+
+luxlEpsConfigEntry OBJECT-TYPE
+    SYNTAX      LUXLEpsConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created EPS instance configuration parameters"
+    INDEX       { luxlEpsConfigId }
+    ::= { luxlEpsConfigTable 1 }
+
+LUXLEpsConfigEntry ::= SEQUENCE {
+    luxlEpsConfigId     Integer32,
+    luxlEpsConfigDirectional    LUXLEpsDirectional,
+    luxlEpsConfigApsEnable      TruthValue,
+    luxlEpsConfigRevertive      TruthValue,
+    luxlEpsConfigRestoreTimer   Unsigned32,
+    luxlEpsConfigHoldOffTimer   Unsigned32
+}
+
+luxlEpsConfigId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The EPS instance ID"
+    ::= { luxlEpsConfigEntry 1 }
+
+luxlEpsConfigDirectional OBJECT-TYPE
+    SYNTAX      LUXLEpsDirectional
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Protection is uni or bi directional. Only for 1+1."
+    ::= { luxlEpsConfigEntry 2 }
+
+luxlEpsConfigApsEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "APS can be enabled or disabled. Only for 1+1."
+    ::= { luxlEpsConfigEntry 3 }
+
+luxlEpsConfigRevertive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Revertive operation can enabled or disabled."
+    ::= { luxlEpsConfigEntry 4 }
+
+luxlEpsConfigRestoreTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Wait to restore timer in seconds - max. 720 - min. 1."
+    ::= { luxlEpsConfigEntry 5 }
+
+luxlEpsConfigHoldOffTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Hold off timer in 100 ms - max. 100 - 0 means no hold off"
+    ::= { luxlEpsConfigEntry 6 }
+
+luxlEpsConfigMepTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEpsConfigMepEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created EPS instance MEP configuration parameters.
+         When an EPS instance is created in the 'InstanceTable', an entry is
+         automatically created here with default value 100 - meaning no MEP
+         instance related."
+    ::= { luxlEpsConfig 4 }
+
+luxlEpsConfigMepEntry OBJECT-TYPE
+    SYNTAX      LUXLEpsConfigMepEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created EPS instance MEP configuration parameters."
+    INDEX       { luxlEpsConfigMepId }
+    ::= { luxlEpsConfigMepTable 1 }
+
+LUXLEpsConfigMepEntry ::= SEQUENCE {
+    luxlEpsConfigMepId      Integer32,
+    luxlEpsConfigMepWorkingMep      Unsigned32,
+    luxlEpsConfigMepProtectingMep   Unsigned32,
+    luxlEpsConfigMepApsMep      Unsigned32
+}
+
+luxlEpsConfigMepId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The EPS instance ID"
+    ::= { luxlEpsConfigMepEntry 1 }
+
+luxlEpsConfigMepWorkingMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Working SF MEP reference - max. 100-1 - min. 0. During get 100 indicate
+         no reference"
+    ::= { luxlEpsConfigMepEntry 2 }
+
+luxlEpsConfigMepProtectingMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Protecting SF MEP reference - max. 100-1 - min. 0. During get 100
+         indicate no reference"
+    ::= { luxlEpsConfigMepEntry 3 }
+
+luxlEpsConfigMepApsMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "APS MEP reference - max. 100-1 - min. 0. During get 100 indicate no
+         reference"
+    ::= { luxlEpsConfigMepEntry 4 }
+
+luxlEpsConfigCommandTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEpsConfigCommandEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created EPS instance command. When an EPS instance
+         is created in the 'InstanceTable', an entry is automatically created
+         here with 'no command'."
+    ::= { luxlEpsConfig 5 }
+
+luxlEpsConfigCommandEntry OBJECT-TYPE
+    SYNTAX      LUXLEpsConfigCommandEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created EPS instance command"
+    INDEX       { luxlEpsConfigCommandId }
+    ::= { luxlEpsConfigCommandTable 1 }
+
+LUXLEpsConfigCommandEntry ::= SEQUENCE {
+    luxlEpsConfigCommandId      Integer32,
+    luxlEpsConfigCommandCommand     LUXLEpsCommand
+}
+
+luxlEpsConfigCommandId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The EPS instance ID"
+    ::= { luxlEpsConfigCommandEntry 1 }
+
+luxlEpsConfigCommandCommand OBJECT-TYPE
+    SYNTAX      LUXLEpsCommand
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "protection group command"
+    ::= { luxlEpsConfigCommandEntry 2 }
+
+luxlEpsStatus OBJECT IDENTIFIER
+    ::= { luxlEpsMibObjects 3 }
+
+luxlEpsStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLEpsStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created EPS instance status."
+    ::= { luxlEpsStatus 1 }
+
+luxlEpsStatusEntry OBJECT-TYPE
+    SYNTAX      LUXLEpsStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created EPS instance status."
+    INDEX       { luxlEpsStatusId }
+    ::= { luxlEpsStatusTable 1 }
+
+LUXLEpsStatusEntry ::= SEQUENCE {
+    luxlEpsStatusId     Integer32,
+    luxlEpsStatusProtectionState    LUXLEpsProtectionState,
+    luxlEpsStatusWorkingState   LUXLEpsDefectState,
+    luxlEpsStatusProtectingState    LUXLEpsDefectState,
+    luxlEpsStatusTransmittedApsRequest      LUXLEpsRequest,
+    luxlEpsStatusTransmittedApsReSignal     Unsigned32,
+    luxlEpsStatusTransmittedApsBrSignal     Unsigned32,
+    luxlEpsStatusReceivedApsRequest     LUXLEpsRequest,
+    luxlEpsStatusReceivedApsReSignal    Unsigned32,
+    luxlEpsStatusReceivedApsBrSignal    Unsigned32,
+    luxlEpsStatusDfopPm     TruthValue,
+    luxlEpsStatusDfopCm     TruthValue,
+    luxlEpsStatusDfopNr     TruthValue,
+    luxlEpsStatusDfopNoAps      TruthValue
+}
+
+luxlEpsStatusId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The EPS instance ID"
+    ::= { luxlEpsStatusEntry 1 }
+
+luxlEpsStatusProtectionState OBJECT-TYPE
+    SYNTAX      LUXLEpsProtectionState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Protection state according to to G.8031 Annex A"
+    ::= { luxlEpsStatusEntry 2 }
+
+luxlEpsStatusWorkingState OBJECT-TYPE
+    SYNTAX      LUXLEpsDefectState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Working flow defect state"
+    ::= { luxlEpsStatusEntry 3 }
+
+luxlEpsStatusProtectingState OBJECT-TYPE
+    SYNTAX      LUXLEpsDefectState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Protecting flow defect state"
+    ::= { luxlEpsStatusEntry 4 }
+
+luxlEpsStatusTransmittedApsRequest OBJECT-TYPE
+    SYNTAX      LUXLEpsRequest
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted APS request"
+    ::= { luxlEpsStatusEntry 5 }
+
+luxlEpsStatusTransmittedApsReSignal OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted APS requested signal"
+    ::= { luxlEpsStatusEntry 6 }
+
+luxlEpsStatusTransmittedApsBrSignal OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted APS bridged signal"
+    ::= { luxlEpsStatusEntry 7 }
+
+luxlEpsStatusReceivedApsRequest OBJECT-TYPE
+    SYNTAX      LUXLEpsRequest
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received APS request"
+    ::= { luxlEpsStatusEntry 8 }
+
+luxlEpsStatusReceivedApsReSignal OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received APS requested signal"
+    ::= { luxlEpsStatusEntry 9 }
+
+luxlEpsStatusReceivedApsBrSignal OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received APS bridged signal"
+    ::= { luxlEpsStatusEntry 10 }
+
+luxlEpsStatusDfopPm OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "FOP Protection type Mismatch - unexpected B bit"
+    ::= { luxlEpsStatusEntry 11 }
+
+luxlEpsStatusDfopCm OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "FOP Configuration Mismatch - APS received on working"
+    ::= { luxlEpsStatusEntry 12 }
+
+luxlEpsStatusDfopNr OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "FOP Not expected Request - receiving request is not the expected
+         (transmitted)"
+    ::= { luxlEpsStatusEntry 13 }
+
+luxlEpsStatusDfopNoAps OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "FOP No APS received"
+    ::= { luxlEpsStatusEntry 14 }
+
+luxlEpsControl OBJECT IDENTIFIER
+    ::= { luxlEpsMibObjects 4 }
+
+luxlEpsMibConformance OBJECT IDENTIFIER
+    ::= { luxlEpsMib 2 }
+
+luxlEpsMibCompliances OBJECT IDENTIFIER
+    ::= { luxlEpsMibConformance 1 }
+
+luxlEpsMibGroups OBJECT IDENTIFIER
+    ::= { luxlEpsMibConformance 2 }
+
+luxlEpsCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEpsCapabilitiesInstanceMax, luxlEpsCapabilitiesWtrMax, 
+                  luxlEpsCapabilitiesHoldOffOff, luxlEpsCapabilitiesHoldOffMax, 
+                  luxlEpsCapabilitiesMepMax, luxlEpsCapabilitiesMepInvalid }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEpsMibGroups 1 }
+
+luxlEpsConfigInstanceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEpsConfigInstanceArchitecture, 
+                  luxlEpsConfigInstanceWorkingFlow, 
+                  luxlEpsConfigInstanceProtectingFlow, 
+                  luxlEpsConfigInstanceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEpsMibGroups 2 }
+
+luxlEpsConfigInstanceRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEpsConfigInstanceRowEditorId, 
+                  luxlEpsConfigInstanceRowEditorArchitecture, 
+                  luxlEpsConfigInstanceRowEditorWorkingFlow, 
+                  luxlEpsConfigInstanceRowEditorProtectingFlow, 
+                  luxlEpsConfigInstanceRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEpsMibGroups 3 }
+
+luxlEpsConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEpsConfigDirectional, luxlEpsConfigApsEnable, 
+                  luxlEpsConfigRevertive, luxlEpsConfigRestoreTimer, 
+                  luxlEpsConfigHoldOffTimer }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEpsMibGroups 4 }
+
+luxlEpsConfigMepTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEpsConfigMepWorkingMep, luxlEpsConfigMepProtectingMep, 
+                  luxlEpsConfigMepApsMep }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEpsMibGroups 5 }
+
+luxlEpsConfigCommandTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEpsConfigCommandCommand }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEpsMibGroups 6 }
+
+luxlEpsStatusTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlEpsStatusProtectionState, luxlEpsStatusWorkingState, 
+                  luxlEpsStatusProtectingState, 
+                  luxlEpsStatusTransmittedApsRequest, 
+                  luxlEpsStatusTransmittedApsReSignal, 
+                  luxlEpsStatusTransmittedApsBrSignal, 
+                  luxlEpsStatusReceivedApsRequest, 
+                  luxlEpsStatusReceivedApsReSignal, 
+                  luxlEpsStatusReceivedApsBrSignal, luxlEpsStatusDfopPm, 
+                  luxlEpsStatusDfopCm, luxlEpsStatusDfopNr, luxlEpsStatusDfopNoAps }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlEpsMibGroups 7 }
+
+luxlEpsMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlEpsCapabilitiesInfoGroup, 
+                  luxlEpsConfigInstanceTableInfoGroup, 
+                  luxlEpsConfigInstanceRowEditorInfoGroup, 
+                  luxlEpsConfigTableInfoGroup, luxlEpsConfigMepTableInfoGroup, 
+                  luxlEpsConfigCommandTableInfoGroup, 
+                  luxlEpsStatusTableInfoGroup }
+
+    ::= { luxlEpsMibCompliances 1 }
+
+END

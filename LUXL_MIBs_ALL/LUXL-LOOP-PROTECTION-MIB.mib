@@ -1,0 +1,260 @@
+-- *****************************************************************
+-- LOOP-PROTECTION-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-LOOP-PROTECTION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLUnsigned64 FROM LUXL-TC
+    ;
+
+luxlLoopProtectionMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private MIB for loop protection"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 91 }
+
+
+LUXLLoopProtectionAction ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available actions for when a loop on an
+         interface is detected."
+    SYNTAX      INTEGER { shutdown(0), shutdownAndLogEvent(1), logEvent(2) }
+
+luxlLoopProtectionMibObjects OBJECT IDENTIFIER
+    ::= { luxlLoopProtectionMib 1 }
+
+luxlLoopProtectionConfig OBJECT IDENTIFIER
+    ::= { luxlLoopProtectionMibObjects 2 }
+
+luxlLoopProtectionConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlLoopProtectionConfig 1 }
+
+luxlLoopProtectionConfigGlobalsEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global enabled for loop protection on any port."
+    ::= { luxlLoopProtectionConfigGlobals 1 }
+
+luxlLoopProtectionConfigGlobalsTransmitInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Port transmission interval (seconds). Valid range: 1-10 seconds."
+    ::= { luxlLoopProtectionConfigGlobals 2 }
+
+luxlLoopProtectionConfigGlobalsShutdownPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Port shutdown period (seconds). Valid range: 0 to 604800 seconds."
+    ::= { luxlLoopProtectionConfigGlobals 3 }
+
+luxlLoopProtectionConfigInterface OBJECT IDENTIFIER
+    ::= { luxlLoopProtectionConfig 2 }
+
+luxlLoopProtectionConfigInterfaceParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLoopProtectionConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of loop protection interface parameters"
+    ::= { luxlLoopProtectionConfigInterface 1 }
+
+luxlLoopProtectionConfigInterfaceParamEntry OBJECT-TYPE
+    SYNTAX      LUXLLoopProtectionConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each physical interface has a set of parameters"
+    INDEX       { luxlLoopProtectionConfigInterfaceParamIfIndex }
+    ::= { luxlLoopProtectionConfigInterfaceParamTable 1 }
+
+LUXLLoopProtectionConfigInterfaceParamEntry ::= SEQUENCE {
+    luxlLoopProtectionConfigInterfaceParamIfIndex   LUXLInterfaceIndex,
+    luxlLoopProtectionConfigInterfaceParamEnabled   TruthValue,
+    luxlLoopProtectionConfigInterfaceParamAction    LUXLLoopProtectionAction,
+    luxlLoopProtectionConfigInterfaceParamTransmit      TruthValue
+}
+
+luxlLoopProtectionConfigInterfaceParamIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlLoopProtectionConfigInterfaceParamEntry 1 }
+
+luxlLoopProtectionConfigInterfaceParamEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enabled loop protection on port"
+    ::= { luxlLoopProtectionConfigInterfaceParamEntry 2 }
+
+luxlLoopProtectionConfigInterfaceParamAction OBJECT-TYPE
+    SYNTAX      LUXLLoopProtectionAction
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action if loop detected"
+    ::= { luxlLoopProtectionConfigInterfaceParamEntry 3 }
+
+luxlLoopProtectionConfigInterfaceParamTransmit OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Actively generate PDUs"
+    ::= { luxlLoopProtectionConfigInterfaceParamEntry 4 }
+
+luxlLoopProtectionStatus OBJECT IDENTIFIER
+    ::= { luxlLoopProtectionMibObjects 3 }
+
+luxlLoopProtectionStatusInterface OBJECT IDENTIFIER
+    ::= { luxlLoopProtectionStatus 2 }
+
+luxlLoopProtectionStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLLoopProtectionStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of loop protection interface status"
+    ::= { luxlLoopProtectionStatusInterface 1 }
+
+luxlLoopProtectionStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLLoopProtectionStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each physical interface has a set of status objects"
+    INDEX       { luxlLoopProtectionStatusInterfaceIfIndex }
+    ::= { luxlLoopProtectionStatusInterfaceTable 1 }
+
+LUXLLoopProtectionStatusInterfaceEntry ::= SEQUENCE {
+    luxlLoopProtectionStatusInterfaceIfIndex    LUXLInterfaceIndex,
+    luxlLoopProtectionStatusInterfaceDisabled   TruthValue,
+    luxlLoopProtectionStatusInterfaceLoopDetected   TruthValue,
+    luxlLoopProtectionStatusInterfaceLoopCount      Unsigned32,
+    luxlLoopProtectionStatusInterfaceLastLoop   LUXLUnsigned64
+}
+
+luxlLoopProtectionStatusInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number."
+    ::= { luxlLoopProtectionStatusInterfaceEntry 1 }
+
+luxlLoopProtectionStatusInterfaceDisabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Whether a port is currently disabled"
+    ::= { luxlLoopProtectionStatusInterfaceEntry 2 }
+
+luxlLoopProtectionStatusInterfaceLoopDetected OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Whether a port has a loop detected"
+    ::= { luxlLoopProtectionStatusInterfaceEntry 3 }
+
+luxlLoopProtectionStatusInterfaceLoopCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of times a loop has been detected on a port"
+    ::= { luxlLoopProtectionStatusInterfaceEntry 4 }
+
+luxlLoopProtectionStatusInterfaceLastLoop OBJECT-TYPE
+    SYNTAX      LUXLUnsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Time of last loop condition"
+    ::= { luxlLoopProtectionStatusInterfaceEntry 5 }
+
+luxlLoopProtectionMibConformance OBJECT IDENTIFIER
+    ::= { luxlLoopProtectionMib 2 }
+
+luxlLoopProtectionMibCompliances OBJECT IDENTIFIER
+    ::= { luxlLoopProtectionMibConformance 1 }
+
+luxlLoopProtectionMibGroups OBJECT IDENTIFIER
+    ::= { luxlLoopProtectionMibConformance 2 }
+
+luxlLoopProtectionConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLoopProtectionConfigGlobalsEnabled, 
+                  luxlLoopProtectionConfigGlobalsTransmitInterval, 
+                  luxlLoopProtectionConfigGlobalsShutdownPeriod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLoopProtectionMibGroups 1 }
+
+luxlLoopProtectionConfigInterfaceParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLoopProtectionConfigInterfaceParamEnabled, 
+                  luxlLoopProtectionConfigInterfaceParamAction, 
+                  luxlLoopProtectionConfigInterfaceParamTransmit }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLoopProtectionMibGroups 2 }
+
+luxlLoopProtectionStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlLoopProtectionStatusInterfaceDisabled, 
+                  luxlLoopProtectionStatusInterfaceLoopDetected, 
+                  luxlLoopProtectionStatusInterfaceLoopCount, 
+                  luxlLoopProtectionStatusInterfaceLastLoop }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlLoopProtectionMibGroups 3 }
+
+luxlLoopProtectionMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlLoopProtectionConfigGlobalsInfoGroup, 
+                  luxlLoopProtectionConfigInterfaceParamTableInfoGroup, 
+                  luxlLoopProtectionStatusInterfaceTableInfoGroup }
+
+    ::= { luxlLoopProtectionMibCompliances 1 }
+
+END

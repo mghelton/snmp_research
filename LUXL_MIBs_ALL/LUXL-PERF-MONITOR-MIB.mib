@@ -1,0 +1,1413 @@
+-- *****************************************************************
+-- PERF-MONITOR-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-PERF-MONITOR-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Counter64 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlPerfMonitorMib MODULE-IDENTITY
+    LAST-UPDATED "201410060000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the Performance Monitor MIB."
+    REVISION    "201410060000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { luxlSwitchMgmt 117 }
+
+
+LUXLPerfMonitorEvcPortType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates per port type for EVC statistics."
+    SYNTAX      INTEGER { evcNni(0), evcUni(1) }
+
+LUXLPerfMonitorMepDirection ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates MEP instance direction measured by PM."
+    SYNTAX      INTEGER { down(0), up(1) }
+
+LUXLPerfMonitorMepDmTimeUnit ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates time resolution of the DM results measured
+         by PM."
+    SYNTAX      INTEGER { us(0), ns(1) }
+
+LUXLPerfMonitorMepRate ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates MEP frame rate of CCM/LMM PDU which is the
+         inverse of transmission period as described in Y.1731."
+    SYNTAX      INTEGER { frames300PerSecond(1), frames100PerSecond(2), frames10PerSecond(3), frames1PerSecond(4), frames6PerMinute(5), frames1PerMinute(6), frames6PerHour(7) }
+
+LUXLPerfMonitorTransferMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates PM transfer interval mode."
+    SYNTAX      INTEGER { all(1), new(2), fixAmount(3) }
+
+luxlPerfMonitorMibObjects OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorMib 1 }
+
+luxlPerfMonitorConfig OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorMibObjects 2 }
+
+luxlPerfMonitorConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorConfig 1 }
+
+luxlPerfMonitorConfigGlobalsMgmt OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorConfigGlobals 1 }
+
+luxlPerfMonitorConfigGlobalsMgmtLossMeasurementAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control for PM's LM function, TRUE is to enable
+         monitoring LM and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsMgmt 1 }
+
+luxlPerfMonitorConfigGlobalsMgmtLossMeasurementStorageState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control for storing PM's LM result, TRUE is to enable
+         storing LM statistics and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsMgmt 2 }
+
+luxlPerfMonitorConfigGlobalsMgmtLossMeasurementInterval OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (1..60)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Interval for tracking LM, in minute. The configurable value ranges from
+         1 to 60."
+    ::= { luxlPerfMonitorConfigGlobalsMgmt 3 }
+
+luxlPerfMonitorConfigGlobalsMgmtDelayMeasurementAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control for PM's DM function, TRUE is to enable
+         monitoring DM and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsMgmt 4 }
+
+luxlPerfMonitorConfigGlobalsMgmtDelayMeasurementStorageState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control for storing PM's DM result, TRUE is to enable
+         storing DM statistics and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsMgmt 5 }
+
+luxlPerfMonitorConfigGlobalsMgmtDelayMeasurementInterval OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (1..60)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Interval for tracking DM, in minute. The configurable value ranges from
+         1 to 60."
+    ::= { luxlPerfMonitorConfigGlobalsMgmt 6 }
+
+luxlPerfMonitorConfigGlobalsMgmtDelayMeasurementBinStorageState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control for storing PM's DM bucket result, TRUE is to
+         enable storing DM bucket statistics and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsMgmt 7 }
+
+luxlPerfMonitorConfigGlobalsMgmtEvcAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control for PM's EVC monitoring function, TRUE is to
+         enable monitoring EVC and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsMgmt 8 }
+
+luxlPerfMonitorConfigGlobalsMgmtEvcStorageState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control for storing PM's EVC monitoring result, TRUE is
+         to enable storing EVC statistics and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsMgmt 9 }
+
+luxlPerfMonitorConfigGlobalsMgmtEvcMeasureInterval OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (1..60)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Interval for tracking EVC, in minute. The configurable value ranges
+         from 1 to 60."
+    ::= { luxlPerfMonitorConfigGlobalsMgmt 10 }
+
+luxlPerfMonitorConfigGlobalsTransfer OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorConfigGlobals 2 }
+
+luxlPerfMonitorConfigGlobalsTransferAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control for PM's transfer function, TRUE is to enable
+         sending PM's monitoring result and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsTransfer 1 }
+
+luxlPerfMonitorConfigGlobalsTransferServerUrl OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The URL for the server directory that keeps PM's monitoring result."
+    ::= { luxlPerfMonitorConfigGlobalsTransfer 2 }
+
+luxlPerfMonitorConfigGlobalsTransferIntervalMode OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorTransferMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Transfer mode, based on selected interval type, for sending PM results.
+         When 'all' is set, PM result from all available intervals will be sent.
+         When 'new' is set, PM result from new intervals since last transfer
+         will be sent. When 'fixAmount' is set, PM result from a fixed number of
+         intervals will be sent."
+    ::= { luxlPerfMonitorConfigGlobalsTransfer 3 }
+
+luxlPerfMonitorConfigGlobalsTransferFixedNumberOfInterval OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (1..96)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "PM result from this fixed number of intervals will be sent. It is
+         working only when 'IntervalMode' is 'fixAmount'. The configurable value
+         ranges from 1 to 96."
+    ::= { luxlPerfMonitorConfigGlobalsTransfer 4 }
+
+luxlPerfMonitorConfigGlobalsTransferRetryIncompletedTransfer OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control to retry sending PM result from last incompleted
+         transmission, TRUE is to enable retrying the incompleted PM result
+         transfer and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsTransfer 5 }
+
+luxlPerfMonitorConfigGlobalsXferSched OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorConfigGlobals 3 }
+
+luxlPerfMonitorConfigGlobalsXferSchedHourTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPerfMonitorConfigGlobalsXferSchedHourEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing PM hourly scheduled transfer
+         configuration."
+    ::= { luxlPerfMonitorConfigGlobalsXferSched 1 }
+
+luxlPerfMonitorConfigGlobalsXferSchedHourEntry OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorConfigGlobalsXferSchedHourEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlPerfMonitorConfigGlobalsXferSchedHourIndex }
+    ::= { luxlPerfMonitorConfigGlobalsXferSchedHourTable 1 }
+
+LUXLPerfMonitorConfigGlobalsXferSchedHourEntry ::= SEQUENCE {
+    luxlPerfMonitorConfigGlobalsXferSchedHourIndex      Unsigned32,
+    luxlPerfMonitorConfigGlobalsXferSchedHourEnabled    TruthValue
+}
+
+luxlPerfMonitorConfigGlobalsXferSchedHourIndex OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..23)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Hour value in 24 hour time."
+    ::= { luxlPerfMonitorConfigGlobalsXferSchedHourEntry 1 }
+
+luxlPerfMonitorConfigGlobalsXferSchedHourEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control for managing the transfer schedule, TRUE is to
+         enable specific time for transfer schedule and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsXferSchedHourEntry 2 }
+
+luxlPerfMonitorConfigGlobalsXferSchedQuarterTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPerfMonitorConfigGlobalsXferSchedQuarterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing PM quarterly scheduled transfer
+         configuration."
+    ::= { luxlPerfMonitorConfigGlobalsXferSched 2 }
+
+luxlPerfMonitorConfigGlobalsXferSchedQuarterEntry OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorConfigGlobalsXferSchedQuarterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlPerfMonitorConfigGlobalsXferSchedQuarterIndex }
+    ::= { luxlPerfMonitorConfigGlobalsXferSchedQuarterTable 1 }
+
+LUXLPerfMonitorConfigGlobalsXferSchedQuarterEntry ::= SEQUENCE {
+    luxlPerfMonitorConfigGlobalsXferSchedQuarterIndex   Unsigned32,
+    luxlPerfMonitorConfigGlobalsXferSchedQuarterEnabled     TruthValue
+}
+
+luxlPerfMonitorConfigGlobalsXferSchedQuarterIndex OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Quarter value in a hour."
+    ::= { luxlPerfMonitorConfigGlobalsXferSchedQuarterEntry 1 }
+
+luxlPerfMonitorConfigGlobalsXferSchedQuarterEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Administrative control for managing the transfer schedule, TRUE is to
+         enable specific time for transfer schedule and FALSE is to disable it."
+    ::= { luxlPerfMonitorConfigGlobalsXferSchedQuarterEntry 2 }
+
+luxlPerfMonitorConfigGlobalsXferSchedOffset OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorConfigGlobalsXferSched 3 }
+
+luxlPerfMonitorConfigGlobalsXferSchedOffsetMinute OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8 (0..15)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The scheduled transfer time offset by minutes. The configurable value
+         ranges from 0 to 15."
+    ::= { luxlPerfMonitorConfigGlobalsXferSchedOffset 1 }
+
+luxlPerfMonitorConfigGlobalsXferSchedOffsetRandomSecond OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16 (0..900)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The scheduled transfer time random offset by seconds. It provides a
+         range for choosing a random second offset. The configurable value
+         ranges from 0 to 900."
+    ::= { luxlPerfMonitorConfigGlobalsXferSchedOffset 2 }
+
+luxlPerfMonitorStatus OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorMibObjects 3 }
+
+luxlPerfMonitorStatusStatistics OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorStatus 1 }
+
+luxlPerfMonitorStatusStatisticsLmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPerfMonitorStatusStatisticsLmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying PM loss measurement statistics."
+    ::= { luxlPerfMonitorStatusStatistics 1 }
+
+luxlPerfMonitorStatusStatisticsLmEntry OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorStatusStatisticsLmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of LM statistics."
+    INDEX       { luxlPerfMonitorStatusStatisticsLmIntervalId, luxlPerfMonitorStatusStatisticsLmEntryId }
+    ::= { luxlPerfMonitorStatusStatisticsLmTable 1 }
+
+LUXLPerfMonitorStatusStatisticsLmEntry ::= SEQUENCE {
+    luxlPerfMonitorStatusStatisticsLmIntervalId     Unsigned32,
+    luxlPerfMonitorStatusStatisticsLmEntryId    Unsigned32,
+    luxlPerfMonitorStatusStatisticsLmMepInstance    LUXLUnsigned16,
+    luxlPerfMonitorStatusStatisticsLmResidencePort      LUXLInterfaceIndex,
+    luxlPerfMonitorStatusStatisticsLmMepId      LUXLUnsigned16,
+    luxlPerfMonitorStatusStatisticsLmMepMacAddress      MacAddress,
+    luxlPerfMonitorStatusStatisticsLmMepPeerMepId   LUXLUnsigned16,
+    luxlPerfMonitorStatusStatisticsLmMepPeerMacAddress      MacAddress,
+    luxlPerfMonitorStatusStatisticsLmMepDirection   LUXLPerfMonitorMepDirection,
+    luxlPerfMonitorStatusStatisticsLmMepLevel   LUXLUnsigned8,
+    luxlPerfMonitorStatusStatisticsLmMepFlowInstance    LUXLInterfaceIndex,
+    luxlPerfMonitorStatusStatisticsLmMepTaggedVid   LUXLUnsigned16,
+    luxlPerfMonitorStatusStatisticsLmPriority   Unsigned32,
+    luxlPerfMonitorStatusStatisticsLmRate   LUXLPerfMonitorMepRate,
+    luxlPerfMonitorStatusStatisticsLmTx     Unsigned32,
+    luxlPerfMonitorStatusStatisticsLmRx     Unsigned32,
+    luxlPerfMonitorStatusStatisticsLmNearEndLossCount   Unsigned32,
+    luxlPerfMonitorStatusStatisticsLmNearEndLossRate    Unsigned32,
+    luxlPerfMonitorStatusStatisticsLmFarEndLossCount    Unsigned32,
+    luxlPerfMonitorStatusStatisticsLmFarEndLossRate     Unsigned32
+}
+
+luxlPerfMonitorStatusStatisticsLmIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 1 }
+
+luxlPerfMonitorStatusStatisticsLmEntryId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The entry identifier for the performance monitor data sets."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 2 }
+
+luxlPerfMonitorStatusStatisticsLmMepInstance OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance for the performance monitor data sets."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 3 }
+
+luxlPerfMonitorStatusStatisticsLmResidencePort OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The residence port for the MEP."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 4 }
+
+luxlPerfMonitorStatusStatisticsLmMepId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Two bytes CCM MEP ID in the transmitted CCM."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 5 }
+
+luxlPerfMonitorStatusStatisticsLmMepMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC address of this MEP which can be used by other MEP when unicast is
+         selected."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 6 }
+
+luxlPerfMonitorStatusStatisticsLmMepPeerMepId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "An expected MEP identifier in the received CCM."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 7 }
+
+luxlPerfMonitorStatusStatisticsLmMepPeerMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC address to be used when unicast is selected with the peer MEP.
+         Also, this MAC is used to create HW checking of receiving CCM PDU from
+         this MEP."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 8 }
+
+luxlPerfMonitorStatusStatisticsLmMepDirection OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorMepDirection
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Upstream or downstream that needs to be monitored."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 10 }
+
+luxlPerfMonitorStatusStatisticsLmMepLevel OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The MEG level of this MEP."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 11 }
+
+luxlPerfMonitorStatusStatisticsLmMepFlowInstance OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The MEP is related to this flow depends on 'MepDomain'."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 12 }
+
+luxlPerfMonitorStatusStatisticsLmMepTaggedVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "An outer C/S-tag or the subscriber VID that identifies the subscriber
+         flow in EVC where the MIP is active."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 13 }
+
+luxlPerfMonitorStatusStatisticsLmPriority OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The priority to be inserted as PCP bits in TAG (if any)."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 14 }
+
+luxlPerfMonitorStatusStatisticsLmRate OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorMepRate
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Frame rate of CCM/LMM PDU which is the inverse of transmission period
+         as described in Y.1731."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 15 }
+
+luxlPerfMonitorStatusStatisticsLmTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of frame transmitted."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 16 }
+
+luxlPerfMonitorStatusStatisticsLmRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of frame received."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 17 }
+
+luxlPerfMonitorStatusStatisticsLmNearEndLossCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The near end loss count."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 18 }
+
+luxlPerfMonitorStatusStatisticsLmNearEndLossRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The near end loss ratio."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 19 }
+
+luxlPerfMonitorStatusStatisticsLmFarEndLossCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The far end loss count."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 20 }
+
+luxlPerfMonitorStatusStatisticsLmFarEndLossRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The far end loss ratio."
+    ::= { luxlPerfMonitorStatusStatisticsLmEntry 21 }
+
+luxlPerfMonitorStatusStatisticsDmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPerfMonitorStatusStatisticsDmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying PM delay measurement statistics."
+    ::= { luxlPerfMonitorStatusStatistics 2 }
+
+luxlPerfMonitorStatusStatisticsDmEntry OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorStatusStatisticsDmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of DM statistics."
+    INDEX       { luxlPerfMonitorStatusStatisticsDmIntervalId, luxlPerfMonitorStatusStatisticsDmEntryId }
+    ::= { luxlPerfMonitorStatusStatisticsDmTable 1 }
+
+LUXLPerfMonitorStatusStatisticsDmEntry ::= SEQUENCE {
+    luxlPerfMonitorStatusStatisticsDmIntervalId     Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmEntryId    Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmMepInstance    LUXLUnsigned16,
+    luxlPerfMonitorStatusStatisticsDmResidencePort      LUXLInterfaceIndex,
+    luxlPerfMonitorStatusStatisticsDmMepId      LUXLUnsigned16,
+    luxlPerfMonitorStatusStatisticsDmMepMacAddress      MacAddress,
+    luxlPerfMonitorStatusStatisticsDmMepPeerMepId   LUXLUnsigned16,
+    luxlPerfMonitorStatusStatisticsDmMepPeerMacAddress      MacAddress,
+    luxlPerfMonitorStatusStatisticsDmMepDirection   LUXLPerfMonitorMepDirection,
+    luxlPerfMonitorStatusStatisticsDmMepLevel   LUXLUnsigned8,
+    luxlPerfMonitorStatusStatisticsDmMepFlowInstance    LUXLInterfaceIndex,
+    luxlPerfMonitorStatusStatisticsDmMepTaggedVid   LUXLUnsigned16,
+    luxlPerfMonitorStatusStatisticsDmPriority   Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmRate   LUXLUnsigned8,
+    luxlPerfMonitorStatusStatisticsDmUnit   LUXLPerfMonitorMepDmTimeUnit,
+    luxlPerfMonitorStatusStatisticsDmTx     Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmRx     Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmFarToNearDelayAverage      Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmFarToNearDelayAverageVariation     Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmFarToNearDelayMin      Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmFarToNearDelayMax      Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmNearToFarDelayAverage      Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmNearToFarDelayAverageVariation     Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmNearToFarDelayMin      Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmNearToFarDelayMax      Unsigned32,
+    luxlPerfMonitorStatusStatisticsDm2WayDelayAverage   Unsigned32,
+    luxlPerfMonitorStatusStatisticsDm2WayDelayAverageVariation      Unsigned32,
+    luxlPerfMonitorStatusStatisticsDm2WayDelayMin   Unsigned32,
+    luxlPerfMonitorStatusStatisticsDm2WayDelayMax   Unsigned32
+}
+
+luxlPerfMonitorStatusStatisticsDmIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 1 }
+
+luxlPerfMonitorStatusStatisticsDmEntryId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The entry identifier for the performance monitor data sets."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 2 }
+
+luxlPerfMonitorStatusStatisticsDmMepInstance OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance for the performance monitor data sets."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 3 }
+
+luxlPerfMonitorStatusStatisticsDmResidencePort OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The residence port for the MEP."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 4 }
+
+luxlPerfMonitorStatusStatisticsDmMepId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Two bytes CCM MEP ID in the transmitted CCM."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 5 }
+
+luxlPerfMonitorStatusStatisticsDmMepMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC address of this MEP which can be used by other MEP when unicast is
+         selected."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 6 }
+
+luxlPerfMonitorStatusStatisticsDmMepPeerMepId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "An expected MEP identifier in the received CCM."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 7 }
+
+luxlPerfMonitorStatusStatisticsDmMepPeerMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC address to be used when unicast is selected with the peer MEP.
+         Also, this MAC is used to create HW checking of receiving CCM PDU from
+         this MEP."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 8 }
+
+luxlPerfMonitorStatusStatisticsDmMepDirection OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorMepDirection
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Upstream or downstream that needs to be monitored."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 10 }
+
+luxlPerfMonitorStatusStatisticsDmMepLevel OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The MEG level of this MEP."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 11 }
+
+luxlPerfMonitorStatusStatisticsDmMepFlowInstance OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The MEP is related to this flow depends on 'MepDomain'."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 12 }
+
+luxlPerfMonitorStatusStatisticsDmMepTaggedVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "An outer C/S-tag or the subscriber VID that identifies the subscriber
+         flow in EVC where the MIP is active."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 13 }
+
+luxlPerfMonitorStatusStatisticsDmPriority OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The priority to be inserted as PCP bits in TAG (if any)."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 14 }
+
+luxlPerfMonitorStatusStatisticsDmRate OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The gap between transmitting 1DM/DMM PDU in 10ms. The range is 10 to
+         65535."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 15 }
+
+luxlPerfMonitorStatusStatisticsDmUnit OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorMepDmTimeUnit
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The time resolution."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 16 }
+
+luxlPerfMonitorStatusStatisticsDmTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of frame transmitted."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 17 }
+
+luxlPerfMonitorStatusStatisticsDmRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of frame received."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 18 }
+
+luxlPerfMonitorStatusStatisticsDmFarToNearDelayAverage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The far to near average delay."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 19 }
+
+luxlPerfMonitorStatusStatisticsDmFarToNearDelayAverageVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The far to near average delay variation."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 20 }
+
+luxlPerfMonitorStatusStatisticsDmFarToNearDelayMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum far to near delay."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 21 }
+
+luxlPerfMonitorStatusStatisticsDmFarToNearDelayMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum far to near delay."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 22 }
+
+luxlPerfMonitorStatusStatisticsDmNearToFarDelayAverage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The near to far average delay."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 23 }
+
+luxlPerfMonitorStatusStatisticsDmNearToFarDelayAverageVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The near to far average delay variation."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 24 }
+
+luxlPerfMonitorStatusStatisticsDmNearToFarDelayMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum near to far delay."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 25 }
+
+luxlPerfMonitorStatusStatisticsDmNearToFarDelayMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum near to far delay."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 26 }
+
+luxlPerfMonitorStatusStatisticsDm2WayDelayAverage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The two-way average delay."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 27 }
+
+luxlPerfMonitorStatusStatisticsDm2WayDelayAverageVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The two-way average delay variation."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 28 }
+
+luxlPerfMonitorStatusStatisticsDm2WayDelayMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum two-way delay."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 29 }
+
+luxlPerfMonitorStatusStatisticsDm2WayDelayMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum two-way delay."
+    ::= { luxlPerfMonitorStatusStatisticsDmEntry 30 }
+
+luxlPerfMonitorStatusStatisticsDmBinTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPerfMonitorStatusStatisticsDmBinEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying PM bin delay measurement statistics."
+    ::= { luxlPerfMonitorStatusStatistics 3 }
+
+luxlPerfMonitorStatusStatisticsDmBinEntry OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorStatusStatisticsDmBinEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of DM bin statistics."
+    INDEX       { luxlPerfMonitorStatusStatisticsDmBinIntervalId, luxlPerfMonitorStatusStatisticsDmBinEntryId, luxlPerfMonitorStatusStatisticsDmBinType, luxlPerfMonitorStatusStatisticsDmBinDirection, luxlPerfMonitorStatusStatisticsDmBinBucketId }
+    ::= { luxlPerfMonitorStatusStatisticsDmBinTable 1 }
+
+LUXLPerfMonitorStatusStatisticsDmBinEntry ::= SEQUENCE {
+    luxlPerfMonitorStatusStatisticsDmBinIntervalId      Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmBinEntryId     Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmBinType    Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmBinDirection   Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmBinBucketId    Unsigned32,
+    luxlPerfMonitorStatusStatisticsDmBinHitCount    Unsigned32
+}
+
+luxlPerfMonitorStatusStatisticsDmBinIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { luxlPerfMonitorStatusStatisticsDmBinEntry 1 }
+
+luxlPerfMonitorStatusStatisticsDmBinEntryId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The entry identifier for the performance monitor data sets."
+    ::= { luxlPerfMonitorStatusStatisticsDmBinEntry 2 }
+
+luxlPerfMonitorStatusStatisticsDmBinType OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..2)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The type for DM bin statistics. It's used for indicating what kinds of
+         delay frame are counted in the bin.'1' presents the frame delay.
+         
+         '2' presents the inter frame delay variation.
+         
+         "
+    ::= { luxlPerfMonitorStatusStatisticsDmBinEntry 3 }
+
+luxlPerfMonitorStatusStatisticsDmBinDirection OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The direction for DM bin statistics. It's used for indicating the
+         measuring method of the delay frame.
+         
+         '1' presents one-way delay from remote devices to the local devices.
+         
+         '2' presents one-way delay from local devices to the remote devices.
+         
+         '3' presents 2-way delay from near to far then far to near."
+    ::= { luxlPerfMonitorStatusStatisticsDmBinEntry 4 }
+
+luxlPerfMonitorStatusStatisticsDmBinBucketId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The bin ID."
+    ::= { luxlPerfMonitorStatusStatisticsDmBinEntry 5 }
+
+luxlPerfMonitorStatusStatisticsDmBinHitCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The hit count for the DM bin"
+    ::= { luxlPerfMonitorStatusStatisticsDmBinEntry 6 }
+
+luxlPerfMonitorStatusStatisticsEvcTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPerfMonitorStatusStatisticsEvcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying PM EVC statistics."
+    ::= { luxlPerfMonitorStatusStatistics 4 }
+
+luxlPerfMonitorStatusStatisticsEvcEntry OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorStatusStatisticsEvcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of EVC statistics."
+    INDEX       { luxlPerfMonitorStatusStatisticsEvcIntervalId, luxlPerfMonitorStatusStatisticsEvcEntryId }
+    ::= { luxlPerfMonitorStatusStatisticsEvcTable 1 }
+
+LUXLPerfMonitorStatusStatisticsEvcEntry ::= SEQUENCE {
+    luxlPerfMonitorStatusStatisticsEvcIntervalId    Unsigned32,
+    luxlPerfMonitorStatusStatisticsEvcEntryId   Unsigned32,
+    luxlPerfMonitorStatusStatisticsEvcEvcInstance   LUXLUnsigned16,
+    luxlPerfMonitorStatusStatisticsEvcPortType      LUXLPerfMonitorEvcPortType,
+    luxlPerfMonitorStatusStatisticsEvcPort      LUXLInterfaceIndex,
+    luxlPerfMonitorStatusStatisticsEvcCos   Unsigned32,
+    luxlPerfMonitorStatusStatisticsEvcGreenRxFrames     Counter64,
+    luxlPerfMonitorStatusStatisticsEvcGreenTxFrames     Counter64,
+    luxlPerfMonitorStatusStatisticsEvcGreenRxBytes      Counter64,
+    luxlPerfMonitorStatusStatisticsEvcGreenTxBytes      Counter64,
+    luxlPerfMonitorStatusStatisticsEvcYellowRxFrames    Counter64,
+    luxlPerfMonitorStatusStatisticsEvcYellowTxFrames    Counter64,
+    luxlPerfMonitorStatusStatisticsEvcYellowRxBytes     Counter64,
+    luxlPerfMonitorStatusStatisticsEvcYellowTxBytes     Counter64,
+    luxlPerfMonitorStatusStatisticsEvcRedRxFrames   Counter64,
+    luxlPerfMonitorStatusStatisticsEvcRedRxBytes    Counter64,
+    luxlPerfMonitorStatusStatisticsEvcDiscardedRxFrames     Counter64,
+    luxlPerfMonitorStatusStatisticsEvcDiscardedTxFrames     Counter64,
+    luxlPerfMonitorStatusStatisticsEvcDiscardedRxBytes      Counter64,
+    luxlPerfMonitorStatusStatisticsEvcDiscardedTxBytes      Counter64
+}
+
+luxlPerfMonitorStatusStatisticsEvcIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 1 }
+
+luxlPerfMonitorStatusStatisticsEvcEntryId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The entry identifier for the performance monitor data sets."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 2 }
+
+luxlPerfMonitorStatusStatisticsEvcEvcInstance OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The EVC instance for the performance monitor data sets."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 3 }
+
+luxlPerfMonitorStatusStatisticsEvcPortType OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorEvcPortType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The port type for the EVC."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 4 }
+
+luxlPerfMonitorStatusStatisticsEvcPort OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The interface ID for the EVC."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 5 }
+
+luxlPerfMonitorStatusStatisticsEvcCos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The COS queue ID on the interface, '4294967295' indicates the port is
+         NNI port."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 6 }
+
+luxlPerfMonitorStatusStatisticsEvcGreenRxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of green frames received."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 7 }
+
+luxlPerfMonitorStatusStatisticsEvcGreenTxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of green frames transmitted."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 8 }
+
+luxlPerfMonitorStatusStatisticsEvcGreenRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of green bytes received."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 9 }
+
+luxlPerfMonitorStatusStatisticsEvcGreenTxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of green bytes transmitted."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 10 }
+
+luxlPerfMonitorStatusStatisticsEvcYellowRxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of yellow frames received."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 11 }
+
+luxlPerfMonitorStatusStatisticsEvcYellowTxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of yellow frames transmitted."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 12 }
+
+luxlPerfMonitorStatusStatisticsEvcYellowRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of yellow bytes received."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 13 }
+
+luxlPerfMonitorStatusStatisticsEvcYellowTxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of yellow bytes transmitted."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 14 }
+
+luxlPerfMonitorStatusStatisticsEvcRedRxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of red frames received."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 15 }
+
+luxlPerfMonitorStatusStatisticsEvcRedRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of red bytes received."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 16 }
+
+luxlPerfMonitorStatusStatisticsEvcDiscardedRxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of frames discarded in the ingress queue system."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 17 }
+
+luxlPerfMonitorStatusStatisticsEvcDiscardedTxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of frames discarded in the egress queue system."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 18 }
+
+luxlPerfMonitorStatusStatisticsEvcDiscardedRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of bytes discarded in the ingress queue system."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 19 }
+
+luxlPerfMonitorStatusStatisticsEvcDiscardedTxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of bytes discarded in the egress queue system."
+    ::= { luxlPerfMonitorStatusStatisticsEvcEntry 20 }
+
+luxlPerfMonitorStatusInterval OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorStatus 2 }
+
+luxlPerfMonitorStatusIntervalInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPerfMonitorStatusIntervalInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying per type and interval PM time
+         information."
+    ::= { luxlPerfMonitorStatusInterval 1 }
+
+luxlPerfMonitorStatusIntervalInfoEntry OBJECT-TYPE
+    SYNTAX      LUXLPerfMonitorStatusIntervalInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of time information."
+    INDEX       { luxlPerfMonitorStatusIntervalInfoType, luxlPerfMonitorStatusIntervalInfoIntervalId }
+    ::= { luxlPerfMonitorStatusIntervalInfoTable 1 }
+
+LUXLPerfMonitorStatusIntervalInfoEntry ::= SEQUENCE {
+    luxlPerfMonitorStatusIntervalInfoType   Unsigned32,
+    luxlPerfMonitorStatusIntervalInfoIntervalId     Unsigned32,
+    luxlPerfMonitorStatusIntervalInfoStartTime      LUXLDisplayString,
+    luxlPerfMonitorStatusIntervalInfoEndTime    LUXLDisplayString,
+    luxlPerfMonitorStatusIntervalInfoElapsedTime    Counter64
+}
+
+luxlPerfMonitorStatusIntervalInfoType OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The type for the performance monitor interval information. '1' presents
+         LM; '2' presents DM; '3' presents EVC."
+    ::= { luxlPerfMonitorStatusIntervalInfoEntry 1 }
+
+luxlPerfMonitorStatusIntervalInfoIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { luxlPerfMonitorStatusIntervalInfoEntry 2 }
+
+luxlPerfMonitorStatusIntervalInfoStartTime OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The date and time when PM starts."
+    ::= { luxlPerfMonitorStatusIntervalInfoEntry 3 }
+
+luxlPerfMonitorStatusIntervalInfoEndTime OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The date and time when PM stops."
+    ::= { luxlPerfMonitorStatusIntervalInfoEntry 4 }
+
+luxlPerfMonitorStatusIntervalInfoElapsedTime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The elapsed time ticks for the specific monitoring type and the
+         corresponding interval identifier."
+    ::= { luxlPerfMonitorStatusIntervalInfoEntry 5 }
+
+luxlPerfMonitorControl OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorMibObjects 4 }
+
+luxlPerfMonitorControlGlobals OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorControl 1 }
+
+luxlPerfMonitorControlGlobalsAction OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorControlGlobals 1 }
+
+luxlPerfMonitorControlGlobalsActionDeleteLmStatisticsAll OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear all the LM statistics."
+    ::= { luxlPerfMonitorControlGlobalsAction 1 }
+
+luxlPerfMonitorControlGlobalsActionDeleteDmStatisticsAll OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear all the DM statistics."
+    ::= { luxlPerfMonitorControlGlobalsAction 2 }
+
+luxlPerfMonitorControlGlobalsActionDeleteEvcStatisticsAll OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear all the EVC statistics."
+    ::= { luxlPerfMonitorControlGlobalsAction 3 }
+
+luxlPerfMonitorMibConformance OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorMib 2 }
+
+luxlPerfMonitorMibCompliances OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorMibConformance 1 }
+
+luxlPerfMonitorMibGroups OBJECT IDENTIFIER
+    ::= { luxlPerfMonitorMibConformance 2 }
+
+luxlPerfMonitorConfigGlobalsMgmtInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorConfigGlobalsMgmtLossMeasurementAdminState, 
+                  luxlPerfMonitorConfigGlobalsMgmtLossMeasurementStorageState, 
+                  luxlPerfMonitorConfigGlobalsMgmtLossMeasurementInterval, 
+                  luxlPerfMonitorConfigGlobalsMgmtDelayMeasurementAdminState, 
+                  luxlPerfMonitorConfigGlobalsMgmtDelayMeasurementStorageState, 
+                  luxlPerfMonitorConfigGlobalsMgmtDelayMeasurementInterval, 
+                  luxlPerfMonitorConfigGlobalsMgmtDelayMeasurementBinStorageState, 
+                  luxlPerfMonitorConfigGlobalsMgmtEvcAdminState, 
+                  luxlPerfMonitorConfigGlobalsMgmtEvcStorageState, 
+                  luxlPerfMonitorConfigGlobalsMgmtEvcMeasureInterval }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 1 }
+
+luxlPerfMonitorConfigGlobalsTransferInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorConfigGlobalsTransferAdminState, 
+                  luxlPerfMonitorConfigGlobalsTransferServerUrl, 
+                  luxlPerfMonitorConfigGlobalsTransferIntervalMode, 
+                  luxlPerfMonitorConfigGlobalsTransferFixedNumberOfInterval, 
+                  luxlPerfMonitorConfigGlobalsTransferRetryIncompletedTransfer }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 2 }
+
+luxlPerfMonitorConfigGlobalsXferSchedHourTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorConfigGlobalsXferSchedHourEnabled }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 3 }
+
+luxlPerfMonitorConfigGlobalsXferSchedQuarterTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorConfigGlobalsXferSchedQuarterEnabled }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 4 }
+
+luxlPerfMonitorConfigGlobalsXferSchedOffsetInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorConfigGlobalsXferSchedOffsetMinute, 
+                  luxlPerfMonitorConfigGlobalsXferSchedOffsetRandomSecond }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 5 }
+
+luxlPerfMonitorStatusStatisticsLmTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorStatusStatisticsLmMepInstance, 
+                  luxlPerfMonitorStatusStatisticsLmResidencePort, 
+                  luxlPerfMonitorStatusStatisticsLmMepId, 
+                  luxlPerfMonitorStatusStatisticsLmMepMacAddress, 
+                  luxlPerfMonitorStatusStatisticsLmMepPeerMepId, 
+                  luxlPerfMonitorStatusStatisticsLmMepPeerMacAddress, 
+                  luxlPerfMonitorStatusStatisticsLmMepDirection, 
+                  luxlPerfMonitorStatusStatisticsLmMepLevel, 
+                  luxlPerfMonitorStatusStatisticsLmMepFlowInstance, 
+                  luxlPerfMonitorStatusStatisticsLmMepTaggedVid, 
+                  luxlPerfMonitorStatusStatisticsLmPriority, 
+                  luxlPerfMonitorStatusStatisticsLmRate, 
+                  luxlPerfMonitorStatusStatisticsLmTx, 
+                  luxlPerfMonitorStatusStatisticsLmRx, 
+                  luxlPerfMonitorStatusStatisticsLmNearEndLossCount, 
+                  luxlPerfMonitorStatusStatisticsLmNearEndLossRate, 
+                  luxlPerfMonitorStatusStatisticsLmFarEndLossCount, 
+                  luxlPerfMonitorStatusStatisticsLmFarEndLossRate }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 6 }
+
+luxlPerfMonitorStatusStatisticsDmTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorStatusStatisticsDmMepInstance, 
+                  luxlPerfMonitorStatusStatisticsDmResidencePort, 
+                  luxlPerfMonitorStatusStatisticsDmMepId, 
+                  luxlPerfMonitorStatusStatisticsDmMepMacAddress, 
+                  luxlPerfMonitorStatusStatisticsDmMepPeerMepId, 
+                  luxlPerfMonitorStatusStatisticsDmMepPeerMacAddress, 
+                  luxlPerfMonitorStatusStatisticsDmMepDirection, 
+                  luxlPerfMonitorStatusStatisticsDmMepLevel, 
+                  luxlPerfMonitorStatusStatisticsDmMepFlowInstance, 
+                  luxlPerfMonitorStatusStatisticsDmMepTaggedVid, 
+                  luxlPerfMonitorStatusStatisticsDmPriority, 
+                  luxlPerfMonitorStatusStatisticsDmRate, 
+                  luxlPerfMonitorStatusStatisticsDmUnit, 
+                  luxlPerfMonitorStatusStatisticsDmTx, 
+                  luxlPerfMonitorStatusStatisticsDmRx, 
+                  luxlPerfMonitorStatusStatisticsDmFarToNearDelayAverage, 
+                  luxlPerfMonitorStatusStatisticsDmFarToNearDelayAverageVariation, 
+                  luxlPerfMonitorStatusStatisticsDmFarToNearDelayMin, 
+                  luxlPerfMonitorStatusStatisticsDmFarToNearDelayMax, 
+                  luxlPerfMonitorStatusStatisticsDmNearToFarDelayAverage, 
+                  luxlPerfMonitorStatusStatisticsDmNearToFarDelayAverageVariation, 
+                  luxlPerfMonitorStatusStatisticsDmNearToFarDelayMin, 
+                  luxlPerfMonitorStatusStatisticsDmNearToFarDelayMax, 
+                  luxlPerfMonitorStatusStatisticsDm2WayDelayAverage, 
+                  luxlPerfMonitorStatusStatisticsDm2WayDelayAverageVariation, 
+                  luxlPerfMonitorStatusStatisticsDm2WayDelayMin, 
+                  luxlPerfMonitorStatusStatisticsDm2WayDelayMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 7 }
+
+luxlPerfMonitorStatusStatisticsDmBinTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorStatusStatisticsDmBinHitCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 8 }
+
+luxlPerfMonitorStatusStatisticsEvcTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorStatusStatisticsEvcEvcInstance, 
+                  luxlPerfMonitorStatusStatisticsEvcPortType, 
+                  luxlPerfMonitorStatusStatisticsEvcPort, 
+                  luxlPerfMonitorStatusStatisticsEvcCos, 
+                  luxlPerfMonitorStatusStatisticsEvcGreenRxFrames, 
+                  luxlPerfMonitorStatusStatisticsEvcGreenTxFrames, 
+                  luxlPerfMonitorStatusStatisticsEvcGreenRxBytes, 
+                  luxlPerfMonitorStatusStatisticsEvcGreenTxBytes, 
+                  luxlPerfMonitorStatusStatisticsEvcYellowRxFrames, 
+                  luxlPerfMonitorStatusStatisticsEvcYellowTxFrames, 
+                  luxlPerfMonitorStatusStatisticsEvcYellowRxBytes, 
+                  luxlPerfMonitorStatusStatisticsEvcYellowTxBytes, 
+                  luxlPerfMonitorStatusStatisticsEvcRedRxFrames, 
+                  luxlPerfMonitorStatusStatisticsEvcRedRxBytes, 
+                  luxlPerfMonitorStatusStatisticsEvcDiscardedRxFrames, 
+                  luxlPerfMonitorStatusStatisticsEvcDiscardedTxFrames, 
+                  luxlPerfMonitorStatusStatisticsEvcDiscardedRxBytes, 
+                  luxlPerfMonitorStatusStatisticsEvcDiscardedTxBytes }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 9 }
+
+luxlPerfMonitorStatusIntervalInfoTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorStatusIntervalInfoStartTime, 
+                  luxlPerfMonitorStatusIntervalInfoEndTime, 
+                  luxlPerfMonitorStatusIntervalInfoElapsedTime }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 10 }
+
+luxlPerfMonitorControlGlobalsActionInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPerfMonitorControlGlobalsActionDeleteLmStatisticsAll, 
+                  luxlPerfMonitorControlGlobalsActionDeleteDmStatisticsAll, 
+                  luxlPerfMonitorControlGlobalsActionDeleteEvcStatisticsAll }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPerfMonitorMibGroups 11 }
+
+luxlPerfMonitorMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlPerfMonitorConfigGlobalsMgmtInfoGroup, 
+                  luxlPerfMonitorConfigGlobalsTransferInfoGroup, 
+                  luxlPerfMonitorConfigGlobalsXferSchedHourTableInfoGroup, 
+                  luxlPerfMonitorConfigGlobalsXferSchedQuarterTableInfoGroup, 
+                  luxlPerfMonitorConfigGlobalsXferSchedOffsetInfoGroup, 
+                  luxlPerfMonitorStatusStatisticsLmTableInfoGroup, 
+                  luxlPerfMonitorStatusStatisticsDmTableInfoGroup, 
+                  luxlPerfMonitorStatusStatisticsDmBinTableInfoGroup, 
+                  luxlPerfMonitorStatusStatisticsEvcTableInfoGroup, 
+                  luxlPerfMonitorStatusIntervalInfoTableInfoGroup, 
+                  luxlPerfMonitorControlGlobalsActionInfoGroup }
+
+    ::= { luxlPerfMonitorMibCompliances 1 }
+
+END

@@ -1,0 +1,400 @@
+-- *****************************************************************
+-- DNS-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-DNS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLIpAddress FROM LUXL-TC
+    ;
+
+luxlDnsMib MODULE-IDENTITY
+    LAST-UPDATED "201411250000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the DNS MIB."
+    REVISION    "201411250000Z"
+    DESCRIPTION
+        "Support multiple DNS server settings and default domain name
+         configuration."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { luxlSwitchMgmt 53 }
+
+
+LUXLDnsConfigType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the configured DNS server type or default
+         domain name type."
+    SYNTAX      INTEGER { none(0), static(1), dhcpv4(2), dhcpv4Vlan(3), dhcpv6(4), dhcpv6Vlan(5) }
+
+luxlDnsMibObjects OBJECT IDENTIFIER
+    ::= { luxlDnsMib 1 }
+
+luxlDnsCapabilities OBJECT IDENTIFIER
+    ::= { luxlDnsMibObjects 1 }
+
+luxlDnsCapabilitiesSupportDhcp4ConfigServer OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The capability to support setting DNS server from DHCPv4."
+    ::= { luxlDnsCapabilities 1 }
+
+luxlDnsCapabilitiesSupportDhcp6ConfigServer OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The capability to support setting DNS server from DHCPv6."
+    ::= { luxlDnsCapabilities 2 }
+
+luxlDnsCapabilitiesSupportDefaultDomainName OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The capability to support setting default domain name."
+    ::= { luxlDnsCapabilities 3 }
+
+luxlDnsCapabilitiesSupportDhcp4DomainName OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The capability to support setting default domain name from DHCPv4."
+    ::= { luxlDnsCapabilities 4 }
+
+luxlDnsCapabilitiesSupportDhcp6DomainName OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The capability to support setting default domain name from DHCPv6."
+    ::= { luxlDnsCapabilities 5 }
+
+luxlDnsConfig OBJECT IDENTIFIER
+    ::= { luxlDnsMibObjects 2 }
+
+luxlDnsConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlDnsConfig 1 }
+
+luxlDnsConfigGlobalsProxy OBJECT IDENTIFIER
+    ::= { luxlDnsConfigGlobals 1 }
+
+luxlDnsConfigGlobalsProxyAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the DNS-Proxy feature."
+    ::= { luxlDnsConfigGlobalsProxy 1 }
+
+luxlDnsConfigGlobalsDefaultDomainName OBJECT IDENTIFIER
+    ::= { luxlDnsConfigGlobals 2 }
+
+luxlDnsConfigGlobalsDefaultDomainNameSetting OBJECT-TYPE
+    SYNTAX      LUXLDnsConfigType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Default domain name administrative type. A default domain name is used
+         as the suffix of the given name in DNS lookup. none(0) means no default
+         domain name is used and thus no domain name suffix is appended in DNS
+         lookup. static(1) means the default domain name will be manually set.
+         dhcpv4(2) means default domain name will be determined by DHCPv4
+         discovery. dhcpv4Vlan(3) means default domain name will be determined
+         by DHCPv4 discovery on a specific IP VLAN interface. dhcpv6(4) means
+         default domain name will be determined by DHCPv6 discovery.
+         dhcpv6Vlan(5) means default domain name will be determined by DHCPv6
+         discovery on a specific IP VLAN interface."
+    ::= { luxlDnsConfigGlobalsDefaultDomainName 1 }
+
+luxlDnsConfigGlobalsDefaultDomainNameStaticName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The static default domain name. It will be a reference only when
+         DomainNameSetting is static(1)."
+    ::= { luxlDnsConfigGlobalsDefaultDomainName 2 }
+
+luxlDnsConfigGlobalsDefaultDomainNameDhcpIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ifIndex of specific VLAN interface that default domain name will be
+         retrieved from DHCP. It will be a reference only when DomainNameSetting
+         is either dhcpv4Vlan(3) or dhcpv6Vlan(5)."
+    ::= { luxlDnsConfigGlobalsDefaultDomainName 3 }
+
+luxlDnsConfigServers OBJECT IDENTIFIER
+    ::= { luxlDnsConfig 2 }
+
+luxlDnsConfigServersTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDnsConfigServersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing DNS server configuration."
+    ::= { luxlDnsConfigServers 1 }
+
+luxlDnsConfigServersEntry OBJECT-TYPE
+    SYNTAX      LUXLDnsConfigServersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlDnsConfigServersPrecedence }
+    ::= { luxlDnsConfigServersTable 1 }
+
+LUXLDnsConfigServersEntry ::= SEQUENCE {
+    luxlDnsConfigServersPrecedence      Unsigned32,
+    luxlDnsConfigServersSetting     LUXLDnsConfigType,
+    luxlDnsConfigServersStaticIpAddress     LUXLIpAddress,
+    luxlDnsConfigServersStaticIfIndex   LUXLInterfaceIndex
+}
+
+luxlDnsConfigServersPrecedence OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table index also represents the precedence in selecting target DNS
+         server: less index value means higher priority in round-robin
+         selection. Only one server is working at a time, that is when the
+         chosen server is active, system marks the designated server as target
+         and stops selection. When the active server becomes inactive, system
+         starts another round of selection starting from the next available
+         server setting."
+    ::= { luxlDnsConfigServersEntry 1 }
+
+luxlDnsConfigServersSetting OBJECT-TYPE
+    SYNTAX      LUXLDnsConfigType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Per precedence DNS server administrative type. The DNS server setting
+         will be used in DNS lookup. none(0) denotes no DNS server is used and
+         thus domain name lookup always fails. static(1) denotes the DNS server
+         address will be manually set, in either IPv4 or IPv6 address form.
+         dhcpv4(2) denotes DNS server address will be determined by DHCPv4
+         discovery. dhcpv4Vlan(3) denotes DNS server address will be determined
+         by DHCPv4 discovery on a specifc IP VLAN interface. dhcpv6(4) denotes
+         DNS server address will be determined by DHCPv6 discovery.
+         dhcpv6Vlan(5) denotes DNS server address will be determined by DHCPv6
+         discovery on a specifc IP VLAN interface."
+    ::= { luxlDnsConfigServersEntry 2 }
+
+luxlDnsConfigServersStaticIpAddress OBJECT-TYPE
+    SYNTAX      LUXLIpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The static DNS server address. It will be a reference only when Setting
+         is static(1)"
+    ::= { luxlDnsConfigServersEntry 3 }
+
+luxlDnsConfigServersStaticIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The ifIndex of specific VLAN interface that DNS server address will be
+         retrieved from DHCP and where the server resides. It will be a
+         reference only when Setting is either dhcpv4Vlan(3) or dhcpv6Vlan(5)."
+    ::= { luxlDnsConfigServersEntry 4 }
+
+luxlDnsStatus OBJECT IDENTIFIER
+    ::= { luxlDnsMibObjects 3 }
+
+luxlDnsStatusGlobals OBJECT IDENTIFIER
+    ::= { luxlDnsStatus 1 }
+
+luxlDnsStatusGlobalsDefaultDomainName OBJECT IDENTIFIER
+    ::= { luxlDnsStatusGlobals 1 }
+
+luxlDnsStatusGlobalsDefaultDomainNameSuffix OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The suffix of the given domain name used in DNS lookup."
+    ::= { luxlDnsStatusGlobalsDefaultDomainName 1 }
+
+luxlDnsStatusServers OBJECT IDENTIFIER
+    ::= { luxlDnsStatus 2 }
+
+luxlDnsStatusServersTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDnsStatusServersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying DNS server information."
+    ::= { luxlDnsStatusServers 1 }
+
+luxlDnsStatusServersEntry OBJECT-TYPE
+    SYNTAX      LUXLDnsStatusServersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlDnsStatusServersPrecedence }
+    ::= { luxlDnsStatusServersTable 1 }
+
+LUXLDnsStatusServersEntry ::= SEQUENCE {
+    luxlDnsStatusServersPrecedence      Unsigned32,
+    luxlDnsStatusServersConfiguredType      LUXLDnsConfigType,
+    luxlDnsStatusServersReferenceIfIndex    LUXLInterfaceIndex,
+    luxlDnsStatusServersIpAddress   LUXLIpAddress
+}
+
+luxlDnsStatusServersPrecedence OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Table index also represents the precedence in selecting target DNS
+         server: less index value means higher priority in round-robin
+         selection. Only one server is working at a time, that is when the
+         chosen server is active, system marks the designated server as target
+         and stops selection. When the active server becomes inactive, system
+         starts another round of selection starting from the next available
+         server setting."
+    ::= { luxlDnsStatusServersEntry 1 }
+
+luxlDnsStatusServersConfiguredType OBJECT-TYPE
+    SYNTAX      LUXLDnsConfigType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Per precedence DNS server configured type.none(0) denotes no DNS server
+         is used and thus domain name lookup always fails. static(1) denotes the
+         DNS server address will be manually set, in either IPv4 or IPv6 address
+         form. dhcpv4(2) denotes DNS server address will be determined by DHCPv4
+         discovery. dhcpv4Vlan(3) denotes DNS server address will be determined
+         by DHCPv4 discovery on a specifc IP VLAN interface. dhcpv6(4) denotes
+         DNS server address will be determined by DHCPv6 discovery.
+         dhcpv6Vlan(5) denotes DNS server address will be determined by DHCPv6
+         discovery on a specifc IP VLAN interface."
+    ::= { luxlDnsStatusServersEntry 2 }
+
+luxlDnsStatusServersReferenceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The ifIndex of specific VLAN interface that DNS server address will be
+         retrieved from DHCP and where the server resides. It will be a
+         reference only when Setting is either dhcpv4Vlan(3) or dhcpv6Vlan(5)."
+    ::= { luxlDnsStatusServersEntry 3 }
+
+luxlDnsStatusServersIpAddress OBJECT-TYPE
+    SYNTAX      LUXLIpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The DNS server address that will be used for domain name lookup."
+    ::= { luxlDnsStatusServersEntry 4 }
+
+luxlDnsMibConformance OBJECT IDENTIFIER
+    ::= { luxlDnsMib 2 }
+
+luxlDnsMibCompliances OBJECT IDENTIFIER
+    ::= { luxlDnsMibConformance 1 }
+
+luxlDnsMibGroups OBJECT IDENTIFIER
+    ::= { luxlDnsMibConformance 2 }
+
+luxlDnsCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDnsCapabilitiesSupportDhcp4ConfigServer, 
+                  luxlDnsCapabilitiesSupportDhcp6ConfigServer, 
+                  luxlDnsCapabilitiesSupportDefaultDomainName, 
+                  luxlDnsCapabilitiesSupportDhcp4DomainName, 
+                  luxlDnsCapabilitiesSupportDhcp6DomainName }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDnsMibGroups 1 }
+
+luxlDnsConfigGlobalsProxyInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDnsConfigGlobalsProxyAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDnsMibGroups 2 }
+
+luxlDnsConfigGlobalsDefaultDomainNameInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDnsConfigGlobalsDefaultDomainNameSetting, 
+                  luxlDnsConfigGlobalsDefaultDomainNameStaticName, 
+                  luxlDnsConfigGlobalsDefaultDomainNameDhcpIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDnsMibGroups 3 }
+
+luxlDnsConfigServersTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDnsConfigServersSetting, 
+                  luxlDnsConfigServersStaticIpAddress, 
+                  luxlDnsConfigServersStaticIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDnsMibGroups 4 }
+
+luxlDnsStatusGlobalsDefaultDomainNameInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDnsStatusGlobalsDefaultDomainNameSuffix }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDnsMibGroups 5 }
+
+luxlDnsStatusServersTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDnsStatusServersConfiguredType, 
+                  luxlDnsStatusServersReferenceIfIndex, 
+                  luxlDnsStatusServersIpAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDnsMibGroups 6 }
+
+luxlDnsMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlDnsCapabilitiesInfoGroup, 
+                  luxlDnsConfigGlobalsProxyInfoGroup, 
+                  luxlDnsConfigGlobalsDefaultDomainNameInfoGroup, 
+                  luxlDnsConfigServersTableInfoGroup, 
+                  luxlDnsStatusGlobalsDefaultDomainNameInfoGroup, 
+                  luxlDnsStatusServersTableInfoGroup }
+
+    ::= { luxlDnsMibCompliances 1 }
+
+END

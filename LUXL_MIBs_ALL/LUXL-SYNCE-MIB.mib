@@ -1,0 +1,646 @@
+-- *****************************************************************
+-- SYNCE-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-SYNCE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlSynceMib MODULE-IDENTITY
+    LAST-UPDATED "201406240000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "Private SyncE MIB."
+    REVISION    "201406240000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 42 }
+
+
+LUXLsynceAnegMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { none(0), preferedSlave(1), preferedMaster(2), forcedSlave(3) }
+
+LUXLsynceEecOption ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { eecOption1(0), eecOption2(1) }
+
+LUXLsynceFrequency ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { disabled(0), freq1544kHz(1), freq2048kHz(2), freq10MHz(3), freqMax(4) }
+
+LUXLsynceQualityLevel ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { qlNone(0), qlPrc(1), qlSsua(2), qlSsub(3), qlEec2(4), qlEec1(5), qlDnu(6), qlInv(7), qlFail(8), qlLink(9) }
+
+LUXLsynceSelectionMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { manual(0), manualToSelected(1), autoNonrevertive(2), autoRevertive(3), forcedHoldover(4), forcedFreeRun(5) }
+
+LUXLsynceSelectorState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { locked(0), holdover(1), freerun(2), ptp(3), refFailed(4), acquiring(5) }
+
+luxlSynceMibObjects OBJECT IDENTIFIER
+    ::= { luxlSynceMib 1 }
+
+luxlSynceCapabilities OBJECT IDENTIFIER
+    ::= { luxlSynceMibObjects 1 }
+
+luxlSynceCapabilitiesGlobal OBJECT IDENTIFIER
+    ::= { luxlSynceCapabilities 1 }
+
+luxlSynceCapabilitiesGlobalSourceCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of SyncE sources supported by the device."
+    ::= { luxlSynceCapabilitiesGlobal 1 }
+
+luxlSynceConfig OBJECT IDENTIFIER
+    ::= { luxlSynceMibObjects 2 }
+
+luxlSynceConfigGlobal OBJECT IDENTIFIER
+    ::= { luxlSynceConfig 1 }
+
+luxlSynceConfigGlobalClockSelectionMode OBJECT IDENTIFIER
+    ::= { luxlSynceConfigGlobal 1 }
+
+luxlSynceConfigGlobalClockSelectionModeSelectionMode OBJECT-TYPE
+    SYNTAX      LUXLsynceSelectionMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The selection mode."
+    ::= { luxlSynceConfigGlobalClockSelectionMode 1 }
+
+luxlSynceConfigGlobalClockSelectionModeSource OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Nominated source for manuel selection mode."
+    ::= { luxlSynceConfigGlobalClockSelectionMode 2 }
+
+luxlSynceConfigGlobalClockSelectionModeWtrTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "WTR timer value in minutes. Range is 0 to 12 minutes where 0 means that
+         the timer is disabled."
+    ::= { luxlSynceConfigGlobalClockSelectionMode 3 }
+
+luxlSynceConfigGlobalClockSelectionModeSsmHoldover OBJECT-TYPE
+    SYNTAX      LUXLsynceQualityLevel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Tx overwrite SSM used when clock controller is hold over."
+    ::= { luxlSynceConfigGlobalClockSelectionMode 4 }
+
+luxlSynceConfigGlobalClockSelectionModeSsmFreerun OBJECT-TYPE
+    SYNTAX      LUXLsynceQualityLevel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Tx overwrite SSM used when clock controller is free run."
+    ::= { luxlSynceConfigGlobalClockSelectionMode 5 }
+
+luxlSynceConfigGlobalClockSelectionModeEecOption OBJECT-TYPE
+    SYNTAX      LUXLsynceEecOption
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Synchronous Ethernet Equipment Clock option."
+    ::= { luxlSynceConfigGlobalClockSelectionMode 6 }
+
+luxlSynceConfigGlobalStationClocks OBJECT IDENTIFIER
+    ::= { luxlSynceConfigGlobal 2 }
+
+luxlSynceConfigGlobalStationClocksStationClkOut OBJECT-TYPE
+    SYNTAX      LUXLsynceFrequency
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Station clock output frequency setting."
+    ::= { luxlSynceConfigGlobalStationClocks 1 }
+
+luxlSynceConfigGlobalStationClocksStationClkIn OBJECT-TYPE
+    SYNTAX      LUXLsynceFrequency
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Station clock input frequency setting."
+    ::= { luxlSynceConfigGlobalStationClocks 2 }
+
+luxlSynceConfigSources OBJECT IDENTIFIER
+    ::= { luxlSynceConfig 2 }
+
+luxlSynceConfigSourcesClockSourceNominationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSynceConfigSourcesClockSourceNominationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the SyncE source nomination configuration."
+    ::= { luxlSynceConfigSources 1 }
+
+luxlSynceConfigSourcesClockSourceNominationEntry OBJECT-TYPE
+    SYNTAX      LUXLSynceConfigSourcesClockSourceNominationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The sourceId index must be a value from 0 up to the number of sources
+         minus one."
+    INDEX       { luxlSynceConfigSourcesClockSourceNominationSourceId }
+    ::= { luxlSynceConfigSourcesClockSourceNominationTable 1 }
+
+LUXLSynceConfigSourcesClockSourceNominationEntry ::= SEQUENCE {
+    luxlSynceConfigSourcesClockSourceNominationSourceId     Integer32,
+    luxlSynceConfigSourcesClockSourceNominationNominated    TruthValue,
+    luxlSynceConfigSourcesClockSourceNominationNetworkPort      LUXLInterfaceIndex,
+    luxlSynceConfigSourcesClockSourceNominationClkInPort    LUXLUnsigned8,
+    luxlSynceConfigSourcesClockSourceNominationPriority     Unsigned32,
+    luxlSynceConfigSourcesClockSourceNominationAnegMode     LUXLsynceAnegMode,
+    luxlSynceConfigSourcesClockSourceNominationSsmOverwrite     LUXLsynceQualityLevel,
+    luxlSynceConfigSourcesClockSourceNominationHoldoffTime      Unsigned32
+}
+
+luxlSynceConfigSourcesClockSourceNominationSourceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlSynceConfigSourcesClockSourceNominationEntry 1 }
+
+luxlSynceConfigSourcesClockSourceNominationNominated OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if source is nominated."
+    ::= { luxlSynceConfigSourcesClockSourceNominationEntry 2 }
+
+luxlSynceConfigSourcesClockSourceNominationNetworkPort OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Interface index of the norminated source."
+    ::= { luxlSynceConfigSourcesClockSourceNominationEntry 3 }
+
+luxlSynceConfigSourcesClockSourceNominationClkInPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clock input of the norminated source."
+    ::= { luxlSynceConfigSourcesClockSourceNominationEntry 4 }
+
+luxlSynceConfigSourcesClockSourceNominationPriority OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the nominated source."
+    ::= { luxlSynceConfigSourcesClockSourceNominationEntry 5 }
+
+luxlSynceConfigSourcesClockSourceNominationAnegMode OBJECT-TYPE
+    SYNTAX      LUXLsynceAnegMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Autonogotiation mode auto-master-slave."
+    ::= { luxlSynceConfigSourcesClockSourceNominationEntry 6 }
+
+luxlSynceConfigSourcesClockSourceNominationSsmOverwrite OBJECT-TYPE
+    SYNTAX      LUXLsynceQualityLevel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "SSM overwrite quality."
+    ::= { luxlSynceConfigSourcesClockSourceNominationEntry 7 }
+
+luxlSynceConfigSourcesClockSourceNominationHoldoffTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Hold Off timer value in 100ms (3 - 18). Zero means no hold off."
+    ::= { luxlSynceConfigSourcesClockSourceNominationEntry 8 }
+
+luxlSynceConfigPorts OBJECT IDENTIFIER
+    ::= { luxlSynceConfig 3 }
+
+luxlSynceConfigPortsPortConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSynceConfigPortsPortConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the SyncE port configuration."
+    ::= { luxlSynceConfigPorts 1 }
+
+luxlSynceConfigPortsPortConfigEntry OBJECT-TYPE
+    SYNTAX      LUXLSynceConfigPortsPortConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The portId index must be a value from 0 up to the number of ports minus
+         one."
+    INDEX       { luxlSynceConfigPortsPortConfigPortId }
+    ::= { luxlSynceConfigPortsPortConfigTable 1 }
+
+LUXLSynceConfigPortsPortConfigEntry ::= SEQUENCE {
+    luxlSynceConfigPortsPortConfigPortId    LUXLInterfaceIndex,
+    luxlSynceConfigPortsPortConfigSsmEnabled    TruthValue
+}
+
+luxlSynceConfigPortsPortConfigPortId OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlSynceConfigPortsPortConfigEntry 1 }
+
+luxlSynceConfigPortsPortConfigSsmEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Quality level via SSM enabled."
+    ::= { luxlSynceConfigPortsPortConfigEntry 2 }
+
+luxlSynceStatus OBJECT IDENTIFIER
+    ::= { luxlSynceMibObjects 3 }
+
+luxlSynceStatusGlobal OBJECT IDENTIFIER
+    ::= { luxlSynceStatus 1 }
+
+luxlSynceStatusGlobalClockSelectionMode OBJECT IDENTIFIER
+    ::= { luxlSynceStatusGlobal 1 }
+
+luxlSynceStatusGlobalClockSelectionModeClockInput OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The clock source locked to when clock selector is in locked state."
+    ::= { luxlSynceStatusGlobalClockSelectionMode 1 }
+
+luxlSynceStatusGlobalClockSelectionModeSelectorState OBJECT-TYPE
+    SYNTAX      LUXLsynceSelectorState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is indicating the state of the clock selector."
+    ::= { luxlSynceStatusGlobalClockSelectionMode 2 }
+
+luxlSynceStatusGlobalClockSelectionModeLosx OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "LOSX"
+    ::= { luxlSynceStatusGlobalClockSelectionMode 3 }
+
+luxlSynceStatusGlobalClockSelectionModeLol OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Clock selector has raised the Los Of Lock alarm."
+    ::= { luxlSynceStatusGlobalClockSelectionMode 4 }
+
+luxlSynceStatusGlobalClockSelectionModeDhold OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Clock selector has not yet calculated the holdover frequency offset to
+         local oscillator."
+    ::= { luxlSynceStatusGlobalClockSelectionMode 5 }
+
+luxlSynceStatusSources OBJECT IDENTIFIER
+    ::= { luxlSynceStatus 2 }
+
+luxlSynceStatusSourcesClockSourceNominationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSynceStatusSourcesClockSourceNominationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the clock source nomination status."
+    ::= { luxlSynceStatusSources 1 }
+
+luxlSynceStatusSourcesClockSourceNominationEntry OBJECT-TYPE
+    SYNTAX      LUXLSynceStatusSourcesClockSourceNominationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The sourceId index must be a value must be a value from 0 up to the
+         number of sources minus one."
+    INDEX       { luxlSynceStatusSourcesClockSourceNominationSourceId }
+    ::= { luxlSynceStatusSourcesClockSourceNominationTable 1 }
+
+LUXLSynceStatusSourcesClockSourceNominationEntry ::= SEQUENCE {
+    luxlSynceStatusSourcesClockSourceNominationSourceId     Integer32,
+    luxlSynceStatusSourcesClockSourceNominationLocs     TruthValue,
+    luxlSynceStatusSourcesClockSourceNominationFos      TruthValue,
+    luxlSynceStatusSourcesClockSourceNominationSsm      TruthValue,
+    luxlSynceStatusSourcesClockSourceNominationWtr      TruthValue
+}
+
+luxlSynceStatusSourcesClockSourceNominationSourceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlSynceStatusSourcesClockSourceNominationEntry 1 }
+
+luxlSynceStatusSourcesClockSourceNominationLocs OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "LOCS"
+    ::= { luxlSynceStatusSourcesClockSourceNominationEntry 2 }
+
+luxlSynceStatusSourcesClockSourceNominationFos OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "FOS"
+    ::= { luxlSynceStatusSourcesClockSourceNominationEntry 3 }
+
+luxlSynceStatusSourcesClockSourceNominationSsm OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "SSM"
+    ::= { luxlSynceStatusSourcesClockSourceNominationEntry 4 }
+
+luxlSynceStatusSourcesClockSourceNominationWtr OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "WTR"
+    ::= { luxlSynceStatusSourcesClockSourceNominationEntry 5 }
+
+luxlSynceStatusPorts OBJECT IDENTIFIER
+    ::= { luxlSynceStatus 3 }
+
+luxlSynceStatusPortsPortStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSynceStatusPortsPortStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the port status."
+    ::= { luxlSynceStatusPorts 1 }
+
+luxlSynceStatusPortsPortStatusEntry OBJECT-TYPE
+    SYNTAX      LUXLSynceStatusPortsPortStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The portId index must be a value must be a value from 0 up to the
+         number of ports minus one."
+    INDEX       { luxlSynceStatusPortsPortStatusPortId }
+    ::= { luxlSynceStatusPortsPortStatusTable 1 }
+
+LUXLSynceStatusPortsPortStatusEntry ::= SEQUENCE {
+    luxlSynceStatusPortsPortStatusPortId    LUXLInterfaceIndex,
+    luxlSynceStatusPortsPortStatusSsmRx     LUXLsynceQualityLevel,
+    luxlSynceStatusPortsPortStatusSsmTx     LUXLsynceQualityLevel,
+    luxlSynceStatusPortsPortStatusMaster    TruthValue
+}
+
+luxlSynceStatusPortsPortStatusPortId OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlSynceStatusPortsPortStatusEntry 1 }
+
+luxlSynceStatusPortsPortStatusSsmRx OBJECT-TYPE
+    SYNTAX      LUXLsynceQualityLevel
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Monitoring of the received SSM QL on this port."
+    ::= { luxlSynceStatusPortsPortStatusEntry 2 }
+
+luxlSynceStatusPortsPortStatusSsmTx OBJECT-TYPE
+    SYNTAX      LUXLsynceQualityLevel
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Monitoring of the transmitted SSM QL on this port."
+    ::= { luxlSynceStatusPortsPortStatusEntry 3 }
+
+luxlSynceStatusPortsPortStatusMaster OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "If PHY is in 1000BaseT Mode then this is monitoring the master/slave
+         mode."
+    ::= { luxlSynceStatusPortsPortStatusEntry 4 }
+
+luxlSynceControl OBJECT IDENTIFIER
+    ::= { luxlSynceMibObjects 4 }
+
+luxlSynceControlSources OBJECT IDENTIFIER
+    ::= { luxlSynceControl 1 }
+
+luxlSynceControlSourcesClockSourceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLSynceControlSourcesClockSourceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the SyncE sources control structure."
+    ::= { luxlSynceControlSources 1 }
+
+luxlSynceControlSourcesClockSourceEntry OBJECT-TYPE
+    SYNTAX      LUXLSynceControlSourcesClockSourceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The sourceId index must be a value must be a value from 0 up to the
+         number of sources minus one."
+    INDEX       { luxlSynceControlSourcesClockSourceSourceId }
+    ::= { luxlSynceControlSourcesClockSourceTable 1 }
+
+LUXLSynceControlSourcesClockSourceEntry ::= SEQUENCE {
+    luxlSynceControlSourcesClockSourceSourceId      Integer32,
+    luxlSynceControlSourcesClockSourceClearWtr      LUXLUnsigned8
+}
+
+luxlSynceControlSourcesClockSourceSourceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlSynceControlSourcesClockSourceEntry 1 }
+
+luxlSynceControlSourcesClockSourceClearWtr OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlSynceControlSourcesClockSourceEntry 2 }
+
+luxlSynceMibConformance OBJECT IDENTIFIER
+    ::= { luxlSynceMib 2 }
+
+luxlSynceMibCompliances OBJECT IDENTIFIER
+    ::= { luxlSynceMibConformance 1 }
+
+luxlSynceMibGroups OBJECT IDENTIFIER
+    ::= { luxlSynceMibConformance 2 }
+
+luxlSynceCapabilitiesGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSynceCapabilitiesGlobalSourceCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSynceMibGroups 1 }
+
+luxlSynceConfigGlobalClockSelectionModeInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSynceConfigGlobalClockSelectionModeSelectionMode, 
+                  luxlSynceConfigGlobalClockSelectionModeSource, 
+                  luxlSynceConfigGlobalClockSelectionModeWtrTime, 
+                  luxlSynceConfigGlobalClockSelectionModeSsmHoldover, 
+                  luxlSynceConfigGlobalClockSelectionModeSsmFreerun, 
+                  luxlSynceConfigGlobalClockSelectionModeEecOption }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSynceMibGroups 2 }
+
+luxlSynceConfigGlobalStationClocksInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSynceConfigGlobalStationClocksStationClkOut, 
+                  luxlSynceConfigGlobalStationClocksStationClkIn }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSynceMibGroups 3 }
+
+luxlSynceConfigSourcesClockSourceNominationInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSynceConfigSourcesClockSourceNominationNominated, 
+                  luxlSynceConfigSourcesClockSourceNominationNetworkPort, 
+                  luxlSynceConfigSourcesClockSourceNominationClkInPort, 
+                  luxlSynceConfigSourcesClockSourceNominationPriority, 
+                  luxlSynceConfigSourcesClockSourceNominationAnegMode, 
+                  luxlSynceConfigSourcesClockSourceNominationSsmOverwrite, 
+                  luxlSynceConfigSourcesClockSourceNominationHoldoffTime }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSynceMibGroups 4 }
+
+luxlSynceConfigPortsPortConfigInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSynceConfigPortsPortConfigSsmEnabled }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSynceMibGroups 5 }
+
+luxlSynceStatusGlobalClockSelectionModeInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSynceStatusGlobalClockSelectionModeClockInput, 
+                  luxlSynceStatusGlobalClockSelectionModeSelectorState, 
+                  luxlSynceStatusGlobalClockSelectionModeLosx, 
+                  luxlSynceStatusGlobalClockSelectionModeLol, 
+                  luxlSynceStatusGlobalClockSelectionModeDhold }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSynceMibGroups 6 }
+
+luxlSynceStatusSourcesClockSourceNominationInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSynceStatusSourcesClockSourceNominationLocs, 
+                  luxlSynceStatusSourcesClockSourceNominationFos, 
+                  luxlSynceStatusSourcesClockSourceNominationSsm, 
+                  luxlSynceStatusSourcesClockSourceNominationWtr }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSynceMibGroups 7 }
+
+luxlSynceStatusPortsPortStatusInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSynceStatusPortsPortStatusSsmRx, 
+                  luxlSynceStatusPortsPortStatusSsmTx, 
+                  luxlSynceStatusPortsPortStatusMaster }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSynceMibGroups 8 }
+
+luxlSynceControlSourcesClockSourceInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSynceControlSourcesClockSourceClearWtr }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSynceMibGroups 9 }
+
+luxlSynceMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlSynceCapabilitiesGlobalInfoGroup, 
+                  luxlSynceConfigGlobalClockSelectionModeInfoGroup, 
+                  luxlSynceConfigGlobalStationClocksInfoGroup, 
+                  luxlSynceConfigSourcesClockSourceNominationInfoGroup, 
+                  luxlSynceConfigPortsPortConfigInfoGroup, 
+                  luxlSynceStatusGlobalClockSelectionModeInfoGroup, 
+                  luxlSynceStatusSourcesClockSourceNominationInfoGroup, 
+                  luxlSynceStatusPortsPortStatusInfoGroup, 
+                  luxlSynceControlSourcesClockSourceInfoGroup }
+
+    ::= { luxlSynceMibCompliances 1 }
+
+END

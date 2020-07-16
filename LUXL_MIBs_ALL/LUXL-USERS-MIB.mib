@@ -1,0 +1,200 @@
+-- *****************************************************************
+-- USERS-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-USERS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    ;
+
+luxlUsersMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of Users"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 58 }
+
+
+luxlUsersMibObjects OBJECT IDENTIFIER
+    ::= { luxlUsersMib 1 }
+
+luxlUsersConfig OBJECT IDENTIFIER
+    ::= { luxlUsersMibObjects 2 }
+
+luxlUsersConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLUsersConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The table is Users onfiguration table. The index is user name."
+    ::= { luxlUsersConfig 1 }
+
+luxlUsersConfigEntry OBJECT-TYPE
+    SYNTAX      LUXLUsersConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlUsersConfigUsername }
+    ::= { luxlUsersConfigTable 1 }
+
+LUXLUsersConfigEntry ::= SEQUENCE {
+    luxlUsersConfigUsername     LUXLDisplayString,
+    luxlUsersConfigPrivilege    Unsigned32,
+    luxlUsersConfigEncrypted    TruthValue,
+    luxlUsersConfigPassword     LUXLDisplayString,
+    luxlUsersConfigAction   LUXLRowEditorState
+}
+
+luxlUsersConfigUsername OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Name of user."
+    ::= { luxlUsersConfigEntry 1 }
+
+luxlUsersConfigPrivilege OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Privilege level of the user."
+    ::= { luxlUsersConfigEntry 2 }
+
+luxlUsersConfigEncrypted OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The flag indicates the password is encrypted or not. TRUE means the
+         password is encrypted. FALSE means the password is plain text."
+    ::= { luxlUsersConfigEntry 3 }
+
+luxlUsersConfigPassword OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..44))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Password of the user. The password length depends on the type of
+         password. If the password is encrypted, then the length is from 4 to
+         44. If it is unencrypted, then the maximum length is 31."
+    ::= { luxlUsersConfigEntry 4 }
+
+luxlUsersConfigAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlUsersConfigEntry 100 }
+
+luxlUsersConfigTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlUsersConfig 2 }
+
+luxlUsersConfigTableRowEditorUsername OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Name of user."
+    ::= { luxlUsersConfigTableRowEditor 1 }
+
+luxlUsersConfigTableRowEditorPrivilege OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Privilege level of the user."
+    ::= { luxlUsersConfigTableRowEditor 2 }
+
+luxlUsersConfigTableRowEditorEncrypted OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The flag indicates the password is encrypted or not. TRUE means the
+         password is encrypted. FALSE means the password is plain text."
+    ::= { luxlUsersConfigTableRowEditor 3 }
+
+luxlUsersConfigTableRowEditorPassword OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..44))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Password of the user. The password length depends on the type of
+         password. If the password is encrypted, then the length is from 4 to
+         44. If it is unencrypted, then the maximum length is 31."
+    ::= { luxlUsersConfigTableRowEditor 4 }
+
+luxlUsersConfigTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlUsersConfigTableRowEditor 100 }
+
+luxlUsersMibConformance OBJECT IDENTIFIER
+    ::= { luxlUsersMib 2 }
+
+luxlUsersMibCompliances OBJECT IDENTIFIER
+    ::= { luxlUsersMibConformance 1 }
+
+luxlUsersMibGroups OBJECT IDENTIFIER
+    ::= { luxlUsersMibConformance 2 }
+
+luxlUsersConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlUsersConfigPrivilege, luxlUsersConfigEncrypted, 
+                  luxlUsersConfigPassword, luxlUsersConfigAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlUsersMibGroups 1 }
+
+luxlUsersConfigTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlUsersConfigTableRowEditorUsername, 
+                  luxlUsersConfigTableRowEditorPrivilege, 
+                  luxlUsersConfigTableRowEditorEncrypted, 
+                  luxlUsersConfigTableRowEditorPassword, 
+                  luxlUsersConfigTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlUsersMibGroups 2 }
+
+luxlUsersMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlUsersConfigTableInfoGroup, 
+                  luxlUsersConfigTableRowEditorInfoGroup }
+
+    ::= { luxlUsersMibCompliances 1 }
+
+END

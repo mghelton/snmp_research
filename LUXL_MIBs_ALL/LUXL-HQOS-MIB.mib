@@ -1,0 +1,380 @@
+-- *****************************************************************
+-- HQOS-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-HQOS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlHqosMib MODULE-IDENTITY
+    LAST-UPDATED "201501090000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private MIB for HQoS"
+    REVISION    "201501090000Z"
+    DESCRIPTION
+        "Minor description changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 125 }
+
+
+LUXLhqosSchMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The HQoS scheduling mode."
+    SYNTAX      INTEGER { normal(0), basic(1), hierarchical(2) }
+
+luxlHqosMibObjects OBJECT IDENTIFIER
+    ::= { luxlHqosMib 1 }
+
+luxlHqosConfig OBJECT IDENTIFIER
+    ::= { luxlHqosMibObjects 2 }
+
+luxlHqosConfigInterface OBJECT IDENTIFIER
+    ::= { luxlHqosConfig 2 }
+
+luxlHqosConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLHqosConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table provides HQoS configuration for interfaces"
+    ::= { luxlHqosConfigInterface 1 }
+
+luxlHqosConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLHqosConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for an interface"
+    INDEX       { luxlHqosConfigInterfaceIfIndex }
+    ::= { luxlHqosConfigInterfaceTable 1 }
+
+LUXLHqosConfigInterfaceEntry ::= SEQUENCE {
+    luxlHqosConfigInterfaceIfIndex      LUXLInterfaceIndex,
+    luxlHqosConfigInterfaceSchMode      LUXLhqosSchMode
+}
+
+luxlHqosConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlHqosConfigInterfaceEntry 1 }
+
+luxlHqosConfigInterfaceSchMode OBJECT-TYPE
+    SYNTAX      LUXLhqosSchMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "HQoS scheduling mode."
+    ::= { luxlHqosConfigInterfaceEntry 2 }
+
+luxlHqosConfigInterfaceHqosTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLHqosConfigInterfaceHqosEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the configuration for HQoS entries"
+    ::= { luxlHqosConfigInterface 2 }
+
+luxlHqosConfigInterfaceHqosEntry OBJECT-TYPE
+    SYNTAX      LUXLHqosConfigInterfaceHqosEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for an HQoS entry"
+    INDEX       { luxlHqosConfigInterfaceHqosIfIndex, luxlHqosConfigInterfaceHqosHqosId }
+    ::= { luxlHqosConfigInterfaceHqosTable 1 }
+
+LUXLHqosConfigInterfaceHqosEntry ::= SEQUENCE {
+    luxlHqosConfigInterfaceHqosIfIndex      LUXLInterfaceIndex,
+    luxlHqosConfigInterfaceHqosHqosId   Integer32,
+    luxlHqosConfigInterfaceHqosDwrrCount    LUXLUnsigned8,
+    luxlHqosConfigInterfaceHqosShaperEnable     TruthValue,
+    luxlHqosConfigInterfaceHqosShaperRate   Unsigned32,
+    luxlHqosConfigInterfaceHqosMinRate      Unsigned32,
+    luxlHqosConfigInterfaceHqosAction   LUXLRowEditorState
+}
+
+luxlHqosConfigInterfaceHqosIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlHqosConfigInterfaceHqosEntry 1 }
+
+luxlHqosConfigInterfaceHqosHqosId OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "HQoS ID, allowed range depends on platform."
+    ::= { luxlHqosConfigInterfaceHqosEntry 2 }
+
+luxlHqosConfigInterfaceHqosDwrrCount OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of queues using DWRR."
+    ::= { luxlHqosConfigInterfaceHqosEntry 3 }
+
+luxlHqosConfigInterfaceHqosShaperEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable or disable shaper."
+    ::= { luxlHqosConfigInterfaceHqosEntry 4 }
+
+luxlHqosConfigInterfaceHqosShaperRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Shaper rate in kbps."
+    ::= { luxlHqosConfigInterfaceHqosEntry 5 }
+
+luxlHqosConfigInterfaceHqosMinRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Minimum guaranteed bandwidth in kbps."
+    ::= { luxlHqosConfigInterfaceHqosEntry 6 }
+
+luxlHqosConfigInterfaceHqosAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlHqosConfigInterfaceHqosEntry 10000 }
+
+luxlHqosConfigInterfaceHqosTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlHqosConfigInterface 3 }
+
+luxlHqosConfigInterfaceHqosTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlHqosConfigInterfaceHqosTableRowEditor 1 }
+
+luxlHqosConfigInterfaceHqosTableRowEditorHqosId OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "HQoS ID, allowed range depends on platform."
+    ::= { luxlHqosConfigInterfaceHqosTableRowEditor 2 }
+
+luxlHqosConfigInterfaceHqosTableRowEditorDwrrCount OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of queues using DWRR."
+    ::= { luxlHqosConfigInterfaceHqosTableRowEditor 3 }
+
+luxlHqosConfigInterfaceHqosTableRowEditorShaperEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable or disable shaper."
+    ::= { luxlHqosConfigInterfaceHqosTableRowEditor 4 }
+
+luxlHqosConfigInterfaceHqosTableRowEditorShaperRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Shaper rate in kbps."
+    ::= { luxlHqosConfigInterfaceHqosTableRowEditor 5 }
+
+luxlHqosConfigInterfaceHqosTableRowEditorMinRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Minimum guaranteed bandwidth in kbps."
+    ::= { luxlHqosConfigInterfaceHqosTableRowEditor 6 }
+
+luxlHqosConfigInterfaceHqosTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlHqosConfigInterfaceHqosTableRowEditor 10000 }
+
+luxlHqosConfigInterfaceHqosQueueTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLHqosConfigInterfaceHqosQueueEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains the configuration for HQoS queues"
+    ::= { luxlHqosConfigInterface 4 }
+
+luxlHqosConfigInterfaceHqosQueueEntry OBJECT-TYPE
+    SYNTAX      LUXLHqosConfigInterfaceHqosQueueEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each row contains the configuration for a queue of an HQoS entry"
+    INDEX       { luxlHqosConfigInterfaceHqosQueueIfIndex, luxlHqosConfigInterfaceHqosQueueHqosId, luxlHqosConfigInterfaceHqosQueueQueue }
+    ::= { luxlHqosConfigInterfaceHqosQueueTable 1 }
+
+LUXLHqosConfigInterfaceHqosQueueEntry ::= SEQUENCE {
+    luxlHqosConfigInterfaceHqosQueueIfIndex     LUXLInterfaceIndex,
+    luxlHqosConfigInterfaceHqosQueueHqosId      Integer32,
+    luxlHqosConfigInterfaceHqosQueueQueue   Integer32,
+    luxlHqosConfigInterfaceHqosQueueShaperEnable    TruthValue,
+    luxlHqosConfigInterfaceHqosQueueShaperRate      Unsigned32,
+    luxlHqosConfigInterfaceHqosQueueSchedulerWeight     LUXLUnsigned8
+}
+
+luxlHqosConfigInterfaceHqosQueueIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface index."
+    ::= { luxlHqosConfigInterfaceHqosQueueEntry 1 }
+
+luxlHqosConfigInterfaceHqosQueueHqosId OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "HQoS ID, allowed range depends on platform."
+    ::= { luxlHqosConfigInterfaceHqosQueueEntry 2 }
+
+luxlHqosConfigInterfaceHqosQueueQueue OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Queue number."
+    ::= { luxlHqosConfigInterfaceHqosQueueEntry 3 }
+
+luxlHqosConfigInterfaceHqosQueueShaperEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable or disable shaper."
+    ::= { luxlHqosConfigInterfaceHqosQueueEntry 4 }
+
+luxlHqosConfigInterfaceHqosQueueShaperRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Shaper rate in kbps."
+    ::= { luxlHqosConfigInterfaceHqosQueueEntry 5 }
+
+luxlHqosConfigInterfaceHqosQueueSchedulerWeight OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Scheduler weight, 1-100."
+    ::= { luxlHqosConfigInterfaceHqosQueueEntry 6 }
+
+luxlHqosConfigHqos OBJECT IDENTIFIER
+    ::= { luxlHqosConfig 4 }
+
+luxlHqosMibConformance OBJECT IDENTIFIER
+    ::= { luxlHqosMib 2 }
+
+luxlHqosMibCompliances OBJECT IDENTIFIER
+    ::= { luxlHqosMibConformance 1 }
+
+luxlHqosMibGroups OBJECT IDENTIFIER
+    ::= { luxlHqosMibConformance 2 }
+
+luxlHqosConfigInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlHqosConfigInterfaceSchMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlHqosMibGroups 1 }
+
+luxlHqosConfigInterfaceHqosTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlHqosConfigInterfaceHqosDwrrCount, 
+                  luxlHqosConfigInterfaceHqosShaperEnable, 
+                  luxlHqosConfigInterfaceHqosShaperRate, 
+                  luxlHqosConfigInterfaceHqosMinRate, 
+                  luxlHqosConfigInterfaceHqosAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlHqosMibGroups 2 }
+
+luxlHqosConfigInterfaceHqosTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlHqosConfigInterfaceHqosTableRowEditorIfIndex, 
+                  luxlHqosConfigInterfaceHqosTableRowEditorHqosId, 
+                  luxlHqosConfigInterfaceHqosTableRowEditorDwrrCount, 
+                  luxlHqosConfigInterfaceHqosTableRowEditorShaperEnable, 
+                  luxlHqosConfigInterfaceHqosTableRowEditorShaperRate, 
+                  luxlHqosConfigInterfaceHqosTableRowEditorMinRate, 
+                  luxlHqosConfigInterfaceHqosTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlHqosMibGroups 3 }
+
+luxlHqosConfigInterfaceHqosQueueTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlHqosConfigInterfaceHqosQueueShaperEnable, 
+                  luxlHqosConfigInterfaceHqosQueueShaperRate, 
+                  luxlHqosConfigInterfaceHqosQueueSchedulerWeight }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlHqosMibGroups 4 }
+
+luxlHqosMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlHqosConfigInterfaceTableInfoGroup, 
+                  luxlHqosConfigInterfaceHqosTableInfoGroup, 
+                  luxlHqosConfigInterfaceHqosTableRowEditorInfoGroup, 
+                  luxlHqosConfigInterfaceHqosQueueTableInfoGroup }
+
+    ::= { luxlHqosMibCompliances 1 }
+
+END

@@ -1,0 +1,2033 @@
+-- *****************************************************************
+-- PTP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-PTP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLInteger16 FROM LUXL-TC
+    LUXLInteger64 FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned64 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlPtpMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "Private PTP MIB."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 65 }
+
+
+LUXLptpExtClock1pps ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { onePpsDisable(0), onePpsOutput(1), onePpsInput(2), onePpsOutInput(3) }
+
+LUXLptpPreferredAdj ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { preferredAdjLtc(0), preferredAdjSyncE(1), preferredAdjXO(2), preferredAdjLtcPhase(3) }
+
+LUXLptpServoClockOption ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { clockFree(0), clockSyncE(1) }
+
+LUXLptpSlaveClockState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { slaveClockStateFreerun(0), slaveClockStateFreqLocking(1), slaveClockStatePhaseLocking(2), slaveClockStateLocked(3), slaveClockStateHoldover(4), slaveClockStateInvalid(5) }
+
+LUXLptpSystemTimeSyncMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { systemTimeNoSync(0), systemTimeSyncGet(1), systemTimeSyncSet(2) }
+
+luxlPtpMibObjects OBJECT IDENTIFIER
+    ::= { luxlPtpMib 1 }
+
+luxlPtpCapabilities OBJECT IDENTIFIER
+    ::= { luxlPtpMibObjects 1 }
+
+luxlPtpCapabilitiesGlobals OBJECT IDENTIFIER
+    ::= { luxlPtpCapabilities 1 }
+
+luxlPtpCapabilitiesGlobalsClockCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of PTP clocks supported by the device."
+    ::= { luxlPtpCapabilitiesGlobals 1 }
+
+luxlPtpConfig OBJECT IDENTIFIER
+    ::= { luxlPtpMibObjects 2 }
+
+luxlPtpConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlPtpConfig 1 }
+
+luxlPtpConfigGlobalsExternalClockMode OBJECT IDENTIFIER
+    ::= { luxlPtpConfigGlobals 1 }
+
+luxlPtpConfigGlobalsExternalClockModeOnePpsMode OBJECT-TYPE
+    SYNTAX      LUXLptpExtClock1pps
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The mode of the PPS pin."
+    ::= { luxlPtpConfigGlobalsExternalClockMode 1 }
+
+luxlPtpConfigGlobalsExternalClockModeExternalEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "External enable of PPS output."
+    ::= { luxlPtpConfigGlobalsExternalClockMode 2 }
+
+luxlPtpConfigGlobalsExternalClockModeAdjustMethod OBJECT-TYPE
+    SYNTAX      LUXLptpPreferredAdj
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The adjustment method of the PPS external output.
+         
+         0: LTC Frequency
+         
+         1: SyncE DPLL
+         
+         2: Oscillator
+         
+         3: LTC Phase"
+    ::= { luxlPtpConfigGlobalsExternalClockMode 3 }
+
+luxlPtpConfigGlobalsExternalClockModeClockFrequency OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The frequency in hertz (Hz) of the PPS external output."
+    ::= { luxlPtpConfigGlobalsExternalClockMode 4 }
+
+luxlPtpConfigGlobalsSystemTimeSyncMode OBJECT IDENTIFIER
+    ::= { luxlPtpConfigGlobals 2 }
+
+luxlPtpConfigGlobalsSystemTimeSyncModeMode OBJECT-TYPE
+    SYNTAX      LUXLptpSystemTimeSyncMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Mode of the System time <-> ptp time synchronization."
+    ::= { luxlPtpConfigGlobalsSystemTimeSyncMode 1 }
+
+luxlPtpConfigClocks OBJECT IDENTIFIER
+    ::= { luxlPtpConfig 2 }
+
+luxlPtpConfigClocksDefaultDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpConfigClocksDefaultDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the configurable part of the PTP clocks DefaultDS."
+    ::= { luxlPtpConfigClocks 1 }
+
+luxlPtpConfigClocksDefaultDsEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpConfigClocksDefaultDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpConfigClocksDefaultDsClockId }
+    ::= { luxlPtpConfigClocksDefaultDsTable 1 }
+
+LUXLPtpConfigClocksDefaultDsEntry ::= SEQUENCE {
+    luxlPtpConfigClocksDefaultDsClockId     Integer32,
+    luxlPtpConfigClocksDefaultDsDeviceType      LUXLUnsigned8,
+    luxlPtpConfigClocksDefaultDsTwoStepFlag     TruthValue,
+    luxlPtpConfigClocksDefaultDsPriority1   LUXLUnsigned8,
+    luxlPtpConfigClocksDefaultDsPriority2   LUXLUnsigned8,
+    luxlPtpConfigClocksDefaultDsOneWay      TruthValue,
+    luxlPtpConfigClocksDefaultDsDomainNumber    LUXLUnsigned8,
+    luxlPtpConfigClocksDefaultDsProtocol    LUXLUnsigned8,
+    luxlPtpConfigClocksDefaultDsVlanTagEnable   TruthValue,
+    luxlPtpConfigClocksDefaultDsVid     LUXLUnsigned16,
+    luxlPtpConfigClocksDefaultDsPcp     LUXLUnsigned8,
+    luxlPtpConfigClocksDefaultDsMep     Integer32,
+    luxlPtpConfigClocksDefaultDsAction      LUXLRowEditorState
+}
+
+luxlPtpConfigClocksDefaultDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpConfigClocksDefaultDsEntry 1 }
+
+luxlPtpConfigClocksDefaultDsDeviceType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PTP clock type."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 2 }
+
+luxlPtpConfigClocksDefaultDsTwoStepFlag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Determines whether clock uses follow-up packets."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 3 }
+
+luxlPtpConfigClocksDefaultDsPriority1 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The priority1 value."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 4 }
+
+luxlPtpConfigClocksDefaultDsPriority2 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The priority2 value."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 5 }
+
+luxlPtpConfigClocksDefaultDsOneWay OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Determines whether clock uses sync packets only."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 6 }
+
+luxlPtpConfigClocksDefaultDsDomainNumber OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The domain number."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 7 }
+
+luxlPtpConfigClocksDefaultDsProtocol OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protocol to be used for the encapsulation of the PTP packets."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 8 }
+
+luxlPtpConfigClocksDefaultDsVlanTagEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Determines whether clock uses sync packets only."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 9 }
+
+luxlPtpConfigClocksDefaultDsVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN id (if VLAN tagging is enabled)."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 10 }
+
+luxlPtpConfigClocksDefaultDsPcp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value (if VLAN tagging is enabled)."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 11 }
+
+luxlPtpConfigClocksDefaultDsMep OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The mep instance number (if protocol is OAM)."
+    ::= { luxlPtpConfigClocksDefaultDsEntry 12 }
+
+luxlPtpConfigClocksDefaultDsAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlPtpConfigClocksDefaultDsEntry 100 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlPtpConfigClocks 2 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 1 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorDeviceType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PTP clock type."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 2 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorTwoStepFlag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Determines whether clock uses follow-up packets."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 3 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorPriority1 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The priority1 value."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 4 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorPriority2 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The priority2 value."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 5 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorOneWay OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Determines whether clock uses sync packets only."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 6 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorDomainNumber OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The domain number."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 7 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorProtocol OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The protocol to be used for the encapsulation of the PTP packets."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 8 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorVlanTagEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Determines whether clock uses sync packets only."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 9 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN id (if VLAN tagging is enabled)."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 10 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorPcp OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The PCP value (if VLAN tagging is enabled)."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 11 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorMep OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The mep instance number (if protocol is OAM)."
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 12 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlPtpConfigClocksDefaultDsTableRowEditor 100 }
+
+luxlPtpConfigClocksTimePropertiesDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpConfigClocksTimePropertiesDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the configurable part of the PTP clocks TimePropertiesDS."
+    ::= { luxlPtpConfigClocks 3 }
+
+luxlPtpConfigClocksTimePropertiesDsEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpConfigClocksTimePropertiesDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpConfigClocksTimePropertiesDsClockId }
+    ::= { luxlPtpConfigClocksTimePropertiesDsTable 1 }
+
+LUXLPtpConfigClocksTimePropertiesDsEntry ::= SEQUENCE {
+    luxlPtpConfigClocksTimePropertiesDsClockId      Integer32,
+    luxlPtpConfigClocksTimePropertiesDsCurrentUtcOffset     LUXLInteger16,
+    luxlPtpConfigClocksTimePropertiesDsCurrentUtcOffsetValid    TruthValue,
+    luxlPtpConfigClocksTimePropertiesDsLeap59   TruthValue,
+    luxlPtpConfigClocksTimePropertiesDsLeap61   TruthValue,
+    luxlPtpConfigClocksTimePropertiesDsTimeTraceable    TruthValue,
+    luxlPtpConfigClocksTimePropertiesDsFrequencyTraceable   TruthValue,
+    luxlPtpConfigClocksTimePropertiesDsPtpTimescale     TruthValue,
+    luxlPtpConfigClocksTimePropertiesDsTimeSource   LUXLUnsigned8
+}
+
+luxlPtpConfigClocksTimePropertiesDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpConfigClocksTimePropertiesDsEntry 1 }
+
+luxlPtpConfigClocksTimePropertiesDsCurrentUtcOffset OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The current UTC time offset."
+    ::= { luxlPtpConfigClocksTimePropertiesDsEntry 2 }
+
+luxlPtpConfigClocksTimePropertiesDsCurrentUtcOffsetValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether the current UTC time offset value is valid."
+    ::= { luxlPtpConfigClocksTimePropertiesDsEntry 3 }
+
+luxlPtpConfigClocksTimePropertiesDsLeap59 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates that the last minute of the day has only 59 seconds."
+    ::= { luxlPtpConfigClocksTimePropertiesDsEntry 4 }
+
+luxlPtpConfigClocksTimePropertiesDsLeap61 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates that the last minute of the day has 61 seconds."
+    ::= { luxlPtpConfigClocksTimePropertiesDsEntry 5 }
+
+luxlPtpConfigClocksTimePropertiesDsTimeTraceable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates that time is traceable to a primary reference."
+    ::= { luxlPtpConfigClocksTimePropertiesDsEntry 6 }
+
+luxlPtpConfigClocksTimePropertiesDsFrequencyTraceable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates that frequency is traceable to a primary reference."
+    ::= { luxlPtpConfigClocksTimePropertiesDsEntry 7 }
+
+luxlPtpConfigClocksTimePropertiesDsPtpTimescale OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether timescale of the grandmaster clock is PTP."
+    ::= { luxlPtpConfigClocksTimePropertiesDsEntry 8 }
+
+luxlPtpConfigClocksTimePropertiesDsTimeSource OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source of time used by the grandmaster clock."
+    ::= { luxlPtpConfigClocksTimePropertiesDsEntry 9 }
+
+luxlPtpConfigClocksFilterParametersTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpConfigClocksFilterParametersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the configurable part of the PTP clocks filter parameters."
+    ::= { luxlPtpConfigClocks 4 }
+
+luxlPtpConfigClocksFilterParametersEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpConfigClocksFilterParametersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpConfigClocksFilterParametersClockId }
+    ::= { luxlPtpConfigClocksFilterParametersTable 1 }
+
+LUXLPtpConfigClocksFilterParametersEntry ::= SEQUENCE {
+    luxlPtpConfigClocksFilterParametersClockId      Integer32,
+    luxlPtpConfigClocksFilterParametersDelayFilter      Unsigned32,
+    luxlPtpConfigClocksFilterParametersOffsetFilter     Unsigned32,
+    luxlPtpConfigClocksFilterParametersPeriod   Unsigned32,
+    luxlPtpConfigClocksFilterParametersDist     Unsigned32,
+    luxlPtpConfigClocksFilterParametersHeight   Unsigned32,
+    luxlPtpConfigClocksFilterParametersPercentage   Unsigned32,
+    luxlPtpConfigClocksFilterParametersResetThreshold   Unsigned32
+}
+
+luxlPtpConfigClocksFilterParametersClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpConfigClocksFilterParametersEntry 1 }
+
+luxlPtpConfigClocksFilterParametersDelayFilter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Defines the time constant of the delay filter."
+    ::= { luxlPtpConfigClocksFilterParametersEntry 2 }
+
+luxlPtpConfigClocksFilterParametersOffsetFilter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Selects the type of offset filter used."
+    ::= { luxlPtpConfigClocksFilterParametersEntry 3 }
+
+luxlPtpConfigClocksFilterParametersPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Defines the period of the offset filter."
+    ::= { luxlPtpConfigClocksFilterParametersEntry 4 }
+
+luxlPtpConfigClocksFilterParametersDist OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Sets the dist value of the offset filter."
+    ::= { luxlPtpConfigClocksFilterParametersEntry 5 }
+
+luxlPtpConfigClocksFilterParametersHeight OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Sets the height value of the offset filter (only applicable to advanced
+         filter)."
+    ::= { luxlPtpConfigClocksFilterParametersEntry 6 }
+
+luxlPtpConfigClocksFilterParametersPercentage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Sets the percentage of time delays values used by the offset filter
+         (only applicable to advanced filter)."
+    ::= { luxlPtpConfigClocksFilterParametersEntry 7 }
+
+luxlPtpConfigClocksFilterParametersResetThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Sets the reset threshold of the offset filter."
+    ::= { luxlPtpConfigClocksFilterParametersEntry 8 }
+
+luxlPtpConfigClocksServoParametersTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpConfigClocksServoParametersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the configurable part of the PTP clocks servo parameters."
+    ::= { luxlPtpConfigClocks 5 }
+
+luxlPtpConfigClocksServoParametersEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpConfigClocksServoParametersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpConfigClocksServoParametersClockId }
+    ::= { luxlPtpConfigClocksServoParametersTable 1 }
+
+LUXLPtpConfigClocksServoParametersEntry ::= SEQUENCE {
+    luxlPtpConfigClocksServoParametersClockId   Integer32,
+    luxlPtpConfigClocksServoParametersDisplay   TruthValue,
+    luxlPtpConfigClocksServoParametersPEnable   TruthValue,
+    luxlPtpConfigClocksServoParametersIEnable   TruthValue,
+    luxlPtpConfigClocksServoParametersDEnable   TruthValue,
+    luxlPtpConfigClocksServoParametersPval      Unsigned32,
+    luxlPtpConfigClocksServoParametersIval      Unsigned32,
+    luxlPtpConfigClocksServoParametersDval      Unsigned32,
+    luxlPtpConfigClocksServoParametersSrvOption     LUXLptpServoClockOption,
+    luxlPtpConfigClocksServoParametersSynceThreshold    Unsigned32,
+    luxlPtpConfigClocksServoParametersSynceAp   Unsigned32,
+    luxlPtpConfigClocksServoParametersHoFilter      Integer32,
+    luxlPtpConfigClocksServoParametersStableAdjThreshold    LUXLUnsigned64
+}
+
+luxlPtpConfigClocksServoParametersClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpConfigClocksServoParametersEntry 1 }
+
+luxlPtpConfigClocksServoParametersDisplay OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether output shall be sent to the debug terminal."
+    ::= { luxlPtpConfigClocksServoParametersEntry 2 }
+
+luxlPtpConfigClocksServoParametersPEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether P-value of servo algorithm shall be used."
+    ::= { luxlPtpConfigClocksServoParametersEntry 3 }
+
+luxlPtpConfigClocksServoParametersIEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether I-value of servo algorithm shall be used."
+    ::= { luxlPtpConfigClocksServoParametersEntry 4 }
+
+luxlPtpConfigClocksServoParametersDEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether D-value of servo algorithm shall be used."
+    ::= { luxlPtpConfigClocksServoParametersEntry 5 }
+
+luxlPtpConfigClocksServoParametersPval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "P-value of the offset filter."
+    ::= { luxlPtpConfigClocksServoParametersEntry 6 }
+
+luxlPtpConfigClocksServoParametersIval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "I-value of the offset filter."
+    ::= { luxlPtpConfigClocksServoParametersEntry 7 }
+
+luxlPtpConfigClocksServoParametersDval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "D-value of the offset filter."
+    ::= { luxlPtpConfigClocksServoParametersEntry 8 }
+
+luxlPtpConfigClocksServoParametersSrvOption OBJECT-TYPE
+    SYNTAX      LUXLptpServoClockOption
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "D-value of the offset filter."
+    ::= { luxlPtpConfigClocksServoParametersEntry 9 }
+
+luxlPtpConfigClocksServoParametersSynceThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "SyncE Threshold"
+    ::= { luxlPtpConfigClocksServoParametersEntry 10 }
+
+luxlPtpConfigClocksServoParametersSynceAp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "SyncE Ap"
+    ::= { luxlPtpConfigClocksServoParametersEntry 11 }
+
+luxlPtpConfigClocksServoParametersHoFilter OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Holdoff low pass filter constant."
+    ::= { luxlPtpConfigClocksServoParametersEntry 12 }
+
+luxlPtpConfigClocksServoParametersStableAdjThreshold OBJECT-TYPE
+    SYNTAX      LUXLUnsigned64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Threshold at which offset is assumed to be stable."
+    ::= { luxlPtpConfigClocksServoParametersEntry 13 }
+
+luxlPtpConfigClocksSlaveConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpConfigClocksSlaveConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the configurable part of the PTP clocks slave configuration."
+    ::= { luxlPtpConfigClocks 6 }
+
+luxlPtpConfigClocksSlaveConfigEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpConfigClocksSlaveConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpConfigClocksSlaveConfigClockId }
+    ::= { luxlPtpConfigClocksSlaveConfigTable 1 }
+
+LUXLPtpConfigClocksSlaveConfigEntry ::= SEQUENCE {
+    luxlPtpConfigClocksSlaveConfigClockId   Integer32,
+    luxlPtpConfigClocksSlaveConfigStableOffset      Unsigned32,
+    luxlPtpConfigClocksSlaveConfigOffsetOk      Unsigned32,
+    luxlPtpConfigClocksSlaveConfigOffsetFail    Unsigned32
+}
+
+luxlPtpConfigClocksSlaveConfigClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpConfigClocksSlaveConfigEntry 1 }
+
+luxlPtpConfigClocksSlaveConfigStableOffset OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Stable offset threshold in ns."
+    ::= { luxlPtpConfigClocksSlaveConfigEntry 2 }
+
+luxlPtpConfigClocksSlaveConfigOffsetOk OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Offset OK threshold in ns."
+    ::= { luxlPtpConfigClocksSlaveConfigEntry 3 }
+
+luxlPtpConfigClocksSlaveConfigOffsetFail OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Offset fail threshold in ns."
+    ::= { luxlPtpConfigClocksSlaveConfigEntry 4 }
+
+luxlPtpConfigClocksUnicastSlaveConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpConfigClocksUnicastSlaveConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the configurable part of the PTP clocks unicast slave
+         configuration."
+    ::= { luxlPtpConfigClocks 7 }
+
+luxlPtpConfigClocksUnicastSlaveConfigEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpConfigClocksUnicastSlaveConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpConfigClocksUnicastSlaveConfigClockId, luxlPtpConfigClocksUnicastSlaveConfigMasterId }
+    ::= { luxlPtpConfigClocksUnicastSlaveConfigTable 1 }
+
+LUXLPtpConfigClocksUnicastSlaveConfigEntry ::= SEQUENCE {
+    luxlPtpConfigClocksUnicastSlaveConfigClockId    Integer32,
+    luxlPtpConfigClocksUnicastSlaveConfigMasterId   Integer32,
+    luxlPtpConfigClocksUnicastSlaveConfigDuration   Unsigned32,
+    luxlPtpConfigClocksUnicastSlaveConfigIpAddress      IpAddress
+}
+
+luxlPtpConfigClocksUnicastSlaveConfigClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpConfigClocksUnicastSlaveConfigEntry 1 }
+
+luxlPtpConfigClocksUnicastSlaveConfigMasterId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpConfigClocksUnicastSlaveConfigEntry 2 }
+
+luxlPtpConfigClocksUnicastSlaveConfigDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of seconds for which the Announce/Sync messages are requested."
+    ::= { luxlPtpConfigClocksUnicastSlaveConfigEntry 3 }
+
+luxlPtpConfigClocksUnicastSlaveConfigIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "IPv4 address of requested master clock."
+    ::= { luxlPtpConfigClocksUnicastSlaveConfigEntry 4 }
+
+luxlPtpConfigClocksPortDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpConfigClocksPortDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the configurable part of the PTP clocks PortDS."
+    ::= { luxlPtpConfigClocks 8 }
+
+luxlPtpConfigClocksPortDsEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpConfigClocksPortDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpConfigClocksPortDsClockId, luxlPtpConfigClocksPortDsPortId }
+    ::= { luxlPtpConfigClocksPortDsTable 1 }
+
+LUXLPtpConfigClocksPortDsEntry ::= SEQUENCE {
+    luxlPtpConfigClocksPortDsClockId    Integer32,
+    luxlPtpConfigClocksPortDsPortId     LUXLInterfaceIndex,
+    luxlPtpConfigClocksPortDsEnabled    LUXLUnsigned8,
+    luxlPtpConfigClocksPortDsLogAnnounceInterval    LUXLInteger16,
+    luxlPtpConfigClocksPortDsAnnounceReceiptTimeout     LUXLUnsigned8,
+    luxlPtpConfigClocksPortDsLogSyncInterval    LUXLInteger16,
+    luxlPtpConfigClocksPortDsDelayMechanism     LUXLUnsigned8,
+    luxlPtpConfigClocksPortDsLogMinPdelayReqInterval    LUXLInteger16,
+    luxlPtpConfigClocksPortDsDelayAsymmetry     LUXLInteger64,
+    luxlPtpConfigClocksPortDsIngressLatency     LUXLInteger64,
+    luxlPtpConfigClocksPortDsEgressLatency      LUXLInteger64,
+    luxlPtpConfigClocksPortDsPortInternal   TruthValue,
+    luxlPtpConfigClocksPortDsVersionNumber      LUXLUnsigned16
+}
+
+luxlPtpConfigClocksPortDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpConfigClocksPortDsEntry 1 }
+
+luxlPtpConfigClocksPortDsPortId OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpConfigClocksPortDsEntry 2 }
+
+luxlPtpConfigClocksPortDsEnabled OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Defines whether port is enabled."
+    ::= { luxlPtpConfigClocksPortDsEntry 3 }
+
+luxlPtpConfigClocksPortDsLogAnnounceInterval OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Interval between announce message transmissions."
+    ::= { luxlPtpConfigClocksPortDsEntry 4 }
+
+luxlPtpConfigClocksPortDsAnnounceReceiptTimeout OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The timeout for receiving announce messages on the port."
+    ::= { luxlPtpConfigClocksPortDsEntry 5 }
+
+luxlPtpConfigClocksPortDsLogSyncInterval OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The interval for issuing sync meesages in the master."
+    ::= { luxlPtpConfigClocksPortDsEntry 6 }
+
+luxlPtpConfigClocksPortDsDelayMechanism OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The delay mechanism used for the port."
+    ::= { luxlPtpConfigClocksPortDsEntry 7 }
+
+luxlPtpConfigClocksPortDsLogMinPdelayReqInterval OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The value of logMinPdelayReqInterval"
+    ::= { luxlPtpConfigClocksPortDsEntry 8 }
+
+luxlPtpConfigClocksPortDsDelayAsymmetry OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The value for the communication path asymmetry."
+    ::= { luxlPtpConfigClocksPortDsEntry 9 }
+
+luxlPtpConfigClocksPortDsIngressLatency OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ingress delay for port."
+    ::= { luxlPtpConfigClocksPortDsEntry 10 }
+
+luxlPtpConfigClocksPortDsEgressLatency OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Egress delay for port."
+    ::= { luxlPtpConfigClocksPortDsEntry 11 }
+
+luxlPtpConfigClocksPortDsPortInternal OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Defines whether port is enabled as an internal interface."
+    ::= { luxlPtpConfigClocksPortDsEntry 12 }
+
+luxlPtpConfigClocksPortDsVersionNumber OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The version of PTP being used by the port."
+    ::= { luxlPtpConfigClocksPortDsEntry 13 }
+
+luxlPtpStatus OBJECT IDENTIFIER
+    ::= { luxlPtpMibObjects 3 }
+
+luxlPtpStatusClocks OBJECT IDENTIFIER
+    ::= { luxlPtpStatus 1 }
+
+luxlPtpStatusClocksDefaultDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpStatusClocksDefaultDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the dynamic (status) part of the PTP clocks DefaultDS."
+    ::= { luxlPtpStatusClocks 1 }
+
+luxlPtpStatusClocksDefaultDsEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpStatusClocksDefaultDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpStatusClocksDefaultDsClockId }
+    ::= { luxlPtpStatusClocksDefaultDsTable 1 }
+
+LUXLPtpStatusClocksDefaultDsEntry ::= SEQUENCE {
+    luxlPtpStatusClocksDefaultDsClockId     Integer32,
+    luxlPtpStatusClocksDefaultDsClockIdentity   OCTET STRING,
+    luxlPtpStatusClocksDefaultDsClockQualityClockClass      LUXLUnsigned8,
+    luxlPtpStatusClocksDefaultDsClockQualityClockAccuracy   LUXLUnsigned8,
+    luxlPtpStatusClocksDefaultDsClockQualityOffsetScaledLogVar      LUXLUnsigned16
+}
+
+luxlPtpStatusClocksDefaultDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksDefaultDsEntry 1 }
+
+luxlPtpStatusClocksDefaultDsClockIdentity OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the unique 8 byte clockIdentify field from the DefaultDS
+         structure."
+    ::= { luxlPtpStatusClocksDefaultDsEntry 2 }
+
+luxlPtpStatusClocksDefaultDsClockQualityClockClass OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the clock class field of the clock quality structure."
+    ::= { luxlPtpStatusClocksDefaultDsEntry 3 }
+
+luxlPtpStatusClocksDefaultDsClockQualityClockAccuracy OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the clock accuracy field of the clock quality structure."
+    ::= { luxlPtpStatusClocksDefaultDsEntry 4 }
+
+luxlPtpStatusClocksDefaultDsClockQualityOffsetScaledLogVar OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the offsetScaledLogVariance field of the clock quality
+         structure."
+    ::= { luxlPtpStatusClocksDefaultDsEntry 5 }
+
+luxlPtpStatusClocksCurrentDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpStatusClocksCurrentDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the dynamic (status) part of the PTP clocks CurrentDS."
+    ::= { luxlPtpStatusClocks 2 }
+
+luxlPtpStatusClocksCurrentDsEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpStatusClocksCurrentDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpStatusClocksCurrentDsClockId }
+    ::= { luxlPtpStatusClocksCurrentDsTable 1 }
+
+LUXLPtpStatusClocksCurrentDsEntry ::= SEQUENCE {
+    luxlPtpStatusClocksCurrentDsClockId     Integer32,
+    luxlPtpStatusClocksCurrentDsStepsRemoved    LUXLUnsigned16,
+    luxlPtpStatusClocksCurrentDsOffsetFromMaster    LUXLInteger64,
+    luxlPtpStatusClocksCurrentDsMeanPathDelay   LUXLInteger64
+}
+
+luxlPtpStatusClocksCurrentDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksCurrentDsEntry 1 }
+
+luxlPtpStatusClocksCurrentDsStepsRemoved OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of PTP clocks traversed from the grandmaster to the local
+         PTP clock."
+    ::= { luxlPtpStatusClocksCurrentDsEntry 2 }
+
+luxlPtpStatusClocksCurrentDsOffsetFromMaster OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The time differece in ns from the grandmaster to the local PTP clock."
+    ::= { luxlPtpStatusClocksCurrentDsEntry 3 }
+
+luxlPtpStatusClocksCurrentDsMeanPathDelay OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The mean path delay from the master to the local slave."
+    ::= { luxlPtpStatusClocksCurrentDsEntry 4 }
+
+luxlPtpStatusClocksParentDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpStatusClocksParentDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the dynamic (status) part of the PTP clocks ParentDS."
+    ::= { luxlPtpStatusClocks 3 }
+
+luxlPtpStatusClocksParentDsEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpStatusClocksParentDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpStatusClocksParentDsClockId }
+    ::= { luxlPtpStatusClocksParentDsTable 1 }
+
+LUXLPtpStatusClocksParentDsEntry ::= SEQUENCE {
+    luxlPtpStatusClocksParentDsClockId      Integer32,
+    luxlPtpStatusClocksParentDsParentPortIdentityClockIdentity      OCTET STRING,
+    luxlPtpStatusClocksParentDsParentPortIdentityPortNumber     LUXLUnsigned16,
+    luxlPtpStatusClocksParentDsParentStats      TruthValue,
+    luxlPtpStatusClocksParentDsObservedParentOffsetScaledLogVar     LUXLUnsigned16,
+    luxlPtpStatusClocksParentDsObservedParentClockPhaseChangeRate   Integer32,
+    luxlPtpStatusClocksParentDsGrmstrIdentity   OCTET STRING,
+    luxlPtpStatusClocksParentDsGrmstrClkQualClockClass      LUXLUnsigned8,
+    luxlPtpStatusClocksParentDsGmstrClkQualClockAccuracy    LUXLUnsigned8,
+    luxlPtpStatusClocksParentDsGmstrClkQualOffsetScaledLogVar   LUXLUnsigned16,
+    luxlPtpStatusClocksParentDsGmstrPriority1   LUXLUnsigned8,
+    luxlPtpStatusClocksParentDsGmstrPriority2   LUXLUnsigned8
+}
+
+luxlPtpStatusClocksParentDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksParentDsEntry 1 }
+
+luxlPtpStatusClocksParentDsParentPortIdentityClockIdentity OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the 8 byte unique clock identity of the parent port."
+    ::= { luxlPtpStatusClocksParentDsEntry 2 }
+
+luxlPtpStatusClocksParentDsParentPortIdentityPortNumber OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the port number on the parent associated with the parent clock."
+    ::= { luxlPtpStatusClocksParentDsEntry 3 }
+
+luxlPtpStatusClocksParentDsParentStats OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Parents stats (always false)."
+    ::= { luxlPtpStatusClocksParentDsEntry 4 }
+
+luxlPtpStatusClocksParentDsObservedParentOffsetScaledLogVar OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This field is optional and is not computed (as signaled by parentStats
+         being false)."
+    ::= { luxlPtpStatusClocksParentDsEntry 5 }
+
+luxlPtpStatusClocksParentDsObservedParentClockPhaseChangeRate OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This field is optional and is not computed (as signaled by parentStats
+         being false)."
+    ::= { luxlPtpStatusClocksParentDsEntry 6 }
+
+luxlPtpStatusClocksParentDsGrmstrIdentity OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the 8 byte unique clock identity of the grand master clock."
+    ::= { luxlPtpStatusClocksParentDsEntry 7 }
+
+luxlPtpStatusClocksParentDsGrmstrClkQualClockClass OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the clock class of the clock quality structure of the grand
+         master clock."
+    ::= { luxlPtpStatusClocksParentDsEntry 8 }
+
+luxlPtpStatusClocksParentDsGmstrClkQualClockAccuracy OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the clock accuracy of the clock quality structure of the grand
+         master clock."
+    ::= { luxlPtpStatusClocksParentDsEntry 9 }
+
+luxlPtpStatusClocksParentDsGmstrClkQualOffsetScaledLogVar OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the offsetScaledLogVariance field of the clock quality
+         structure of the grand master clock."
+    ::= { luxlPtpStatusClocksParentDsEntry 10 }
+
+luxlPtpStatusClocksParentDsGmstrPriority1 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Grandmaster Priority1 value."
+    ::= { luxlPtpStatusClocksParentDsEntry 11 }
+
+luxlPtpStatusClocksParentDsGmstrPriority2 OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Grandmaster Priority2 value."
+    ::= { luxlPtpStatusClocksParentDsEntry 12 }
+
+luxlPtpStatusClocksTimePropertiesDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpStatusClocksTimePropertiesDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the dynamic (status) part of the PTP clocks TimePropertiesDS."
+    ::= { luxlPtpStatusClocks 4 }
+
+luxlPtpStatusClocksTimePropertiesDsEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpStatusClocksTimePropertiesDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpStatusClocksTimePropertiesDsClockId }
+    ::= { luxlPtpStatusClocksTimePropertiesDsTable 1 }
+
+LUXLPtpStatusClocksTimePropertiesDsEntry ::= SEQUENCE {
+    luxlPtpStatusClocksTimePropertiesDsClockId      Integer32,
+    luxlPtpStatusClocksTimePropertiesDsCurrentUtcOffset     LUXLInteger16,
+    luxlPtpStatusClocksTimePropertiesDsCurrentUtcOffsetValid    TruthValue,
+    luxlPtpStatusClocksTimePropertiesDsLeap59   TruthValue,
+    luxlPtpStatusClocksTimePropertiesDsLeap61   TruthValue,
+    luxlPtpStatusClocksTimePropertiesDsTimeTraceable    TruthValue,
+    luxlPtpStatusClocksTimePropertiesDsFrequencyTraceable   TruthValue,
+    luxlPtpStatusClocksTimePropertiesDsPtpTimescale     TruthValue,
+    luxlPtpStatusClocksTimePropertiesDsTimeSource   LUXLUnsigned8
+}
+
+luxlPtpStatusClocksTimePropertiesDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksTimePropertiesDsEntry 1 }
+
+luxlPtpStatusClocksTimePropertiesDsCurrentUtcOffset OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The current UTC time offset."
+    ::= { luxlPtpStatusClocksTimePropertiesDsEntry 2 }
+
+luxlPtpStatusClocksTimePropertiesDsCurrentUtcOffsetValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether the current UTC time offset value is valid."
+    ::= { luxlPtpStatusClocksTimePropertiesDsEntry 3 }
+
+luxlPtpStatusClocksTimePropertiesDsLeap59 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates that the last minute of the day has only 59 seconds."
+    ::= { luxlPtpStatusClocksTimePropertiesDsEntry 4 }
+
+luxlPtpStatusClocksTimePropertiesDsLeap61 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates that the last minute of the day has 61 seconds."
+    ::= { luxlPtpStatusClocksTimePropertiesDsEntry 5 }
+
+luxlPtpStatusClocksTimePropertiesDsTimeTraceable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates that time is traceable to a primary reference."
+    ::= { luxlPtpStatusClocksTimePropertiesDsEntry 6 }
+
+luxlPtpStatusClocksTimePropertiesDsFrequencyTraceable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates that frequency is traceable to a primary reference."
+    ::= { luxlPtpStatusClocksTimePropertiesDsEntry 7 }
+
+luxlPtpStatusClocksTimePropertiesDsPtpTimescale OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates whether timescale of the grandmaster clock is PTP."
+    ::= { luxlPtpStatusClocksTimePropertiesDsEntry 8 }
+
+luxlPtpStatusClocksTimePropertiesDsTimeSource OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Source of time used by the grandmaster clock."
+    ::= { luxlPtpStatusClocksTimePropertiesDsEntry 9 }
+
+luxlPtpStatusClocksSlaveDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpStatusClocksSlaveDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the dynamic (status) part of the PTP clocks SlaveDS."
+    ::= { luxlPtpStatusClocks 5 }
+
+luxlPtpStatusClocksSlaveDsEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpStatusClocksSlaveDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpStatusClocksSlaveDsClockId }
+    ::= { luxlPtpStatusClocksSlaveDsTable 1 }
+
+LUXLPtpStatusClocksSlaveDsEntry ::= SEQUENCE {
+    luxlPtpStatusClocksSlaveDsClockId   Integer32,
+    luxlPtpStatusClocksSlaveDsSlavePort     LUXLUnsigned16,
+    luxlPtpStatusClocksSlaveDsSlaveState    LUXLptpSlaveClockState,
+    luxlPtpStatusClocksSlaveDsHoldoverStable    LUXLUnsigned8,
+    luxlPtpStatusClocksSlaveDsHoldoverAdj   LUXLInteger64
+}
+
+luxlPtpStatusClocksSlaveDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksSlaveDsEntry 1 }
+
+luxlPtpStatusClocksSlaveDsSlavePort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "0 => no slave port, 1..n => selected slave port."
+    ::= { luxlPtpStatusClocksSlaveDsEntry 2 }
+
+luxlPtpStatusClocksSlaveDsSlaveState OBJECT-TYPE
+    SYNTAX      LUXLptpSlaveClockState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The slaves state."
+    ::= { luxlPtpStatusClocksSlaveDsEntry 3 }
+
+luxlPtpStatusClocksSlaveDsHoldoverStable OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "True if the stabilization period has expired."
+    ::= { luxlPtpStatusClocksSlaveDsEntry 4 }
+
+luxlPtpStatusClocksSlaveDsHoldoverAdj OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The calculated holdover offset (ppb*10)."
+    ::= { luxlPtpStatusClocksSlaveDsEntry 5 }
+
+luxlPtpStatusClocksUnicastMasterTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpStatusClocksUnicastMasterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the dynamic (status) part of the PTP clocks unicast master
+         table."
+    ::= { luxlPtpStatusClocks 6 }
+
+luxlPtpStatusClocksUnicastMasterEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpStatusClocksUnicastMasterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpStatusClocksUnicastMasterClockId, luxlPtpStatusClocksUnicastMasterSlaveIp }
+    ::= { luxlPtpStatusClocksUnicastMasterTable 1 }
+
+LUXLPtpStatusClocksUnicastMasterEntry ::= SEQUENCE {
+    luxlPtpStatusClocksUnicastMasterClockId     Integer32,
+    luxlPtpStatusClocksUnicastMasterSlaveIp     IpAddress,
+    luxlPtpStatusClocksUnicastMasterSlaveMac    MacAddress,
+    luxlPtpStatusClocksUnicastMasterPort    LUXLUnsigned16,
+    luxlPtpStatusClocksUnicastMasterAnnLogMsgPeriod     LUXLInteger16,
+    luxlPtpStatusClocksUnicastMasterAnn     TruthValue,
+    luxlPtpStatusClocksUnicastMasterLogMsgPeriod    LUXLInteger16,
+    luxlPtpStatusClocksUnicastMasterSync    TruthValue
+}
+
+luxlPtpStatusClocksUnicastMasterClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksUnicastMasterEntry 1 }
+
+luxlPtpStatusClocksUnicastMasterSlaveIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksUnicastMasterEntry 2 }
+
+luxlPtpStatusClocksUnicastMasterSlaveMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksUnicastMasterEntry 3 }
+
+luxlPtpStatusClocksUnicastMasterPort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Port on the master that slave is connected to."
+    ::= { luxlPtpStatusClocksUnicastMasterEntry 4 }
+
+luxlPtpStatusClocksUnicastMasterAnnLogMsgPeriod OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The granted Announce interval."
+    ::= { luxlPtpStatusClocksUnicastMasterEntry 5 }
+
+luxlPtpStatusClocksUnicastMasterAnn OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "True if sending announce messages."
+    ::= { luxlPtpStatusClocksUnicastMasterEntry 6 }
+
+luxlPtpStatusClocksUnicastMasterLogMsgPeriod OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The granted sync interval."
+    ::= { luxlPtpStatusClocksUnicastMasterEntry 7 }
+
+luxlPtpStatusClocksUnicastMasterSync OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "True if sending sync messages."
+    ::= { luxlPtpStatusClocksUnicastMasterEntry 8 }
+
+luxlPtpStatusClocksUnicastSlaveTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpStatusClocksUnicastSlaveEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the dynamic (status) part of the PTP clocks unicast slave
+         table."
+    ::= { luxlPtpStatusClocks 7 }
+
+luxlPtpStatusClocksUnicastSlaveEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpStatusClocksUnicastSlaveEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpStatusClocksUnicastSlaveClockId, luxlPtpStatusClocksUnicastSlaveMasterId }
+    ::= { luxlPtpStatusClocksUnicastSlaveTable 1 }
+
+LUXLPtpStatusClocksUnicastSlaveEntry ::= SEQUENCE {
+    luxlPtpStatusClocksUnicastSlaveClockId      Integer32,
+    luxlPtpStatusClocksUnicastSlaveMasterId     Integer32,
+    luxlPtpStatusClocksUnicastSlaveMasterIp     IpAddress,
+    luxlPtpStatusClocksUnicastSlaveMasterMac    MacAddress,
+    luxlPtpStatusClocksUnicastSlaveSourcePortIdentityClockIdentity      OCTET STRING,
+    luxlPtpStatusClocksUnicastSlaveSourcePortIdentityPortNumber     LUXLUnsigned16,
+    luxlPtpStatusClocksUnicastSlavePort     LUXLUnsigned16,
+    luxlPtpStatusClocksUnicastSlaveLogMsgPeriod     LUXLInteger16,
+    luxlPtpStatusClocksUnicastSlaveCommState    LUXLUnsigned8,
+    luxlPtpStatusClocksUnicastSlaveConfMasterIp     IpAddress
+}
+
+luxlPtpStatusClocksUnicastSlaveClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksUnicastSlaveEntry 1 }
+
+luxlPtpStatusClocksUnicastSlaveMasterId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksUnicastSlaveEntry 2 }
+
+luxlPtpStatusClocksUnicastSlaveMasterIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the IP address of the master."
+    ::= { luxlPtpStatusClocksUnicastSlaveEntry 3 }
+
+luxlPtpStatusClocksUnicastSlaveMasterMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the MAC address of the master."
+    ::= { luxlPtpStatusClocksUnicastSlaveEntry 4 }
+
+luxlPtpStatusClocksUnicastSlaveSourcePortIdentityClockIdentity OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the 8 byte unique clock identity of the source port."
+    ::= { luxlPtpStatusClocksUnicastSlaveEntry 5 }
+
+luxlPtpStatusClocksUnicastSlaveSourcePortIdentityPortNumber OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is port number of the port used on the source."
+    ::= { luxlPtpStatusClocksUnicastSlaveEntry 6 }
+
+luxlPtpStatusClocksUnicastSlavePort OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The port (on the slave) connected to the master."
+    ::= { luxlPtpStatusClocksUnicastSlaveEntry 7 }
+
+luxlPtpStatusClocksUnicastSlaveLogMsgPeriod OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The granted sync interval."
+    ::= { luxlPtpStatusClocksUnicastSlaveEntry 8 }
+
+luxlPtpStatusClocksUnicastSlaveCommState OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Communication state."
+    ::= { luxlPtpStatusClocksUnicastSlaveEntry 9 }
+
+luxlPtpStatusClocksUnicastSlaveConfMasterIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Copy of the destination ip address."
+    ::= { luxlPtpStatusClocksUnicastSlaveEntry 10 }
+
+luxlPtpStatusClocksPortsDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpStatusClocksPortsDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the dynamic (status) part of the PTP clocks PortDS."
+    ::= { luxlPtpStatusClocks 8 }
+
+luxlPtpStatusClocksPortsDsEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpStatusClocksPortsDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpStatusClocksPortsDsClockId, luxlPtpStatusClocksPortsDsPortId }
+    ::= { luxlPtpStatusClocksPortsDsTable 1 }
+
+LUXLPtpStatusClocksPortsDsEntry ::= SEQUENCE {
+    luxlPtpStatusClocksPortsDsClockId   Integer32,
+    luxlPtpStatusClocksPortsDsPortId    LUXLInterfaceIndex,
+    luxlPtpStatusClocksPortsDsPortState     LUXLUnsigned8,
+    luxlPtpStatusClocksPortsDsLogMinDelayReqInterval    LUXLInteger16,
+    luxlPtpStatusClocksPortsDsPeerMeanPathDelay     LUXLInteger64,
+    luxlPtpStatusClocksPortsDsPeerDelayOk   TruthValue
+}
+
+luxlPtpStatusClocksPortsDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksPortsDsEntry 1 }
+
+luxlPtpStatusClocksPortsDsPortId OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksPortsDsEntry 2 }
+
+luxlPtpStatusClocksPortsDsPortState OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksPortsDsEntry 3 }
+
+luxlPtpStatusClocksPortsDsLogMinDelayReqInterval OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksPortsDsEntry 4 }
+
+luxlPtpStatusClocksPortsDsPeerMeanPathDelay OBJECT-TYPE
+    SYNTAX      LUXLInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksPortsDsEntry 5 }
+
+luxlPtpStatusClocksPortsDsPeerDelayOk OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpStatusClocksPortsDsEntry 6 }
+
+luxlPtpControl OBJECT IDENTIFIER
+    ::= { luxlPtpMibObjects 4 }
+
+luxlPtpControlClocksTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPtpControlClocksEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the PTP clocks control structure."
+    ::= { luxlPtpControl 1 }
+
+luxlPtpControlClocksEntry OBJECT-TYPE
+    SYNTAX      LUXLPtpControlClocksEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { luxlPtpControlClocksClockId }
+    ::= { luxlPtpControlClocksTable 1 }
+
+LUXLPtpControlClocksEntry ::= SEQUENCE {
+    luxlPtpControlClocksClockId     Integer32,
+    luxlPtpControlClocksSyncToSystemClock   LUXLUnsigned8
+}
+
+luxlPtpControlClocksClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpControlClocksEntry 1 }
+
+luxlPtpControlClocksSyncToSystemClock OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "-"
+    ::= { luxlPtpControlClocksEntry 2 }
+
+luxlPtpStatistics OBJECT IDENTIFIER
+    ::= { luxlPtpMibObjects 5 }
+
+luxlPtpMibConformance OBJECT IDENTIFIER
+    ::= { luxlPtpMib 2 }
+
+luxlPtpMibCompliances OBJECT IDENTIFIER
+    ::= { luxlPtpMibConformance 1 }
+
+luxlPtpMibGroups OBJECT IDENTIFIER
+    ::= { luxlPtpMibConformance 2 }
+
+luxlPtpCapabilitiesGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpCapabilitiesGlobalsClockCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 1 }
+
+luxlPtpConfigGlobalsExternalClockModeInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpConfigGlobalsExternalClockModeOnePpsMode, 
+                  luxlPtpConfigGlobalsExternalClockModeExternalEnable, 
+                  luxlPtpConfigGlobalsExternalClockModeAdjustMethod, 
+                  luxlPtpConfigGlobalsExternalClockModeClockFrequency }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 2 }
+
+luxlPtpConfigGlobalsSystemTimeSyncModeInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpConfigGlobalsSystemTimeSyncModeMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 3 }
+
+luxlPtpConfigClocksDefaultDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpConfigClocksDefaultDsDeviceType, 
+                  luxlPtpConfigClocksDefaultDsTwoStepFlag, 
+                  luxlPtpConfigClocksDefaultDsPriority1, 
+                  luxlPtpConfigClocksDefaultDsPriority2, 
+                  luxlPtpConfigClocksDefaultDsOneWay, 
+                  luxlPtpConfigClocksDefaultDsDomainNumber, 
+                  luxlPtpConfigClocksDefaultDsProtocol, 
+                  luxlPtpConfigClocksDefaultDsVlanTagEnable, 
+                  luxlPtpConfigClocksDefaultDsVid, 
+                  luxlPtpConfigClocksDefaultDsPcp, 
+                  luxlPtpConfigClocksDefaultDsMep, 
+                  luxlPtpConfigClocksDefaultDsAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 4 }
+
+luxlPtpConfigClocksDefaultDsTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpConfigClocksDefaultDsTableRowEditorClockId, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorDeviceType, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorTwoStepFlag, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorPriority1, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorPriority2, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorOneWay, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorDomainNumber, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorProtocol, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorVlanTagEnable, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorVid, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorPcp, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorMep, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 5 }
+
+luxlPtpConfigClocksTimePropertiesDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpConfigClocksTimePropertiesDsCurrentUtcOffset, 
+                  luxlPtpConfigClocksTimePropertiesDsCurrentUtcOffsetValid, 
+                  luxlPtpConfigClocksTimePropertiesDsLeap59, 
+                  luxlPtpConfigClocksTimePropertiesDsLeap61, 
+                  luxlPtpConfigClocksTimePropertiesDsTimeTraceable, 
+                  luxlPtpConfigClocksTimePropertiesDsFrequencyTraceable, 
+                  luxlPtpConfigClocksTimePropertiesDsPtpTimescale, 
+                  luxlPtpConfigClocksTimePropertiesDsTimeSource }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 6 }
+
+luxlPtpConfigClocksFilterParametersTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpConfigClocksFilterParametersDelayFilter, 
+                  luxlPtpConfigClocksFilterParametersOffsetFilter, 
+                  luxlPtpConfigClocksFilterParametersPeriod, 
+                  luxlPtpConfigClocksFilterParametersDist, 
+                  luxlPtpConfigClocksFilterParametersHeight, 
+                  luxlPtpConfigClocksFilterParametersPercentage, 
+                  luxlPtpConfigClocksFilterParametersResetThreshold }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 7 }
+
+luxlPtpConfigClocksServoParametersTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpConfigClocksServoParametersDisplay, 
+                  luxlPtpConfigClocksServoParametersPEnable, 
+                  luxlPtpConfigClocksServoParametersIEnable, 
+                  luxlPtpConfigClocksServoParametersDEnable, 
+                  luxlPtpConfigClocksServoParametersPval, 
+                  luxlPtpConfigClocksServoParametersIval, 
+                  luxlPtpConfigClocksServoParametersDval, 
+                  luxlPtpConfigClocksServoParametersSrvOption, 
+                  luxlPtpConfigClocksServoParametersSynceThreshold, 
+                  luxlPtpConfigClocksServoParametersSynceAp, 
+                  luxlPtpConfigClocksServoParametersHoFilter, 
+                  luxlPtpConfigClocksServoParametersStableAdjThreshold }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 8 }
+
+luxlPtpConfigClocksSlaveConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpConfigClocksSlaveConfigStableOffset, 
+                  luxlPtpConfigClocksSlaveConfigOffsetOk, 
+                  luxlPtpConfigClocksSlaveConfigOffsetFail }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 9 }
+
+luxlPtpConfigClocksUnicastSlaveConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpConfigClocksUnicastSlaveConfigDuration, 
+                  luxlPtpConfigClocksUnicastSlaveConfigIpAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 10 }
+
+luxlPtpConfigClocksPortDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpConfigClocksPortDsEnabled, 
+                  luxlPtpConfigClocksPortDsLogAnnounceInterval, 
+                  luxlPtpConfigClocksPortDsAnnounceReceiptTimeout, 
+                  luxlPtpConfigClocksPortDsLogSyncInterval, 
+                  luxlPtpConfigClocksPortDsDelayMechanism, 
+                  luxlPtpConfigClocksPortDsLogMinPdelayReqInterval, 
+                  luxlPtpConfigClocksPortDsDelayAsymmetry, 
+                  luxlPtpConfigClocksPortDsIngressLatency, 
+                  luxlPtpConfigClocksPortDsEgressLatency, 
+                  luxlPtpConfigClocksPortDsPortInternal, 
+                  luxlPtpConfigClocksPortDsVersionNumber }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 11 }
+
+luxlPtpStatusClocksDefaultDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpStatusClocksDefaultDsClockIdentity, 
+                  luxlPtpStatusClocksDefaultDsClockQualityClockClass, 
+                  luxlPtpStatusClocksDefaultDsClockQualityClockAccuracy, 
+                  luxlPtpStatusClocksDefaultDsClockQualityOffsetScaledLogVar }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 12 }
+
+luxlPtpStatusClocksCurrentDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpStatusClocksCurrentDsStepsRemoved, 
+                  luxlPtpStatusClocksCurrentDsOffsetFromMaster, 
+                  luxlPtpStatusClocksCurrentDsMeanPathDelay }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 13 }
+
+luxlPtpStatusClocksParentDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpStatusClocksParentDsParentPortIdentityClockIdentity, 
+                  luxlPtpStatusClocksParentDsParentPortIdentityPortNumber, 
+                  luxlPtpStatusClocksParentDsParentStats, 
+                  luxlPtpStatusClocksParentDsObservedParentOffsetScaledLogVar, 
+                  luxlPtpStatusClocksParentDsObservedParentClockPhaseChangeRate, 
+                  luxlPtpStatusClocksParentDsGrmstrIdentity, 
+                  luxlPtpStatusClocksParentDsGrmstrClkQualClockClass, 
+                  luxlPtpStatusClocksParentDsGmstrClkQualClockAccuracy, 
+                  luxlPtpStatusClocksParentDsGmstrClkQualOffsetScaledLogVar, 
+                  luxlPtpStatusClocksParentDsGmstrPriority1, 
+                  luxlPtpStatusClocksParentDsGmstrPriority2 }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 14 }
+
+luxlPtpStatusClocksTimePropertiesDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpStatusClocksTimePropertiesDsCurrentUtcOffset, 
+                  luxlPtpStatusClocksTimePropertiesDsCurrentUtcOffsetValid, 
+                  luxlPtpStatusClocksTimePropertiesDsLeap59, 
+                  luxlPtpStatusClocksTimePropertiesDsLeap61, 
+                  luxlPtpStatusClocksTimePropertiesDsTimeTraceable, 
+                  luxlPtpStatusClocksTimePropertiesDsFrequencyTraceable, 
+                  luxlPtpStatusClocksTimePropertiesDsPtpTimescale, 
+                  luxlPtpStatusClocksTimePropertiesDsTimeSource }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 15 }
+
+luxlPtpStatusClocksSlaveDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpStatusClocksSlaveDsSlavePort, 
+                  luxlPtpStatusClocksSlaveDsSlaveState, 
+                  luxlPtpStatusClocksSlaveDsHoldoverStable, 
+                  luxlPtpStatusClocksSlaveDsHoldoverAdj }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 16 }
+
+luxlPtpStatusClocksUnicastMasterTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpStatusClocksUnicastMasterSlaveMac, 
+                  luxlPtpStatusClocksUnicastMasterPort, 
+                  luxlPtpStatusClocksUnicastMasterAnnLogMsgPeriod, 
+                  luxlPtpStatusClocksUnicastMasterAnn, 
+                  luxlPtpStatusClocksUnicastMasterLogMsgPeriod, 
+                  luxlPtpStatusClocksUnicastMasterSync }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 17 }
+
+luxlPtpStatusClocksUnicastSlaveTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpStatusClocksUnicastSlaveMasterIp, 
+                  luxlPtpStatusClocksUnicastSlaveMasterMac, 
+                  luxlPtpStatusClocksUnicastSlaveSourcePortIdentityClockIdentity, 
+                  luxlPtpStatusClocksUnicastSlaveSourcePortIdentityPortNumber, 
+                  luxlPtpStatusClocksUnicastSlavePort, 
+                  luxlPtpStatusClocksUnicastSlaveLogMsgPeriod, 
+                  luxlPtpStatusClocksUnicastSlaveCommState, 
+                  luxlPtpStatusClocksUnicastSlaveConfMasterIp }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 18 }
+
+luxlPtpStatusClocksPortsDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpStatusClocksPortsDsPortState, 
+                  luxlPtpStatusClocksPortsDsLogMinDelayReqInterval, 
+                  luxlPtpStatusClocksPortsDsPeerMeanPathDelay, 
+                  luxlPtpStatusClocksPortsDsPeerDelayOk }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 19 }
+
+luxlPtpControlClocksTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPtpControlClocksSyncToSystemClock }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPtpMibGroups 20 }
+
+luxlPtpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlPtpCapabilitiesGlobalsInfoGroup, 
+                  luxlPtpConfigGlobalsExternalClockModeInfoGroup, 
+                  luxlPtpConfigGlobalsSystemTimeSyncModeInfoGroup, 
+                  luxlPtpConfigClocksDefaultDsTableInfoGroup, 
+                  luxlPtpConfigClocksDefaultDsTableRowEditorInfoGroup, 
+                  luxlPtpConfigClocksTimePropertiesDsTableInfoGroup, 
+                  luxlPtpConfigClocksFilterParametersTableInfoGroup, 
+                  luxlPtpConfigClocksServoParametersTableInfoGroup, 
+                  luxlPtpConfigClocksSlaveConfigTableInfoGroup, 
+                  luxlPtpConfigClocksUnicastSlaveConfigTableInfoGroup, 
+                  luxlPtpConfigClocksPortDsTableInfoGroup, 
+                  luxlPtpStatusClocksDefaultDsTableInfoGroup, 
+                  luxlPtpStatusClocksCurrentDsTableInfoGroup, 
+                  luxlPtpStatusClocksParentDsTableInfoGroup, 
+                  luxlPtpStatusClocksTimePropertiesDsTableInfoGroup, 
+                  luxlPtpStatusClocksSlaveDsTableInfoGroup, 
+                  luxlPtpStatusClocksUnicastMasterTableInfoGroup, 
+                  luxlPtpStatusClocksUnicastSlaveTableInfoGroup, 
+                  luxlPtpStatusClocksPortsDsTableInfoGroup, 
+                  luxlPtpControlClocksTableInfoGroup }
+
+    ::= { luxlPtpMibCompliances 1 }
+
+END

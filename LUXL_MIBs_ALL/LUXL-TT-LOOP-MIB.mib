@@ -1,0 +1,407 @@
+-- *****************************************************************
+-- TT-LOOP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-TT-LOOP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    ;
+
+luxlTtLoopMib MODULE-IDENTITY
+    LAST-UPDATED "201411140000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private Traffic Test Loop MIB that can be used for RFC2544
+         and Y.1564 (remote end) testing"
+    REVISION    "201411140000Z"
+    DESCRIPTION
+        "Refactoring regarding Ifindex. Domain element is removed and flow
+         element is changed to be Ifindex containing domain"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 128 }
+
+
+LUXLTtLoopInstanceAdminState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance Administrative State."
+    SYNTAX      INTEGER { adminDisabled(0), adminEnabled(1) }
+
+LUXLTtLoopInstanceDirection ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance direction."
+    SYNTAX      INTEGER { facility(0), terminal(1) }
+
+LUXLTtLoopInstanceOperState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance Operational State."
+    SYNTAX      INTEGER { operDown(0), operUp(1) }
+
+LUXLTtLoopInstanceSubscriber ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance subscriber mode."
+    SYNTAX      INTEGER { none(0), all(1), test(2) }
+
+LUXLTtLoopInstanceType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance type."
+    SYNTAX      INTEGER { macLoop(0), oamLoop(1) }
+
+luxlTtLoopMibObjects OBJECT IDENTIFIER
+    ::= { luxlTtLoopMib 1 }
+
+luxlTtLoopCapabilities OBJECT IDENTIFIER
+    ::= { luxlTtLoopMibObjects 1 }
+
+luxlTtLoopCapabilitiesInstanceMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Max number of TT_LOOP instance"
+    ::= { luxlTtLoopCapabilities 1 }
+
+luxlTtLoopCapabilitiesNameMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Max length of instance name"
+    ::= { luxlTtLoopCapabilities 2 }
+
+luxlTtLoopConfig OBJECT IDENTIFIER
+    ::= { luxlTtLoopMibObjects 2 }
+
+luxlTtLoopConfigInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLTtLoopConfigInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance configuration parameters"
+    ::= { luxlTtLoopConfig 1 }
+
+luxlTtLoopConfigInstanceEntry OBJECT-TYPE
+    SYNTAX      LUXLTtLoopConfigInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance configuration parameters. Not all parameters
+         can be changed"
+    INDEX       { luxlTtLoopConfigInstanceId }
+    ::= { luxlTtLoopConfigInstanceTable 1 }
+
+LUXLTtLoopConfigInstanceEntry ::= SEQUENCE {
+    luxlTtLoopConfigInstanceId      Integer32,
+    luxlTtLoopConfigInstanceName    LUXLDisplayString,
+    luxlTtLoopConfigInstanceType    LUXLTtLoopInstanceType,
+    luxlTtLoopConfigInstanceDirection   LUXLTtLoopInstanceDirection,
+    luxlTtLoopConfigInstanceFlow    LUXLInterfaceIndex,
+    luxlTtLoopConfigInstancePort    LUXLInterfaceIndex,
+    luxlTtLoopConfigInstanceLevel   Unsigned32,
+    luxlTtLoopConfigInstanceSubscriber      LUXLTtLoopInstanceSubscriber,
+    luxlTtLoopConfigInstanceAdminState      LUXLTtLoopInstanceAdminState,
+    luxlTtLoopConfigInstanceAction      LUXLRowEditorState
+}
+
+luxlTtLoopConfigInstanceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The TT_LOOP instance ID"
+    ::= { luxlTtLoopConfigInstanceEntry 1 }
+
+luxlTtLoopConfigInstanceName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Instance name"
+    ::= { luxlTtLoopConfigInstanceEntry 2 }
+
+luxlTtLoopConfigInstanceType OBJECT-TYPE
+    SYNTAX      LUXLTtLoopInstanceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Traffic Test loop type. Currently OAM Loop is only supported in EVC
+         domain."
+    ::= { luxlTtLoopConfigInstanceEntry 3 }
+
+luxlTtLoopConfigInstanceDirection OBJECT-TYPE
+    SYNTAX      LUXLTtLoopInstanceDirection
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance direction. Currently Terminal Loop is only supported in
+         EVC domain."
+    ::= { luxlTtLoopConfigInstanceEntry 4 }
+
+luxlTtLoopConfigInstanceFlow OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The flow instance. Currently VLAN domain is not supported."
+    ::= { luxlTtLoopConfigInstanceEntry 6 }
+
+luxlTtLoopConfigInstancePort OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance residence port."
+    ::= { luxlTtLoopConfigInstanceEntry 7 }
+
+luxlTtLoopConfigInstanceLevel OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance MEG level"
+    ::= { luxlTtLoopConfigInstanceEntry 8 }
+
+luxlTtLoopConfigInstanceSubscriber OBJECT-TYPE
+    SYNTAX      LUXLTtLoopInstanceSubscriber
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The EVC OAM loop subscriber mode"
+    ::= { luxlTtLoopConfigInstanceEntry 9 }
+
+luxlTtLoopConfigInstanceAdminState OBJECT-TYPE
+    SYNTAX      LUXLTtLoopInstanceAdminState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance Administrative state."
+    ::= { luxlTtLoopConfigInstanceEntry 10 }
+
+luxlTtLoopConfigInstanceAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlTtLoopConfigInstanceEntry 100 }
+
+luxlTtLoopConfigInstanceRowEditor OBJECT IDENTIFIER
+    ::= { luxlTtLoopConfig 2 }
+
+luxlTtLoopConfigInstanceRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The TT_LOOP instance ID"
+    ::= { luxlTtLoopConfigInstanceRowEditor 1 }
+
+luxlTtLoopConfigInstanceRowEditorName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Instance name"
+    ::= { luxlTtLoopConfigInstanceRowEditor 2 }
+
+luxlTtLoopConfigInstanceRowEditorType OBJECT-TYPE
+    SYNTAX      LUXLTtLoopInstanceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Traffic Test loop type. Currently OAM Loop is only supported in EVC
+         domain."
+    ::= { luxlTtLoopConfigInstanceRowEditor 3 }
+
+luxlTtLoopConfigInstanceRowEditorDirection OBJECT-TYPE
+    SYNTAX      LUXLTtLoopInstanceDirection
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance direction. Currently Terminal Loop is only supported in
+         EVC domain."
+    ::= { luxlTtLoopConfigInstanceRowEditor 4 }
+
+luxlTtLoopConfigInstanceRowEditorFlow OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The flow instance. Currently VLAN domain is not supported."
+    ::= { luxlTtLoopConfigInstanceRowEditor 6 }
+
+luxlTtLoopConfigInstanceRowEditorPort OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance residence port."
+    ::= { luxlTtLoopConfigInstanceRowEditor 7 }
+
+luxlTtLoopConfigInstanceRowEditorLevel OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance MEG level"
+    ::= { luxlTtLoopConfigInstanceRowEditor 8 }
+
+luxlTtLoopConfigInstanceRowEditorSubscriber OBJECT-TYPE
+    SYNTAX      LUXLTtLoopInstanceSubscriber
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The EVC OAM loop subscriber mode"
+    ::= { luxlTtLoopConfigInstanceRowEditor 9 }
+
+luxlTtLoopConfigInstanceRowEditorAdminState OBJECT-TYPE
+    SYNTAX      LUXLTtLoopInstanceAdminState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance Administrative state."
+    ::= { luxlTtLoopConfigInstanceRowEditor 10 }
+
+luxlTtLoopConfigInstanceRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlTtLoopConfigInstanceRowEditor 100 }
+
+luxlTtLoopStatus OBJECT IDENTIFIER
+    ::= { luxlTtLoopMibObjects 3 }
+
+luxlTtLoopStatusInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLTtLoopStatusInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance status"
+    ::= { luxlTtLoopStatus 1 }
+
+luxlTtLoopStatusInstanceEntry OBJECT-TYPE
+    SYNTAX      LUXLTtLoopStatusInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance status"
+    INDEX       { luxlTtLoopStatusInstanceId }
+    ::= { luxlTtLoopStatusInstanceTable 1 }
+
+LUXLTtLoopStatusInstanceEntry ::= SEQUENCE {
+    luxlTtLoopStatusInstanceId      Integer32,
+    luxlTtLoopStatusInstanceOperState   LUXLTtLoopInstanceOperState
+}
+
+luxlTtLoopStatusInstanceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The TT_LOOP instance ID"
+    ::= { luxlTtLoopStatusInstanceEntry 1 }
+
+luxlTtLoopStatusInstanceOperState OBJECT-TYPE
+    SYNTAX      LUXLTtLoopInstanceOperState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The instance Operational state."
+    ::= { luxlTtLoopStatusInstanceEntry 2 }
+
+luxlTtLoopMibConformance OBJECT IDENTIFIER
+    ::= { luxlTtLoopMib 2 }
+
+luxlTtLoopMibCompliances OBJECT IDENTIFIER
+    ::= { luxlTtLoopMibConformance 1 }
+
+luxlTtLoopMibGroups OBJECT IDENTIFIER
+    ::= { luxlTtLoopMibConformance 2 }
+
+luxlTtLoopCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTtLoopCapabilitiesInstanceMax, 
+                  luxlTtLoopCapabilitiesNameMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTtLoopMibGroups 1 }
+
+luxlTtLoopConfigInstanceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTtLoopConfigInstanceName, luxlTtLoopConfigInstanceType, 
+                  luxlTtLoopConfigInstanceDirection, 
+                  luxlTtLoopConfigInstanceFlow, luxlTtLoopConfigInstancePort, 
+                  luxlTtLoopConfigInstanceLevel, 
+                  luxlTtLoopConfigInstanceSubscriber, 
+                  luxlTtLoopConfigInstanceAdminState, 
+                  luxlTtLoopConfigInstanceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTtLoopMibGroups 2 }
+
+luxlTtLoopConfigInstanceRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTtLoopConfigInstanceRowEditorId, 
+                  luxlTtLoopConfigInstanceRowEditorName, 
+                  luxlTtLoopConfigInstanceRowEditorType, 
+                  luxlTtLoopConfigInstanceRowEditorDirection, 
+                  luxlTtLoopConfigInstanceRowEditorFlow, 
+                  luxlTtLoopConfigInstanceRowEditorPort, 
+                  luxlTtLoopConfigInstanceRowEditorLevel, 
+                  luxlTtLoopConfigInstanceRowEditorSubscriber, 
+                  luxlTtLoopConfigInstanceRowEditorAdminState, 
+                  luxlTtLoopConfigInstanceRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTtLoopMibGroups 3 }
+
+luxlTtLoopStatusInstanceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlTtLoopStatusInstanceOperState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlTtLoopMibGroups 4 }
+
+luxlTtLoopMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlTtLoopCapabilitiesInfoGroup, 
+                  luxlTtLoopConfigInstanceTableInfoGroup, 
+                  luxlTtLoopConfigInstanceRowEditorInfoGroup, 
+                  luxlTtLoopStatusInstanceTableInfoGroup }
+
+    ::= { luxlTtLoopMibCompliances 1 }
+
+END

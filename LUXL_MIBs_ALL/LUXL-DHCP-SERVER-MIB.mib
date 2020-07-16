@@ -1,0 +1,1649 @@
+-- *****************************************************************
+-- DHCP-SERVER-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-DHCP-SERVER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    ;
+
+luxlDhcpServerMib MODULE-IDENTITY
+    LAST-UPDATED "201411270000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of DhcpServer"
+    REVISION    "201411270000Z"
+    DESCRIPTION
+        "revise descriptions by Palle"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 109 }
+
+
+LUXLDhcpServerBindingEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of binding."
+    SYNTAX      INTEGER { none(0), automatic(1), manual(2), expired(3) }
+
+LUXLDhcpServerBindingStateEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the state of binding."
+    SYNTAX      INTEGER { none(0), allocated(1), committed(2), expired(3) }
+
+LUXLDhcpServerClientIdentifierEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of client identifier."
+    SYNTAX      INTEGER { none(0), fqdn(1), mac(2) }
+
+LUXLDhcpServerNetbiosNodeEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of NetBIOS node."
+    SYNTAX      INTEGER { nodeNone(0), nodeB(1), nodeP(2), nodeM(3), nodeH(4) }
+
+LUXLDhcpServerPoolEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of DHCP pool."
+    SYNTAX      INTEGER { none(0), network(1), host(2) }
+
+luxlDhcpServerMibObjects OBJECT IDENTIFIER
+    ::= { luxlDhcpServerMib 1 }
+
+luxlDhcpServerConfig OBJECT IDENTIFIER
+    ::= { luxlDhcpServerMibObjects 2 }
+
+luxlDhcpServerConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlDhcpServerConfig 1 }
+
+luxlDhcpServerConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global mode of DHCP server. true is to enable the functions of DHCP
+         server and false is to disable it."
+    ::= { luxlDhcpServerConfigGlobals 1 }
+
+luxlDhcpServerConfigVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcpServerConfigVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the table of DHCP server VLAN configuration. The index is VLAN
+         ID."
+    ::= { luxlDhcpServerConfig 2 }
+
+luxlDhcpServerConfigVlanEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerConfigVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each VLAN has a set of parameters"
+    INDEX       { luxlDhcpServerConfigVlanIfIndex }
+    ::= { luxlDhcpServerConfigVlanTable 1 }
+
+LUXLDhcpServerConfigVlanEntry ::= SEQUENCE {
+    luxlDhcpServerConfigVlanIfIndex     LUXLInterfaceIndex,
+    luxlDhcpServerConfigVlanMode    TruthValue
+}
+
+luxlDhcpServerConfigVlanIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of VLAN."
+    ::= { luxlDhcpServerConfigVlanEntry 1 }
+
+luxlDhcpServerConfigVlanMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VLAN mode of DHCP server. true is to enable DHCP server per VLAN and
+         false is to disable it per VLAN."
+    ::= { luxlDhcpServerConfigVlanEntry 2 }
+
+luxlDhcpServerConfigExcludedTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcpServerConfigExcludedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The table is DHCP server excluded IP onfiguration table. The indexes
+         are low IP and high IP address."
+    ::= { luxlDhcpServerConfig 3 }
+
+luxlDhcpServerConfigExcludedEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerConfigExcludedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlDhcpServerConfigExcludedLowIpAddress, luxlDhcpServerConfigExcludedHighIpAddress }
+    ::= { luxlDhcpServerConfigExcludedTable 1 }
+
+LUXLDhcpServerConfigExcludedEntry ::= SEQUENCE {
+    luxlDhcpServerConfigExcludedLowIpAddress    IpAddress,
+    luxlDhcpServerConfigExcludedHighIpAddress   IpAddress,
+    luxlDhcpServerConfigExcludedAction      LUXLRowEditorState
+}
+
+luxlDhcpServerConfigExcludedLowIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Low IP address."
+    ::= { luxlDhcpServerConfigExcludedEntry 1 }
+
+luxlDhcpServerConfigExcludedHighIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "High IP address."
+    ::= { luxlDhcpServerConfigExcludedEntry 2 }
+
+luxlDhcpServerConfigExcludedAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlDhcpServerConfigExcludedEntry 100 }
+
+luxlDhcpServerConfigExcludedIpTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlDhcpServerConfig 4 }
+
+luxlDhcpServerConfigExcludedIpTableRowEditorLowIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Low IP address."
+    ::= { luxlDhcpServerConfigExcludedIpTableRowEditor 1 }
+
+luxlDhcpServerConfigExcludedIpTableRowEditorHighIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "High IP address."
+    ::= { luxlDhcpServerConfigExcludedIpTableRowEditor 2 }
+
+luxlDhcpServerConfigExcludedIpTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlDhcpServerConfigExcludedIpTableRowEditor 100 }
+
+luxlDhcpServerConfigPoolTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcpServerConfigPoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The table is DHCP server pool onfiguration table. The indexe is pool
+         name."
+    ::= { luxlDhcpServerConfig 5 }
+
+luxlDhcpServerConfigPoolEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerConfigPoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlDhcpServerConfigPoolPoolName }
+    ::= { luxlDhcpServerConfigPoolTable 1 }
+
+LUXLDhcpServerConfigPoolEntry ::= SEQUENCE {
+    luxlDhcpServerConfigPoolPoolName    LUXLDisplayString,
+    luxlDhcpServerConfigPoolPoolType    LUXLDhcpServerPoolEnum,
+    luxlDhcpServerConfigPoolIpv4Address     IpAddress,
+    luxlDhcpServerConfigPoolSubnetMask      IpAddress,
+    luxlDhcpServerConfigPoolSubnetBroadcast     IpAddress,
+    luxlDhcpServerConfigPoolLeaseDay    Unsigned32,
+    luxlDhcpServerConfigPoolLeaseHour   Unsigned32,
+    luxlDhcpServerConfigPoolLeaseMinute     Unsigned32,
+    luxlDhcpServerConfigPoolDomainName      LUXLDisplayString,
+    luxlDhcpServerConfigPoolDefaultRouter1      IpAddress,
+    luxlDhcpServerConfigPoolDefaultRouter2      IpAddress,
+    luxlDhcpServerConfigPoolDefaultRouter3      IpAddress,
+    luxlDhcpServerConfigPoolDefaultRouter4      IpAddress,
+    luxlDhcpServerConfigPoolDnsServer1      IpAddress,
+    luxlDhcpServerConfigPoolDnsServer2      IpAddress,
+    luxlDhcpServerConfigPoolDnsServer3      IpAddress,
+    luxlDhcpServerConfigPoolDnsServer4      IpAddress,
+    luxlDhcpServerConfigPoolNtpServer1      IpAddress,
+    luxlDhcpServerConfigPoolNtpServer2      IpAddress,
+    luxlDhcpServerConfigPoolNtpServer3      IpAddress,
+    luxlDhcpServerConfigPoolNtpServer4      IpAddress,
+    luxlDhcpServerConfigPoolNetbiosNodeType     LUXLDhcpServerNetbiosNodeEnum,
+    luxlDhcpServerConfigPoolNetbiosScope    LUXLDisplayString,
+    luxlDhcpServerConfigPoolNetbiosNameServer1      IpAddress,
+    luxlDhcpServerConfigPoolNetbiosNameServer2      IpAddress,
+    luxlDhcpServerConfigPoolNetbiosNameServer3      IpAddress,
+    luxlDhcpServerConfigPoolNetbiosNameServer4      IpAddress,
+    luxlDhcpServerConfigPoolNisDomainName   LUXLDisplayString,
+    luxlDhcpServerConfigPoolNisServer1      IpAddress,
+    luxlDhcpServerConfigPoolNisServer2      IpAddress,
+    luxlDhcpServerConfigPoolNisServer3      IpAddress,
+    luxlDhcpServerConfigPoolNisServer4      IpAddress,
+    luxlDhcpServerConfigPoolClientIdentifierType    LUXLDhcpServerClientIdentifierEnum,
+    luxlDhcpServerConfigPoolClientIdentifierFqdn    LUXLDisplayString,
+    luxlDhcpServerConfigPoolClientIdentifierMac     MacAddress,
+    luxlDhcpServerConfigPoolClientHardwareAddress   MacAddress,
+    luxlDhcpServerConfigPoolClientName      LUXLDisplayString,
+    luxlDhcpServerConfigPoolVendorClassId1      LUXLDisplayString,
+    luxlDhcpServerConfigPoolVendorSpecificInfo1     LUXLDisplayString,
+    luxlDhcpServerConfigPoolVendorClassId2      LUXLDisplayString,
+    luxlDhcpServerConfigPoolVendorSpecificInfo2     LUXLDisplayString,
+    luxlDhcpServerConfigPoolVendorClassId3      LUXLDisplayString,
+    luxlDhcpServerConfigPoolVendorSpecificInfo3     LUXLDisplayString,
+    luxlDhcpServerConfigPoolVendorClassId4      LUXLDisplayString,
+    luxlDhcpServerConfigPoolVendorSpecificInfo4     LUXLDisplayString,
+    luxlDhcpServerConfigPoolAction      LUXLRowEditorState
+}
+
+luxlDhcpServerConfigPoolPoolName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Name of DHCP pool."
+    ::= { luxlDhcpServerConfigPoolEntry 1 }
+
+luxlDhcpServerConfigPoolPoolType OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerPoolEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of pool. none(0) means the pool type is not defined yet.
+         network(1) means the pool defines a pool of IP addresses to service
+         more than one DHCP client. host(2) means the pool services for a
+         specific DHCP client identified by client identifier or hardware
+         address."
+    ::= { luxlDhcpServerConfigPoolEntry 2 }
+
+luxlDhcpServerConfigPoolIpv4Address OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Network number of the subnet. If the pool type is of network, the IP
+         address can be any general IP address. If the pool type is of host, the
+         IP address must be a unicast IP address."
+    ::= { luxlDhcpServerConfigPoolEntry 3 }
+
+luxlDhcpServerConfigPoolSubnetMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Subnet Mask. DHCP option 1. Specify subnet mask of the DHCP address
+         pool, excluding 0.0.0.0 and 255.255.255.255."
+    ::= { luxlDhcpServerConfigPoolEntry 4 }
+
+luxlDhcpServerConfigPoolSubnetBroadcast OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Broadcast IP address in the subnet. DHCP option 28. Specify the
+         broadcast address in use on the client's subnet."
+    ::= { luxlDhcpServerConfigPoolEntry 5 }
+
+luxlDhcpServerConfigPoolLeaseDay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of days of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-365. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { luxlDhcpServerConfigPoolEntry 6 }
+
+luxlDhcpServerConfigPoolLeaseHour OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of hours of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-23. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { luxlDhcpServerConfigPoolEntry 7 }
+
+luxlDhcpServerConfigPoolLeaseMinute OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of minutes of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-59. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { luxlDhcpServerConfigPoolEntry 8 }
+
+luxlDhcpServerConfigPoolDomainName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Domain name. DHCP option 15. Specify domain name that client should use
+         when resolving hostname via DNS."
+    ::= { luxlDhcpServerConfigPoolEntry 9 }
+
+luxlDhcpServerConfigPoolDefaultRouter1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Default router 1."
+    ::= { luxlDhcpServerConfigPoolEntry 10 }
+
+luxlDhcpServerConfigPoolDefaultRouter2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Default router 2."
+    ::= { luxlDhcpServerConfigPoolEntry 11 }
+
+luxlDhcpServerConfigPoolDefaultRouter3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Default router 3."
+    ::= { luxlDhcpServerConfigPoolEntry 12 }
+
+luxlDhcpServerConfigPoolDefaultRouter4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Default router 4."
+    ::= { luxlDhcpServerConfigPoolEntry 13 }
+
+luxlDhcpServerConfigPoolDnsServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DNS server 1."
+    ::= { luxlDhcpServerConfigPoolEntry 14 }
+
+luxlDhcpServerConfigPoolDnsServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DNS server 2."
+    ::= { luxlDhcpServerConfigPoolEntry 15 }
+
+luxlDhcpServerConfigPoolDnsServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DNS server 3."
+    ::= { luxlDhcpServerConfigPoolEntry 16 }
+
+luxlDhcpServerConfigPoolDnsServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DNS server 4."
+    ::= { luxlDhcpServerConfigPoolEntry 17 }
+
+luxlDhcpServerConfigPoolNtpServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NTP server 1."
+    ::= { luxlDhcpServerConfigPoolEntry 18 }
+
+luxlDhcpServerConfigPoolNtpServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NTP server 2."
+    ::= { luxlDhcpServerConfigPoolEntry 19 }
+
+luxlDhcpServerConfigPoolNtpServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NTP server 3."
+    ::= { luxlDhcpServerConfigPoolEntry 20 }
+
+luxlDhcpServerConfigPoolNtpServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NTP server 4."
+    ::= { luxlDhcpServerConfigPoolEntry 21 }
+
+luxlDhcpServerConfigPoolNetbiosNodeType OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerNetbiosNodeEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of NetBIOS node. DHCP option 46. Specify NetBIOS node type option
+         to allow Netbios over TCP/IP clients which are configurable to be
+         configured as described in RFC 1001/1002. nodeNone(0) means the node
+         type is not defined yet. nodeB(1) means the node type is type of B.
+         nodeP(2) means the node type is type of P. nodeM(3) means the node type
+         is type of M. nodeH(4) means the node type is type of H."
+    ::= { luxlDhcpServerConfigPoolEntry 22 }
+
+luxlDhcpServerConfigPoolNetbiosScope OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NetBIOS scope. DHCP option 47. Specify the NetBIOS over TCP/IP scope
+         parameter for the client as specified in RFC 1001/1002."
+    ::= { luxlDhcpServerConfigPoolEntry 23 }
+
+luxlDhcpServerConfigPoolNetbiosNameServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NetBIOS name server 1."
+    ::= { luxlDhcpServerConfigPoolEntry 24 }
+
+luxlDhcpServerConfigPoolNetbiosNameServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NetBIOS name server 2."
+    ::= { luxlDhcpServerConfigPoolEntry 25 }
+
+luxlDhcpServerConfigPoolNetbiosNameServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NetBIOS name server 3."
+    ::= { luxlDhcpServerConfigPoolEntry 26 }
+
+luxlDhcpServerConfigPoolNetbiosNameServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NetBIOS name server 4."
+    ::= { luxlDhcpServerConfigPoolEntry 27 }
+
+luxlDhcpServerConfigPoolNisDomainName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NIS Domain Name. DHCP option 40. Specify the name of the client's NIS
+         domain."
+    ::= { luxlDhcpServerConfigPoolEntry 28 }
+
+luxlDhcpServerConfigPoolNisServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NIS server 1."
+    ::= { luxlDhcpServerConfigPoolEntry 29 }
+
+luxlDhcpServerConfigPoolNisServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NIS server 2."
+    ::= { luxlDhcpServerConfigPoolEntry 30 }
+
+luxlDhcpServerConfigPoolNisServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NIS server 3."
+    ::= { luxlDhcpServerConfigPoolEntry 31 }
+
+luxlDhcpServerConfigPoolNisServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NIS server 4."
+    ::= { luxlDhcpServerConfigPoolEntry 32 }
+
+luxlDhcpServerConfigPoolClientIdentifierType OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerClientIdentifierEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of client identifier. DHCP option 61. Specify client's unique
+         identifier to be used when the pool is the type of host. none(0) means
+         the client identifier type is not defined yet. fqdn(1) means the client
+         identifier type is type of FQDN (Fully Qualified Domain Name). mac(2)
+         means the client identifier type is type of MAC address."
+    ::= { luxlDhcpServerConfigPoolEntry 33 }
+
+luxlDhcpServerConfigPoolClientIdentifierFqdn OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Client's Fully Qualified Domain Name. DHCP option 61. Specify client's
+         unique identifier to be used when the pool is the type of host. This
+         takes effect only if ClientIdentifierType is defined fqdn(1)."
+    ::= { luxlDhcpServerConfigPoolEntry 34 }
+
+luxlDhcpServerConfigPoolClientIdentifierMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Client's MAC address. DHCP option 61. Specify client's unique
+         identifier to be used when the pool is the type of host. This takes
+         effect only if ClientIdentifierType is defined as mac(2)."
+    ::= { luxlDhcpServerConfigPoolEntry 35 }
+
+luxlDhcpServerConfigPoolClientHardwareAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Client's hardware address. Specify client's hardware(MAC) address to be
+         used when the pool is the type of host."
+    ::= { luxlDhcpServerConfigPoolEntry 36 }
+
+luxlDhcpServerConfigPoolClientName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Client name. DHCP option 12. Specify the name of client to be used when
+         the pool is the type of host."
+    ::= { luxlDhcpServerConfigPoolEntry 37 }
+
+luxlDhcpServerConfigPoolVendorClassId1 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { luxlDhcpServerConfigPoolEntry 38 }
+
+luxlDhcpServerConfigPoolVendorSpecificInfo1 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { luxlDhcpServerConfigPoolEntry 39 }
+
+luxlDhcpServerConfigPoolVendorClassId2 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { luxlDhcpServerConfigPoolEntry 40 }
+
+luxlDhcpServerConfigPoolVendorSpecificInfo2 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { luxlDhcpServerConfigPoolEntry 41 }
+
+luxlDhcpServerConfigPoolVendorClassId3 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { luxlDhcpServerConfigPoolEntry 42 }
+
+luxlDhcpServerConfigPoolVendorSpecificInfo3 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { luxlDhcpServerConfigPoolEntry 43 }
+
+luxlDhcpServerConfigPoolVendorClassId4 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { luxlDhcpServerConfigPoolEntry 44 }
+
+luxlDhcpServerConfigPoolVendorSpecificInfo4 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { luxlDhcpServerConfigPoolEntry 45 }
+
+luxlDhcpServerConfigPoolAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlDhcpServerConfigPoolEntry 100 }
+
+luxlDhcpServerConfigPoolTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlDhcpServerConfig 6 }
+
+luxlDhcpServerConfigPoolTableRowEditorPoolName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Name of DHCP pool."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 1 }
+
+luxlDhcpServerConfigPoolTableRowEditorPoolType OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerPoolEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of pool. none(0) means the pool type is not defined yet.
+         network(1) means the pool defines a pool of IP addresses to service
+         more than one DHCP client. host(2) means the pool services for a
+         specific DHCP client identified by client identifier or hardware
+         address."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 2 }
+
+luxlDhcpServerConfigPoolTableRowEditorIpv4Address OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Network number of the subnet. If the pool type is of network, the IP
+         address can be any general IP address. If the pool type is of host, the
+         IP address must be a unicast IP address."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 3 }
+
+luxlDhcpServerConfigPoolTableRowEditorSubnetMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Subnet Mask. DHCP option 1. Specify subnet mask of the DHCP address
+         pool, excluding 0.0.0.0 and 255.255.255.255."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 4 }
+
+luxlDhcpServerConfigPoolTableRowEditorSubnetBroadcast OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Broadcast IP address in the subnet. DHCP option 28. Specify the
+         broadcast address in use on the client's subnet."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 5 }
+
+luxlDhcpServerConfigPoolTableRowEditorLeaseDay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of days of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-365. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 6 }
+
+luxlDhcpServerConfigPoolTableRowEditorLeaseHour OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of hours of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-23. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 7 }
+
+luxlDhcpServerConfigPoolTableRowEditorLeaseMinute OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of minutes of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-59. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 8 }
+
+luxlDhcpServerConfigPoolTableRowEditorDomainName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Domain name. DHCP option 15. Specify domain name that client should use
+         when resolving hostname via DNS."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 9 }
+
+luxlDhcpServerConfigPoolTableRowEditorDefaultRouter1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Default router 1."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 10 }
+
+luxlDhcpServerConfigPoolTableRowEditorDefaultRouter2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Default router 2."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 11 }
+
+luxlDhcpServerConfigPoolTableRowEditorDefaultRouter3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Default router 3."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 12 }
+
+luxlDhcpServerConfigPoolTableRowEditorDefaultRouter4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Default router 4."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 13 }
+
+luxlDhcpServerConfigPoolTableRowEditorDnsServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DNS server 1."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 14 }
+
+luxlDhcpServerConfigPoolTableRowEditorDnsServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DNS server 2."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 15 }
+
+luxlDhcpServerConfigPoolTableRowEditorDnsServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DNS server 3."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 16 }
+
+luxlDhcpServerConfigPoolTableRowEditorDnsServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "DNS server 4."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 17 }
+
+luxlDhcpServerConfigPoolTableRowEditorNtpServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NTP server 1."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 18 }
+
+luxlDhcpServerConfigPoolTableRowEditorNtpServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NTP server 2."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 19 }
+
+luxlDhcpServerConfigPoolTableRowEditorNtpServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NTP server 3."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 20 }
+
+luxlDhcpServerConfigPoolTableRowEditorNtpServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NTP server 4."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 21 }
+
+luxlDhcpServerConfigPoolTableRowEditorNetbiosNodeType OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerNetbiosNodeEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of NetBIOS node. DHCP option 46. Specify NetBIOS node type option
+         to allow Netbios over TCP/IP clients which are configurable to be
+         configured as described in RFC 1001/1002. nodeNone(0) means the node
+         type is not defined yet. nodeB(1) means the node type is type of B.
+         nodeP(2) means the node type is type of P. nodeM(3) means the node type
+         is type of M. nodeH(4) means the node type is type of H."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 22 }
+
+luxlDhcpServerConfigPoolTableRowEditorNetbiosScope OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NetBIOS scope. DHCP option 47. Specify the NetBIOS over TCP/IP scope
+         parameter for the client as specified in RFC 1001/1002."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 23 }
+
+luxlDhcpServerConfigPoolTableRowEditorNetbiosNameServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NetBIOS name server 1."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 24 }
+
+luxlDhcpServerConfigPoolTableRowEditorNetbiosNameServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NetBIOS name server 2."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 25 }
+
+luxlDhcpServerConfigPoolTableRowEditorNetbiosNameServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NetBIOS name server 3."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 26 }
+
+luxlDhcpServerConfigPoolTableRowEditorNetbiosNameServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NetBIOS name server 4."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 27 }
+
+luxlDhcpServerConfigPoolTableRowEditorNisDomainName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NIS Domain Name. DHCP option 40. Specify the name of the client's NIS
+         domain."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 28 }
+
+luxlDhcpServerConfigPoolTableRowEditorNisServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NIS server 1."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 29 }
+
+luxlDhcpServerConfigPoolTableRowEditorNisServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NIS server 2."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 30 }
+
+luxlDhcpServerConfigPoolTableRowEditorNisServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NIS server 3."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 31 }
+
+luxlDhcpServerConfigPoolTableRowEditorNisServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "NIS server 4."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 32 }
+
+luxlDhcpServerConfigPoolTableRowEditorClientIdentifierType OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerClientIdentifierEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of client identifier. DHCP option 61. Specify client's unique
+         identifier to be used when the pool is the type of host. none(0) means
+         the client identifier type is not defined yet. fqdn(1) means the client
+         identifier type is type of FQDN (Fully Qualified Domain Name). mac(2)
+         means the client identifier type is type of MAC address."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 33 }
+
+luxlDhcpServerConfigPoolTableRowEditorClientIdentifierFqdn OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Client's Fully Qualified Domain Name. DHCP option 61. Specify client's
+         unique identifier to be used when the pool is the type of host. This
+         takes effect only if ClientIdentifierType is defined fqdn(1)."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 34 }
+
+luxlDhcpServerConfigPoolTableRowEditorClientIdentifierMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Client's MAC address. DHCP option 61. Specify client's unique
+         identifier to be used when the pool is the type of host. This takes
+         effect only if ClientIdentifierType is defined as mac(2)."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 35 }
+
+luxlDhcpServerConfigPoolTableRowEditorClientHardwareAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Client's hardware address. Specify client's hardware(MAC) address to be
+         used when the pool is the type of host."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 36 }
+
+luxlDhcpServerConfigPoolTableRowEditorClientName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Client name. DHCP option 12. Specify the name of client to be used when
+         the pool is the type of host."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 37 }
+
+luxlDhcpServerConfigPoolTableRowEditorVendorClassId1 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 38 }
+
+luxlDhcpServerConfigPoolTableRowEditorVendorSpecificInfo1 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 39 }
+
+luxlDhcpServerConfigPoolTableRowEditorVendorClassId2 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 40 }
+
+luxlDhcpServerConfigPoolTableRowEditorVendorSpecificInfo2 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 41 }
+
+luxlDhcpServerConfigPoolTableRowEditorVendorClassId3 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 42 }
+
+luxlDhcpServerConfigPoolTableRowEditorVendorSpecificInfo3 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 43 }
+
+luxlDhcpServerConfigPoolTableRowEditorVendorClassId4 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 44 }
+
+luxlDhcpServerConfigPoolTableRowEditorVendorSpecificInfo4 OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 45 }
+
+luxlDhcpServerConfigPoolTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlDhcpServerConfigPoolTableRowEditor 100 }
+
+luxlDhcpServerStatus OBJECT IDENTIFIER
+    ::= { luxlDhcpServerMibObjects 3 }
+
+luxlDhcpServerStatusDeclinedTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcpServerStatusDeclinedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of IP addresses declined by DHCP client."
+    ::= { luxlDhcpServerStatus 1 }
+
+luxlDhcpServerStatusDeclinedEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerStatusDeclinedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a declined IP address."
+    INDEX       { luxlDhcpServerStatusDeclinedEntryNo }
+    ::= { luxlDhcpServerStatusDeclinedTable 1 }
+
+LUXLDhcpServerStatusDeclinedEntry ::= SEQUENCE {
+    luxlDhcpServerStatusDeclinedEntryNo     Integer32,
+    luxlDhcpServerStatusDeclinedIpv4Address     IpAddress
+}
+
+luxlDhcpServerStatusDeclinedEntryNo OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The number of entry. The number starts from 1."
+    ::= { luxlDhcpServerStatusDeclinedEntry 1 }
+
+luxlDhcpServerStatusDeclinedIpv4Address OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "IPv4 address declined by DHCP client."
+    ::= { luxlDhcpServerStatusDeclinedEntry 2 }
+
+luxlDhcpServerStatusStatistics OBJECT IDENTIFIER
+    ::= { luxlDhcpServerStatus 2 }
+
+luxlDhcpServerStatusStatisticsDiscoverCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of DHCP DISCOVER messages received."
+    ::= { luxlDhcpServerStatusStatistics 1 }
+
+luxlDhcpServerStatusStatisticsOfferCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of DHCP OFFER messages sent."
+    ::= { luxlDhcpServerStatusStatistics 2 }
+
+luxlDhcpServerStatusStatisticsRequestCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of DHCP REQUEST messages received."
+    ::= { luxlDhcpServerStatusStatistics 3 }
+
+luxlDhcpServerStatusStatisticsAckCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of DHCP ACK messages sent."
+    ::= { luxlDhcpServerStatusStatistics 4 }
+
+luxlDhcpServerStatusStatisticsNakCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of DHCP NAK messages sent."
+    ::= { luxlDhcpServerStatusStatistics 5 }
+
+luxlDhcpServerStatusStatisticsDeclineCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of DHCP DECLINE messages received."
+    ::= { luxlDhcpServerStatusStatistics 6 }
+
+luxlDhcpServerStatusStatisticsReleaseCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of DHCP RELEASE messages received."
+    ::= { luxlDhcpServerStatusStatistics 7 }
+
+luxlDhcpServerStatusStatisticsInformCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of DHCP INFORM messages received."
+    ::= { luxlDhcpServerStatusStatistics 8 }
+
+luxlDhcpServerStatusBindingTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcpServerStatusBindingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of binding data."
+    ::= { luxlDhcpServerStatus 3 }
+
+luxlDhcpServerStatusBindingEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerStatusBindingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has the binding data."
+    INDEX       { luxlDhcpServerStatusBindingIpAddress }
+    ::= { luxlDhcpServerStatusBindingTable 1 }
+
+LUXLDhcpServerStatusBindingEntry ::= SEQUENCE {
+    luxlDhcpServerStatusBindingIpAddress    IpAddress,
+    luxlDhcpServerStatusBindingState    LUXLDhcpServerBindingStateEnum,
+    luxlDhcpServerStatusBindingType     LUXLDhcpServerBindingEnum,
+    luxlDhcpServerStatusBindingPoolName     LUXLDisplayString,
+    luxlDhcpServerStatusBindingServerId     IpAddress,
+    luxlDhcpServerStatusBindingVlanId   LUXLUnsigned16,
+    luxlDhcpServerStatusBindingSubnetMask   IpAddress,
+    luxlDhcpServerStatusBindingClientIdentifierType     LUXLDhcpServerClientIdentifierEnum,
+    luxlDhcpServerStatusBindingClientIdentifierFqdn     LUXLDisplayString,
+    luxlDhcpServerStatusBindingClientIdentifierMac      MacAddress,
+    luxlDhcpServerStatusBindingMacAddress   MacAddress,
+    luxlDhcpServerStatusBindingLease    LUXLDisplayString,
+    luxlDhcpServerStatusBindingTimeToExpire     LUXLDisplayString
+}
+
+luxlDhcpServerStatusBindingIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "IP address."
+    ::= { luxlDhcpServerStatusBindingEntry 1 }
+
+luxlDhcpServerStatusBindingState OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerBindingStateEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "State of binding. none(0) means the binding is not in use. allocated(1)
+         means the binding is allocated to the new DHCP client who send
+         DHCPDISCOVER. committed(2) means the binding is committed as the DHCP
+         process is completed successfully. expired(3) means the lease of the
+         binding expired."
+    ::= { luxlDhcpServerStatusBindingEntry 2 }
+
+luxlDhcpServerStatusBindingType OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerBindingEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Type of binding. none(0) means the binding is not in use. automatic(1)
+         means the binding is mapped to network-type pool. manual(2) means the
+         binding is mapped to host-type pool. expired(3) means the lease of the
+         binding expired."
+    ::= { luxlDhcpServerStatusBindingEntry 3 }
+
+luxlDhcpServerStatusBindingPoolName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Name of the pool that creates the binding."
+    ::= { luxlDhcpServerStatusBindingEntry 4 }
+
+luxlDhcpServerStatusBindingServerId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "IP address of the DHCP server to service the binding."
+    ::= { luxlDhcpServerStatusBindingEntry 5 }
+
+luxlDhcpServerStatusBindingVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN where the binding works on."
+    ::= { luxlDhcpServerStatusBindingEntry 6 }
+
+luxlDhcpServerStatusBindingSubnetMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Subnet mask of the DHCP client."
+    ::= { luxlDhcpServerStatusBindingEntry 7 }
+
+luxlDhcpServerStatusBindingClientIdentifierType OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerClientIdentifierEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Type of client identifier. DHCP option 61. Specify client's unique
+         identifier to be used when the pool is the type of host. none(0) means
+         the client identifier type is not defined yet. fqdn(1) means the client
+         identifier type is type of FQDN (Fully Qualified Domain Name). mac(2)
+         means the client identifier type is type of MAC address."
+    ::= { luxlDhcpServerStatusBindingEntry 8 }
+
+luxlDhcpServerStatusBindingClientIdentifierFqdn OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Client's Fully Qualified Domain Name. DHCP option 61."
+    ::= { luxlDhcpServerStatusBindingEntry 9 }
+
+luxlDhcpServerStatusBindingClientIdentifierMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Client's MAC address. DHCP option 61."
+    ::= { luxlDhcpServerStatusBindingEntry 10 }
+
+luxlDhcpServerStatusBindingMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC address of the DHCP client."
+    ::= { luxlDhcpServerStatusBindingEntry 11 }
+
+luxlDhcpServerStatusBindingLease OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Lease time of the binding."
+    ::= { luxlDhcpServerStatusBindingEntry 12 }
+
+luxlDhcpServerStatusBindingTimeToExpire OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "remaining time to expire."
+    ::= { luxlDhcpServerStatusBindingEntry 13 }
+
+luxlDhcpServerControl OBJECT IDENTIFIER
+    ::= { luxlDhcpServerMibObjects 4 }
+
+luxlDhcpServerControlStatistics OBJECT IDENTIFIER
+    ::= { luxlDhcpServerControl 1 }
+
+luxlDhcpServerControlStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear all statistics."
+    ::= { luxlDhcpServerControlStatistics 1 }
+
+luxlDhcpServerControlBinding OBJECT IDENTIFIER
+    ::= { luxlDhcpServerControl 2 }
+
+luxlDhcpServerControlBindingClearByIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear binding with the IP address. If 0.0.0.0 then do nothing."
+    ::= { luxlDhcpServerControlBinding 1 }
+
+luxlDhcpServerControlBindingClearByType OBJECT-TYPE
+    SYNTAX      LUXLDhcpServerBindingEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear binding by binding type. If none(0) then do nothing."
+    ::= { luxlDhcpServerControlBinding 2 }
+
+luxlDhcpServerMibConformance OBJECT IDENTIFIER
+    ::= { luxlDhcpServerMib 2 }
+
+luxlDhcpServerMibCompliances OBJECT IDENTIFIER
+    ::= { luxlDhcpServerMibConformance 1 }
+
+luxlDhcpServerMibGroups OBJECT IDENTIFIER
+    ::= { luxlDhcpServerMibConformance 2 }
+
+luxlDhcpServerConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerConfigGlobalsMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 1 }
+
+luxlDhcpServerConfigVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerConfigVlanMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 2 }
+
+luxlDhcpServerConfigExcludedTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerConfigExcludedAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 3 }
+
+luxlDhcpServerConfigExcludedIpTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerConfigExcludedIpTableRowEditorLowIpAddress, 
+                  luxlDhcpServerConfigExcludedIpTableRowEditorHighIpAddress, 
+                  luxlDhcpServerConfigExcludedIpTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 4 }
+
+luxlDhcpServerConfigPoolTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerConfigPoolPoolType, 
+                  luxlDhcpServerConfigPoolIpv4Address, 
+                  luxlDhcpServerConfigPoolSubnetMask, 
+                  luxlDhcpServerConfigPoolSubnetBroadcast, 
+                  luxlDhcpServerConfigPoolLeaseDay, 
+                  luxlDhcpServerConfigPoolLeaseHour, 
+                  luxlDhcpServerConfigPoolLeaseMinute, 
+                  luxlDhcpServerConfigPoolDomainName, 
+                  luxlDhcpServerConfigPoolDefaultRouter1, 
+                  luxlDhcpServerConfigPoolDefaultRouter2, 
+                  luxlDhcpServerConfigPoolDefaultRouter3, 
+                  luxlDhcpServerConfigPoolDefaultRouter4, 
+                  luxlDhcpServerConfigPoolDnsServer1, 
+                  luxlDhcpServerConfigPoolDnsServer2, 
+                  luxlDhcpServerConfigPoolDnsServer3, 
+                  luxlDhcpServerConfigPoolDnsServer4, 
+                  luxlDhcpServerConfigPoolNtpServer1, 
+                  luxlDhcpServerConfigPoolNtpServer2, 
+                  luxlDhcpServerConfigPoolNtpServer3, 
+                  luxlDhcpServerConfigPoolNtpServer4, 
+                  luxlDhcpServerConfigPoolNetbiosNodeType, 
+                  luxlDhcpServerConfigPoolNetbiosScope, 
+                  luxlDhcpServerConfigPoolNetbiosNameServer1, 
+                  luxlDhcpServerConfigPoolNetbiosNameServer2, 
+                  luxlDhcpServerConfigPoolNetbiosNameServer3, 
+                  luxlDhcpServerConfigPoolNetbiosNameServer4, 
+                  luxlDhcpServerConfigPoolNisDomainName, 
+                  luxlDhcpServerConfigPoolNisServer1, 
+                  luxlDhcpServerConfigPoolNisServer2, 
+                  luxlDhcpServerConfigPoolNisServer3, 
+                  luxlDhcpServerConfigPoolNisServer4, 
+                  luxlDhcpServerConfigPoolClientIdentifierType, 
+                  luxlDhcpServerConfigPoolClientIdentifierFqdn, 
+                  luxlDhcpServerConfigPoolClientIdentifierMac, 
+                  luxlDhcpServerConfigPoolClientHardwareAddress, 
+                  luxlDhcpServerConfigPoolClientName, 
+                  luxlDhcpServerConfigPoolVendorClassId1, 
+                  luxlDhcpServerConfigPoolVendorSpecificInfo1, 
+                  luxlDhcpServerConfigPoolVendorClassId2, 
+                  luxlDhcpServerConfigPoolVendorSpecificInfo2, 
+                  luxlDhcpServerConfigPoolVendorClassId3, 
+                  luxlDhcpServerConfigPoolVendorSpecificInfo3, 
+                  luxlDhcpServerConfigPoolVendorClassId4, 
+                  luxlDhcpServerConfigPoolVendorSpecificInfo4, 
+                  luxlDhcpServerConfigPoolAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 5 }
+
+luxlDhcpServerConfigPoolTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerConfigPoolTableRowEditorPoolName, 
+                  luxlDhcpServerConfigPoolTableRowEditorPoolType, 
+                  luxlDhcpServerConfigPoolTableRowEditorIpv4Address, 
+                  luxlDhcpServerConfigPoolTableRowEditorSubnetMask, 
+                  luxlDhcpServerConfigPoolTableRowEditorSubnetBroadcast, 
+                  luxlDhcpServerConfigPoolTableRowEditorLeaseDay, 
+                  luxlDhcpServerConfigPoolTableRowEditorLeaseHour, 
+                  luxlDhcpServerConfigPoolTableRowEditorLeaseMinute, 
+                  luxlDhcpServerConfigPoolTableRowEditorDomainName, 
+                  luxlDhcpServerConfigPoolTableRowEditorDefaultRouter1, 
+                  luxlDhcpServerConfigPoolTableRowEditorDefaultRouter2, 
+                  luxlDhcpServerConfigPoolTableRowEditorDefaultRouter3, 
+                  luxlDhcpServerConfigPoolTableRowEditorDefaultRouter4, 
+                  luxlDhcpServerConfigPoolTableRowEditorDnsServer1, 
+                  luxlDhcpServerConfigPoolTableRowEditorDnsServer2, 
+                  luxlDhcpServerConfigPoolTableRowEditorDnsServer3, 
+                  luxlDhcpServerConfigPoolTableRowEditorDnsServer4, 
+                  luxlDhcpServerConfigPoolTableRowEditorNtpServer1, 
+                  luxlDhcpServerConfigPoolTableRowEditorNtpServer2, 
+                  luxlDhcpServerConfigPoolTableRowEditorNtpServer3, 
+                  luxlDhcpServerConfigPoolTableRowEditorNtpServer4, 
+                  luxlDhcpServerConfigPoolTableRowEditorNetbiosNodeType, 
+                  luxlDhcpServerConfigPoolTableRowEditorNetbiosScope, 
+                  luxlDhcpServerConfigPoolTableRowEditorNetbiosNameServer1, 
+                  luxlDhcpServerConfigPoolTableRowEditorNetbiosNameServer2, 
+                  luxlDhcpServerConfigPoolTableRowEditorNetbiosNameServer3, 
+                  luxlDhcpServerConfigPoolTableRowEditorNetbiosNameServer4, 
+                  luxlDhcpServerConfigPoolTableRowEditorNisDomainName, 
+                  luxlDhcpServerConfigPoolTableRowEditorNisServer1, 
+                  luxlDhcpServerConfigPoolTableRowEditorNisServer2, 
+                  luxlDhcpServerConfigPoolTableRowEditorNisServer3, 
+                  luxlDhcpServerConfigPoolTableRowEditorNisServer4, 
+                  luxlDhcpServerConfigPoolTableRowEditorClientIdentifierType, 
+                  luxlDhcpServerConfigPoolTableRowEditorClientIdentifierFqdn, 
+                  luxlDhcpServerConfigPoolTableRowEditorClientIdentifierMac, 
+                  luxlDhcpServerConfigPoolTableRowEditorClientHardwareAddress, 
+                  luxlDhcpServerConfigPoolTableRowEditorClientName, 
+                  luxlDhcpServerConfigPoolTableRowEditorVendorClassId1, 
+                  luxlDhcpServerConfigPoolTableRowEditorVendorSpecificInfo1, 
+                  luxlDhcpServerConfigPoolTableRowEditorVendorClassId2, 
+                  luxlDhcpServerConfigPoolTableRowEditorVendorSpecificInfo2, 
+                  luxlDhcpServerConfigPoolTableRowEditorVendorClassId3, 
+                  luxlDhcpServerConfigPoolTableRowEditorVendorSpecificInfo3, 
+                  luxlDhcpServerConfigPoolTableRowEditorVendorClassId4, 
+                  luxlDhcpServerConfigPoolTableRowEditorVendorSpecificInfo4, 
+                  luxlDhcpServerConfigPoolTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 6 }
+
+luxlDhcpServerStatusDeclinedTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerStatusDeclinedIpv4Address }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 7 }
+
+luxlDhcpServerStatusStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerStatusStatisticsDiscoverCnt, 
+                  luxlDhcpServerStatusStatisticsOfferCnt, 
+                  luxlDhcpServerStatusStatisticsRequestCnt, 
+                  luxlDhcpServerStatusStatisticsAckCnt, 
+                  luxlDhcpServerStatusStatisticsNakCnt, 
+                  luxlDhcpServerStatusStatisticsDeclineCnt, 
+                  luxlDhcpServerStatusStatisticsReleaseCnt, 
+                  luxlDhcpServerStatusStatisticsInformCnt }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 8 }
+
+luxlDhcpServerStatusBindingTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerStatusBindingState, 
+                  luxlDhcpServerStatusBindingType, 
+                  luxlDhcpServerStatusBindingPoolName, 
+                  luxlDhcpServerStatusBindingServerId, 
+                  luxlDhcpServerStatusBindingVlanId, 
+                  luxlDhcpServerStatusBindingSubnetMask, 
+                  luxlDhcpServerStatusBindingClientIdentifierType, 
+                  luxlDhcpServerStatusBindingClientIdentifierFqdn, 
+                  luxlDhcpServerStatusBindingClientIdentifierMac, 
+                  luxlDhcpServerStatusBindingMacAddress, 
+                  luxlDhcpServerStatusBindingLease, 
+                  luxlDhcpServerStatusBindingTimeToExpire }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 9 }
+
+luxlDhcpServerControlStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerControlStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 10 }
+
+luxlDhcpServerControlBindingInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpServerControlBindingClearByIp, 
+                  luxlDhcpServerControlBindingClearByType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpServerMibGroups 11 }
+
+luxlDhcpServerMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlDhcpServerConfigGlobalsInfoGroup, 
+                  luxlDhcpServerConfigVlanTableInfoGroup, 
+                  luxlDhcpServerConfigExcludedTableInfoGroup, 
+                  luxlDhcpServerConfigExcludedIpTableRowEditorInfoGroup, 
+                  luxlDhcpServerConfigPoolTableInfoGroup, 
+                  luxlDhcpServerConfigPoolTableRowEditorInfoGroup, 
+                  luxlDhcpServerStatusDeclinedTableInfoGroup, 
+                  luxlDhcpServerStatusStatisticsInfoGroup, 
+                  luxlDhcpServerStatusBindingTableInfoGroup, 
+                  luxlDhcpServerControlStatisticsInfoGroup, 
+                  luxlDhcpServerControlBindingInfoGroup }
+
+    ::= { luxlDhcpServerMibCompliances 1 }
+
+END

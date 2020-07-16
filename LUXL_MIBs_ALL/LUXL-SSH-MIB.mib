@@ -1,0 +1,81 @@
+-- *****************************************************************
+-- SSH-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-SSH-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+luxlSshMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the SSH MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 49 }
+
+
+luxlSshMibObjects OBJECT IDENTIFIER
+    ::= { luxlSshMib 1 }
+
+luxlSshConfig OBJECT IDENTIFIER
+    ::= { luxlSshMibObjects 2 }
+
+luxlSshConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlSshConfig 1 }
+
+luxlSshConfigGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the SSH functionality."
+    ::= { luxlSshConfigGlobals 1 }
+
+luxlSshMibConformance OBJECT IDENTIFIER
+    ::= { luxlSshMib 2 }
+
+luxlSshMibCompliances OBJECT IDENTIFIER
+    ::= { luxlSshMibConformance 1 }
+
+luxlSshMibGroups OBJECT IDENTIFIER
+    ::= { luxlSshMibConformance 2 }
+
+luxlSshConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlSshConfigGlobalsAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlSshMibGroups 1 }
+
+luxlSshMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlSshConfigGlobalsInfoGroup }
+
+    ::= { luxlSshMibCompliances 1 }
+
+END

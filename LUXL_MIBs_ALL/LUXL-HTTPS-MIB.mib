@@ -1,0 +1,96 @@
+-- *****************************************************************
+-- HTTPS-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-HTTPS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+luxlHttpsMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of HTTPS"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 47 }
+
+
+luxlHttpsMibObjects OBJECT IDENTIFIER
+    ::= { luxlHttpsMib 1 }
+
+luxlHttpsConfig OBJECT IDENTIFIER
+    ::= { luxlHttpsMibObjects 2 }
+
+luxlHttpsConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlHttpsConfig 1 }
+
+luxlHttpsConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global mode of HTTPS. true is to enable the functions of HTTPS and
+         false is to disable it."
+    ::= { luxlHttpsConfigGlobals 1 }
+
+luxlHttpsConfigGlobalsRedirectToHttps OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The flag is to enable/disable the automatic redirection from HTTP to
+         HTTPS. true is to enable the redirection and false is to disable the
+         redirection."
+    ::= { luxlHttpsConfigGlobals 2 }
+
+luxlHttpsMibConformance OBJECT IDENTIFIER
+    ::= { luxlHttpsMib 2 }
+
+luxlHttpsMibCompliances OBJECT IDENTIFIER
+    ::= { luxlHttpsMibConformance 1 }
+
+luxlHttpsMibGroups OBJECT IDENTIFIER
+    ::= { luxlHttpsMibConformance 2 }
+
+luxlHttpsConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlHttpsConfigGlobalsMode, 
+                  luxlHttpsConfigGlobalsRedirectToHttps }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlHttpsMibGroups 1 }
+
+luxlHttpsMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlHttpsConfigGlobalsInfoGroup }
+
+    ::= { luxlHttpsMibCompliances 1 }
+
+END

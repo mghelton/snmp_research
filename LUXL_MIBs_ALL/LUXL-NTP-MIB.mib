@@ -1,0 +1,133 @@
+-- *****************************************************************
+-- NTP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-NTP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInetAddress FROM LUXL-TC
+    ;
+
+luxlNtpMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of NTP"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 57 }
+
+
+luxlNtpMibObjects OBJECT IDENTIFIER
+    ::= { luxlNtpMib 1 }
+
+luxlNtpConfig OBJECT IDENTIFIER
+    ::= { luxlNtpMibObjects 2 }
+
+luxlNtpConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlNtpConfig 1 }
+
+luxlNtpConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global config mode of NTP. true is to enable NTP function in the system
+         and false is to disable it."
+    ::= { luxlNtpConfigGlobals 1 }
+
+luxlNtpConfigServerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLNtpConfigServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of NTP server."
+    ::= { luxlNtpConfig 2 }
+
+luxlNtpConfigServerEntry OBJECT-TYPE
+    SYNTAX      LUXLNtpConfigServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each server has a set of parameters."
+    INDEX       { luxlNtpConfigServerIndex }
+    ::= { luxlNtpConfigServerTable 1 }
+
+LUXLNtpConfigServerEntry ::= SEQUENCE {
+    luxlNtpConfigServerIndex    Integer32,
+    luxlNtpConfigServerAddress      LUXLInetAddress
+}
+
+luxlNtpConfigServerIndex OBJECT-TYPE
+    SYNTAX      Integer32 (1..5)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The index of NTP servers."
+    ::= { luxlNtpConfigServerEntry 1 }
+
+luxlNtpConfigServerAddress OBJECT-TYPE
+    SYNTAX      LUXLInetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Internet address of a NTP server."
+    ::= { luxlNtpConfigServerEntry 2 }
+
+luxlNtpMibConformance OBJECT IDENTIFIER
+    ::= { luxlNtpMib 2 }
+
+luxlNtpMibCompliances OBJECT IDENTIFIER
+    ::= { luxlNtpMibConformance 1 }
+
+luxlNtpMibGroups OBJECT IDENTIFIER
+    ::= { luxlNtpMibConformance 2 }
+
+luxlNtpConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlNtpConfigGlobalsMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlNtpMibGroups 1 }
+
+luxlNtpConfigServerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlNtpConfigServerAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlNtpMibGroups 2 }
+
+luxlNtpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlNtpConfigGlobalsInfoGroup, 
+                  luxlNtpConfigServerTableInfoGroup }
+
+    ::= { luxlNtpMibCompliances 1 }
+
+END

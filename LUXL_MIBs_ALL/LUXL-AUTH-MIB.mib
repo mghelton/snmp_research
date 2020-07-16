@@ -1,0 +1,900 @@
+-- *****************************************************************
+-- AUTH-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-AUTH-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlAuthMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private MIB for authentication"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 48 }
+
+
+LUXLAuthAcctMethod ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available accounting methods."
+    SYNTAX      INTEGER { none(0), tacacs(3) }
+
+LUXLAuthAuthenMethod ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available authentication methods."
+    SYNTAX      INTEGER { none(0), local(1), radius(2), tacacs(3) }
+
+LUXLAuthAuthorMethod ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available authorization methods."
+    SYNTAX      INTEGER { none(0), tacacs(3) }
+
+luxlAuthMibObjects OBJECT IDENTIFIER
+    ::= { luxlAuthMib 1 }
+
+luxlAuthConfig OBJECT IDENTIFIER
+    ::= { luxlAuthMibObjects 2 }
+
+luxlAuthConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlAuthConfig 1 }
+
+luxlAuthConfigGlobalsAgents OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobals 1 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthen OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsAgents 1 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is an ordered table of methods used to authenticate console access"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAuthen 1 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry OBJECT-TYPE
+    SYNTAX      LUXLAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry defines a method to be consulted with a priorty equal to the
+         index"
+    INDEX       { luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsIndex }
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsTable 1 }
+
+LUXLAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry ::= SEQUENCE {
+    luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsIndex    Integer32,
+    luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsMethod   LUXLAuthAuthenMethod
+}
+
+luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Method priority index, from 0 to 3 where 0 is the highest priority
+         index"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry 1 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsMethod OBJECT-TYPE
+    SYNTAX      LUXLAuthAuthenMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication method"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry 2 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthen OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsAgents 2 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is an ordered table of methods used to authenticate telnet access"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAuthen 1 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry OBJECT-TYPE
+    SYNTAX      LUXLAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry defines a method to be consulted with a priorty equal to the
+         index"
+    INDEX       { luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsIndex }
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsTable 1 }
+
+LUXLAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry ::= SEQUENCE {
+    luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsIndex     Integer32,
+    luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsMethod    LUXLAuthAuthenMethod
+}
+
+luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Method priority index, from 0 to 3 where 0 is the highest priority
+         index"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry 1 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsMethod OBJECT-TYPE
+    SYNTAX      LUXLAuthAuthenMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication method"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry 2 }
+
+luxlAuthConfigGlobalsAgentsSshAuthen OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsAgents 3 }
+
+luxlAuthConfigGlobalsAgentsSshAuthenMethodsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAuthConfigGlobalsAgentsSshAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is an ordered table of methods used to authenticate ssh access"
+    ::= { luxlAuthConfigGlobalsAgentsSshAuthen 1 }
+
+luxlAuthConfigGlobalsAgentsSshAuthenMethodsEntry OBJECT-TYPE
+    SYNTAX      LUXLAuthConfigGlobalsAgentsSshAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry defines a method to be consulted with a priorty equal to the
+         index"
+    INDEX       { luxlAuthConfigGlobalsAgentsSshAuthenMethodsIndex }
+    ::= { luxlAuthConfigGlobalsAgentsSshAuthenMethodsTable 1 }
+
+LUXLAuthConfigGlobalsAgentsSshAuthenMethodsEntry ::= SEQUENCE {
+    luxlAuthConfigGlobalsAgentsSshAuthenMethodsIndex    Integer32,
+    luxlAuthConfigGlobalsAgentsSshAuthenMethodsMethod   LUXLAuthAuthenMethod
+}
+
+luxlAuthConfigGlobalsAgentsSshAuthenMethodsIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Method priority index, from 0 to 3 where 0 is the highest priority
+         index"
+    ::= { luxlAuthConfigGlobalsAgentsSshAuthenMethodsEntry 1 }
+
+luxlAuthConfigGlobalsAgentsSshAuthenMethodsMethod OBJECT-TYPE
+    SYNTAX      LUXLAuthAuthenMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication method"
+    ::= { luxlAuthConfigGlobalsAgentsSshAuthenMethodsEntry 2 }
+
+luxlAuthConfigGlobalsAgentsHttpAuthen OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsAgents 4 }
+
+luxlAuthConfigGlobalsAgentsHttpAuthenMethodsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAuthConfigGlobalsAgentsHttpAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is an ordered table of methods used to authenticate HTTP access"
+    ::= { luxlAuthConfigGlobalsAgentsHttpAuthen 1 }
+
+luxlAuthConfigGlobalsAgentsHttpAuthenMethodsEntry OBJECT-TYPE
+    SYNTAX      LUXLAuthConfigGlobalsAgentsHttpAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry defines a method to be consulted with a priorty equal to the
+         index"
+    INDEX       { luxlAuthConfigGlobalsAgentsHttpAuthenMethodsIndex }
+    ::= { luxlAuthConfigGlobalsAgentsHttpAuthenMethodsTable 1 }
+
+LUXLAuthConfigGlobalsAgentsHttpAuthenMethodsEntry ::= SEQUENCE {
+    luxlAuthConfigGlobalsAgentsHttpAuthenMethodsIndex   Integer32,
+    luxlAuthConfigGlobalsAgentsHttpAuthenMethodsMethod      LUXLAuthAuthenMethod
+}
+
+luxlAuthConfigGlobalsAgentsHttpAuthenMethodsIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..3)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Method priority index, from 0 to 3 where 0 is the highest priority
+         index"
+    ::= { luxlAuthConfigGlobalsAgentsHttpAuthenMethodsEntry 1 }
+
+luxlAuthConfigGlobalsAgentsHttpAuthenMethodsMethod OBJECT-TYPE
+    SYNTAX      LUXLAuthAuthenMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication method"
+    ::= { luxlAuthConfigGlobalsAgentsHttpAuthenMethodsEntry 2 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthor OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsAgents 11 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthorMethod OBJECT-TYPE
+    SYNTAX      LUXLAuthAuthorMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authorization method"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAuthor 1 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthorCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable authorization of commands"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAuthor 2 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthorCmdPrivLvl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Command privilege level. Authorize all commands with a privilege level
+         higher than or equal to this level. Valid values are in the range 0 to
+         15"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAuthor 3 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthorCfgCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Also authorize configuration commands"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAuthor 4 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthor OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsAgents 12 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthorMethod OBJECT-TYPE
+    SYNTAX      LUXLAuthAuthorMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authorization method"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAuthor 1 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthorCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable authorization of commands"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAuthor 2 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthorCmdPrivLvl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Command privilege level. Authorize all commands with a privilege level
+         higher than or equal to this level. Valid values are in the range 0 to
+         15"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAuthor 3 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthorCfgCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Also authorize configuration commands"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAuthor 4 }
+
+luxlAuthConfigGlobalsAgentsSshAuthor OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsAgents 13 }
+
+luxlAuthConfigGlobalsAgentsSshAuthorMethod OBJECT-TYPE
+    SYNTAX      LUXLAuthAuthorMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authorization method"
+    ::= { luxlAuthConfigGlobalsAgentsSshAuthor 1 }
+
+luxlAuthConfigGlobalsAgentsSshAuthorCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable authorization of commands"
+    ::= { luxlAuthConfigGlobalsAgentsSshAuthor 2 }
+
+luxlAuthConfigGlobalsAgentsSshAuthorCmdPrivLvl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Command privilege level. Authorize all commands with a privilege level
+         higher than or equal to this level. Valid values are in the range 0 to
+         15"
+    ::= { luxlAuthConfigGlobalsAgentsSshAuthor 3 }
+
+luxlAuthConfigGlobalsAgentsSshAuthorCfgCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Also authorize configuration commands"
+    ::= { luxlAuthConfigGlobalsAgentsSshAuthor 4 }
+
+luxlAuthConfigGlobalsAgentsConsoleAcct OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsAgents 21 }
+
+luxlAuthConfigGlobalsAgentsConsoleAcctMethod OBJECT-TYPE
+    SYNTAX      LUXLAuthAcctMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Accounting method"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAcct 1 }
+
+luxlAuthConfigGlobalsAgentsConsoleAcctCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable accounting of commands"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAcct 2 }
+
+luxlAuthConfigGlobalsAgentsConsoleAcctCmdPrivLvl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Command privilege level. Log all commands with a privilege level higher
+         than or equal to this level. Valid values are in the range 0 to 15"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAcct 3 }
+
+luxlAuthConfigGlobalsAgentsConsoleAcctExecEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable exec (login) accounting"
+    ::= { luxlAuthConfigGlobalsAgentsConsoleAcct 4 }
+
+luxlAuthConfigGlobalsAgentsTelnetAcct OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsAgents 22 }
+
+luxlAuthConfigGlobalsAgentsTelnetAcctMethod OBJECT-TYPE
+    SYNTAX      LUXLAuthAcctMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Accounting method"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAcct 1 }
+
+luxlAuthConfigGlobalsAgentsTelnetAcctCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable accounting of commands"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAcct 2 }
+
+luxlAuthConfigGlobalsAgentsTelnetAcctCmdPrivLvl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Command privilege level. Log all commands with a privilege level higher
+         than or equal to this level. Valid values are in the range 0 to 15"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAcct 3 }
+
+luxlAuthConfigGlobalsAgentsTelnetAcctExecEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable exec (login) accounting"
+    ::= { luxlAuthConfigGlobalsAgentsTelnetAcct 4 }
+
+luxlAuthConfigGlobalsAgentsSshAcct OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsAgents 23 }
+
+luxlAuthConfigGlobalsAgentsSshAcctMethod OBJECT-TYPE
+    SYNTAX      LUXLAuthAcctMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Accounting method"
+    ::= { luxlAuthConfigGlobalsAgentsSshAcct 1 }
+
+luxlAuthConfigGlobalsAgentsSshAcctCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable accounting of commands"
+    ::= { luxlAuthConfigGlobalsAgentsSshAcct 2 }
+
+luxlAuthConfigGlobalsAgentsSshAcctCmdPrivLvl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Command privilege level. Log all commands with a privilege level higher
+         than or equal to this level. Valid values are in the range 0 to 15"
+    ::= { luxlAuthConfigGlobalsAgentsSshAcct 3 }
+
+luxlAuthConfigGlobalsAgentsSshAcctExecEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable exec (login) accounting"
+    ::= { luxlAuthConfigGlobalsAgentsSshAcct 4 }
+
+luxlAuthConfigGlobalsRadius OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobals 2 }
+
+luxlAuthConfigGlobalsRadiusGlobal OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsRadius 1 }
+
+luxlAuthConfigGlobalsRadiusGlobalTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global timeout for for RADIUS servers. Can be overridden by individual
+         host entries. (1 to 1000 seconds)"
+    ::= { luxlAuthConfigGlobalsRadiusGlobal 1 }
+
+luxlAuthConfigGlobalsRadiusGlobalRetransmit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global retransmit count for RADIUS servers. Can be overridden by
+         individual host entries. (1 to 1000 times)"
+    ::= { luxlAuthConfigGlobalsRadiusGlobal 2 }
+
+luxlAuthConfigGlobalsRadiusGlobalDeadtime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global deadtime for RADIUS servers. (0 to 1440 minutes)"
+    ::= { luxlAuthConfigGlobalsRadiusGlobal 3 }
+
+luxlAuthConfigGlobalsRadiusGlobalKey OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global secret key for RADIUS servers. Can be overridden by individual
+         host entries."
+    ::= { luxlAuthConfigGlobalsRadiusGlobal 4 }
+
+luxlAuthConfigGlobalsRadiusGlobalNasIpv4Enable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable Global NAS IPv4 address"
+    ::= { luxlAuthConfigGlobalsRadiusGlobal 11 }
+
+luxlAuthConfigGlobalsRadiusGlobalNasIpv4Address OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global NAS IPv4 address"
+    ::= { luxlAuthConfigGlobalsRadiusGlobal 12 }
+
+luxlAuthConfigGlobalsRadiusGlobalNasIpv6Enable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable Global NAS IPv6 address"
+    ::= { luxlAuthConfigGlobalsRadiusGlobal 13 }
+
+luxlAuthConfigGlobalsRadiusGlobalNasIpv6Address OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global NAS IPv6 address"
+    ::= { luxlAuthConfigGlobalsRadiusGlobal 14 }
+
+luxlAuthConfigGlobalsRadiusGlobalNasIdentifier OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global NAS Identifier"
+    ::= { luxlAuthConfigGlobalsRadiusGlobal 15 }
+
+luxlAuthConfigGlobalsRadiusHostTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAuthConfigGlobalsRadiusHostEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Radius servers useed to query for RADIUS
+         authentication"
+    ::= { luxlAuthConfigGlobalsRadius 3 }
+
+luxlAuthConfigGlobalsRadiusHostEntry OBJECT-TYPE
+    SYNTAX      LUXLAuthConfigGlobalsRadiusHostEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry defines a RADIUS server, with attributes used for contacting
+         it. Host entries are consulted in numerical order of the entry index"
+    INDEX       { luxlAuthConfigGlobalsRadiusHostIndex }
+    ::= { luxlAuthConfigGlobalsRadiusHostTable 1 }
+
+LUXLAuthConfigGlobalsRadiusHostEntry ::= SEQUENCE {
+    luxlAuthConfigGlobalsRadiusHostIndex    Integer32,
+    luxlAuthConfigGlobalsRadiusHostAddress      LUXLDisplayString,
+    luxlAuthConfigGlobalsRadiusHostAuthPort     Unsigned32,
+    luxlAuthConfigGlobalsRadiusHostAcctPort     Unsigned32,
+    luxlAuthConfigGlobalsRadiusHostTimeout      Unsigned32,
+    luxlAuthConfigGlobalsRadiusHostRetransmit   Unsigned32,
+    luxlAuthConfigGlobalsRadiusHostKey      LUXLDisplayString
+}
+
+luxlAuthConfigGlobalsRadiusHostIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Host entry index"
+    ::= { luxlAuthConfigGlobalsRadiusHostEntry 1 }
+
+luxlAuthConfigGlobalsRadiusHostAddress OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "IPv4/IPv6 address or hostname of this server"
+    ::= { luxlAuthConfigGlobalsRadiusHostEntry 2 }
+
+luxlAuthConfigGlobalsRadiusHostAuthPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication port number (UDP) for use for this server"
+    ::= { luxlAuthConfigGlobalsRadiusHostEntry 3 }
+
+luxlAuthConfigGlobalsRadiusHostAcctPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Accounting port number (UDP) to use for this server"
+    ::= { luxlAuthConfigGlobalsRadiusHostEntry 4 }
+
+luxlAuthConfigGlobalsRadiusHostTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Seconds to wait for a response from this server. Use global timeout if
+         zero"
+    ::= { luxlAuthConfigGlobalsRadiusHostEntry 5 }
+
+luxlAuthConfigGlobalsRadiusHostRetransmit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of times a request is resent to an unresponding server. Use
+         global retransmit if zero"
+    ::= { luxlAuthConfigGlobalsRadiusHostEntry 6 }
+
+luxlAuthConfigGlobalsRadiusHostKey OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The secret key to use for this server. Use global key if empty"
+    ::= { luxlAuthConfigGlobalsRadiusHostEntry 7 }
+
+luxlAuthConfigGlobalsTacacs OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobals 3 }
+
+luxlAuthConfigGlobalsTacacsGlobal OBJECT IDENTIFIER
+    ::= { luxlAuthConfigGlobalsTacacs 1 }
+
+luxlAuthConfigGlobalsTacacsGlobalTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global timeout for for TACACS servers. Can be overridden by individual
+         host entries. (1 to 1000 seconds)"
+    ::= { luxlAuthConfigGlobalsTacacsGlobal 1 }
+
+luxlAuthConfigGlobalsTacacsGlobalDeadtime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global deadtime for TACACS servers. (0 to 1440 minutes)"
+    ::= { luxlAuthConfigGlobalsTacacsGlobal 2 }
+
+luxlAuthConfigGlobalsTacacsGlobalKey OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global secret key for TACACS servers. Can be overridden by individual
+         host entries."
+    ::= { luxlAuthConfigGlobalsTacacsGlobal 3 }
+
+luxlAuthConfigGlobalsTacacsHostTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLAuthConfigGlobalsTacacsHostEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Tacacs servers useed to query for TACACS
+         authentication"
+    ::= { luxlAuthConfigGlobalsTacacs 2 }
+
+luxlAuthConfigGlobalsTacacsHostEntry OBJECT-TYPE
+    SYNTAX      LUXLAuthConfigGlobalsTacacsHostEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry defines a TACACS server, with attributes used for contacting
+         it. Host entries are consulted in numerical order of the entry index"
+    INDEX       { luxlAuthConfigGlobalsTacacsHostIndex }
+    ::= { luxlAuthConfigGlobalsTacacsHostTable 1 }
+
+LUXLAuthConfigGlobalsTacacsHostEntry ::= SEQUENCE {
+    luxlAuthConfigGlobalsTacacsHostIndex    Integer32,
+    luxlAuthConfigGlobalsTacacsHostAddress      LUXLDisplayString,
+    luxlAuthConfigGlobalsTacacsHostAuthPort     Unsigned32,
+    luxlAuthConfigGlobalsTacacsHostTimeout      Unsigned32,
+    luxlAuthConfigGlobalsTacacsHostKey      LUXLDisplayString
+}
+
+luxlAuthConfigGlobalsTacacsHostIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Host entry index"
+    ::= { luxlAuthConfigGlobalsTacacsHostEntry 1 }
+
+luxlAuthConfigGlobalsTacacsHostAddress OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "IPv4/IPv6 address or hostname of this server"
+    ::= { luxlAuthConfigGlobalsTacacsHostEntry 2 }
+
+luxlAuthConfigGlobalsTacacsHostAuthPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication port number (TCP) to use for this server"
+    ::= { luxlAuthConfigGlobalsTacacsHostEntry 3 }
+
+luxlAuthConfigGlobalsTacacsHostTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Seconds to wait for a response from this server. Use global timeout if
+         zero"
+    ::= { luxlAuthConfigGlobalsTacacsHostEntry 4 }
+
+luxlAuthConfigGlobalsTacacsHostKey OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The secret key to use for this server. Use global key if empty"
+    ::= { luxlAuthConfigGlobalsTacacsHostEntry 5 }
+
+luxlAuthMibConformance OBJECT IDENTIFIER
+    ::= { luxlAuthMib 2 }
+
+luxlAuthMibCompliances OBJECT IDENTIFIER
+    ::= { luxlAuthMibConformance 1 }
+
+luxlAuthMibGroups OBJECT IDENTIFIER
+    ::= { luxlAuthMibConformance 2 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsMethod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 1 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsMethod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 2 }
+
+luxlAuthConfigGlobalsAgentsSshAuthenMethodsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsAgentsSshAuthenMethodsMethod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 3 }
+
+luxlAuthConfigGlobalsAgentsHttpAuthenMethodsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsAgentsHttpAuthenMethodsMethod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 4 }
+
+luxlAuthConfigGlobalsAgentsConsoleAuthorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsAgentsConsoleAuthorMethod, 
+                  luxlAuthConfigGlobalsAgentsConsoleAuthorCmdEnable, 
+                  luxlAuthConfigGlobalsAgentsConsoleAuthorCmdPrivLvl, 
+                  luxlAuthConfigGlobalsAgentsConsoleAuthorCfgCmdEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 5 }
+
+luxlAuthConfigGlobalsAgentsTelnetAuthorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsAgentsTelnetAuthorMethod, 
+                  luxlAuthConfigGlobalsAgentsTelnetAuthorCmdEnable, 
+                  luxlAuthConfigGlobalsAgentsTelnetAuthorCmdPrivLvl, 
+                  luxlAuthConfigGlobalsAgentsTelnetAuthorCfgCmdEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 6 }
+
+luxlAuthConfigGlobalsAgentsSshAuthorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsAgentsSshAuthorMethod, 
+                  luxlAuthConfigGlobalsAgentsSshAuthorCmdEnable, 
+                  luxlAuthConfigGlobalsAgentsSshAuthorCmdPrivLvl, 
+                  luxlAuthConfigGlobalsAgentsSshAuthorCfgCmdEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 7 }
+
+luxlAuthConfigGlobalsAgentsConsoleAcctInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsAgentsConsoleAcctMethod, 
+                  luxlAuthConfigGlobalsAgentsConsoleAcctCmdEnable, 
+                  luxlAuthConfigGlobalsAgentsConsoleAcctCmdPrivLvl, 
+                  luxlAuthConfigGlobalsAgentsConsoleAcctExecEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 8 }
+
+luxlAuthConfigGlobalsAgentsTelnetAcctInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsAgentsTelnetAcctMethod, 
+                  luxlAuthConfigGlobalsAgentsTelnetAcctCmdEnable, 
+                  luxlAuthConfigGlobalsAgentsTelnetAcctCmdPrivLvl, 
+                  luxlAuthConfigGlobalsAgentsTelnetAcctExecEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 9 }
+
+luxlAuthConfigGlobalsAgentsSshAcctInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsAgentsSshAcctMethod, 
+                  luxlAuthConfigGlobalsAgentsSshAcctCmdEnable, 
+                  luxlAuthConfigGlobalsAgentsSshAcctCmdPrivLvl, 
+                  luxlAuthConfigGlobalsAgentsSshAcctExecEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 10 }
+
+luxlAuthConfigGlobalsRadiusGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsRadiusGlobalTimeout, 
+                  luxlAuthConfigGlobalsRadiusGlobalRetransmit, 
+                  luxlAuthConfigGlobalsRadiusGlobalDeadtime, 
+                  luxlAuthConfigGlobalsRadiusGlobalKey, 
+                  luxlAuthConfigGlobalsRadiusGlobalNasIpv4Enable, 
+                  luxlAuthConfigGlobalsRadiusGlobalNasIpv4Address, 
+                  luxlAuthConfigGlobalsRadiusGlobalNasIpv6Enable, 
+                  luxlAuthConfigGlobalsRadiusGlobalNasIpv6Address, 
+                  luxlAuthConfigGlobalsRadiusGlobalNasIdentifier }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 11 }
+
+luxlAuthConfigGlobalsRadiusHostTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsRadiusHostAddress, 
+                  luxlAuthConfigGlobalsRadiusHostAuthPort, 
+                  luxlAuthConfigGlobalsRadiusHostAcctPort, 
+                  luxlAuthConfigGlobalsRadiusHostTimeout, 
+                  luxlAuthConfigGlobalsRadiusHostRetransmit, 
+                  luxlAuthConfigGlobalsRadiusHostKey }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 12 }
+
+luxlAuthConfigGlobalsTacacsGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsTacacsGlobalTimeout, 
+                  luxlAuthConfigGlobalsTacacsGlobalDeadtime, 
+                  luxlAuthConfigGlobalsTacacsGlobalKey }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 13 }
+
+luxlAuthConfigGlobalsTacacsHostTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlAuthConfigGlobalsTacacsHostAddress, 
+                  luxlAuthConfigGlobalsTacacsHostAuthPort, 
+                  luxlAuthConfigGlobalsTacacsHostTimeout, 
+                  luxlAuthConfigGlobalsTacacsHostKey }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlAuthMibGroups 14 }
+
+luxlAuthMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { 
+                  luxlAuthConfigGlobalsAgentsConsoleAuthenMethodsTableInfoGroup, 
+                  luxlAuthConfigGlobalsAgentsTelnetAuthenMethodsTableInfoGroup, 
+                  luxlAuthConfigGlobalsAgentsSshAuthenMethodsTableInfoGroup, 
+                  luxlAuthConfigGlobalsAgentsHttpAuthenMethodsTableInfoGroup, 
+                  luxlAuthConfigGlobalsAgentsConsoleAuthorInfoGroup, 
+                  luxlAuthConfigGlobalsAgentsTelnetAuthorInfoGroup, 
+                  luxlAuthConfigGlobalsAgentsSshAuthorInfoGroup, 
+                  luxlAuthConfigGlobalsAgentsConsoleAcctInfoGroup, 
+                  luxlAuthConfigGlobalsAgentsTelnetAcctInfoGroup, 
+                  luxlAuthConfigGlobalsAgentsSshAcctInfoGroup, 
+                  luxlAuthConfigGlobalsRadiusGlobalInfoGroup, 
+                  luxlAuthConfigGlobalsRadiusHostTableInfoGroup, 
+                  luxlAuthConfigGlobalsTacacsGlobalInfoGroup, 
+                  luxlAuthConfigGlobalsTacacsHostTableInfoGroup }
+
+    ::= { luxlAuthMibCompliances 1 }
+
+END

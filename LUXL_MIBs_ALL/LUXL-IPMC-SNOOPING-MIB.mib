@@ -1,0 +1,1969 @@
+-- *****************************************************************
+-- IPMC-SNOOPING-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-IPMC-SNOOPING-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlIpmcSnoopingMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the IPMC Snooping MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 69 }
+
+
+LUXLIpmcSnoopingIgmpGroupSrcListGroupFilterModeEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the group filter mode for a IGMP group
+         address."
+    SYNTAX      INTEGER { exclude(0), include(1), none(2) }
+
+LUXLIpmcSnoopingIgmpGroupSrcListSourceTypeEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the source filtering type from IGMP
+         snooping."
+    SYNTAX      INTEGER { deny(0), permit(1) }
+
+LUXLIpmcSnoopingIgmpInterfaceCompatibilityEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the version compatibility for IGMP snooping
+         VLAN interface."
+    SYNTAX      INTEGER { auto(0), igmpv1(1), igmpv2(2), igmpv3(3) }
+
+LUXLIpmcSnoopingIgmpRouterPortStatusEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the router port status from IGMP snooping."
+    SYNTAX      INTEGER { none(0), static(1), dynamic(2), both(3) }
+
+LUXLIpmcSnoopingIgmpVlanStatusQuerierStatusEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the querier status for IGMP snooping VLAN
+         interface."
+    SYNTAX      INTEGER { disabled(0), initial(1), idle(2), active(3) }
+
+LUXLIpmcSnoopingMldGroupSrcListGroupFilterModeEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the group filter mode for a MLD group
+         address."
+    SYNTAX      INTEGER { exclude(0), include(1), none(2) }
+
+LUXLIpmcSnoopingMldGroupSrcListSourceEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the source filtering type from MLD snooping."
+    SYNTAX      INTEGER { deny(0), permit(1) }
+
+LUXLIpmcSnoopingMldInterfaceCompatibilityEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the version compatibility for MLD snooping
+         VLAN interface."
+    SYNTAX      INTEGER { auto(0), mldv1(1), mldv2(2) }
+
+LUXLIpmcSnoopingMldRouterPortStatusEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the router port status from MLD snooping."
+    SYNTAX      INTEGER { none(0), static(1), dynamic(2), both(3) }
+
+LUXLIpmcSnoopingMldVlanStatusQuerierStatusEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the querier status for MLD snooping VLAN
+         interface."
+    SYNTAX      INTEGER { disabled(0), initial(1), idle(2), active(3) }
+
+luxlIpmcSnoopingMibObjects OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingMib 1 }
+
+luxlIpmcSnoopingConfig OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingMibObjects 2 }
+
+luxlIpmcSnoopingConfigIgmpGlobals OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingConfig 1 }
+
+luxlIpmcSnoopingConfigIgmpGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the IGMP snooping global functionality."
+    ::= { luxlIpmcSnoopingConfigIgmpGlobals 1 }
+
+luxlIpmcSnoopingConfigIgmpGlobalsUnregisteredFlooding OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the control for flooding unregistered IPv4 multicast
+         traffic."
+    ::= { luxlIpmcSnoopingConfigIgmpGlobals 2 }
+
+luxlIpmcSnoopingConfigIgmpGlobalsSsmRangeAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The address prefix value defined for IGMP SSM service model."
+    ::= { luxlIpmcSnoopingConfigIgmpGlobals 3 }
+
+luxlIpmcSnoopingConfigIgmpGlobalsSsmRangeMask OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The address prefix length defined for IGMP SSM service model."
+    ::= { luxlIpmcSnoopingConfigIgmpGlobals 4 }
+
+luxlIpmcSnoopingConfigIgmpGlobalsProxy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the IGMP proxy functionality."
+    ::= { luxlIpmcSnoopingConfigIgmpGlobals 5 }
+
+luxlIpmcSnoopingConfigIgmpGlobalsLeaveProxy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the IGMP leave-proxy functionality."
+    ::= { luxlIpmcSnoopingConfigIgmpGlobals 6 }
+
+luxlIpmcSnoopingConfigIgmpPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingConfigIgmpPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing extra IGMP snooping helper features per
+         port basis"
+    ::= { luxlIpmcSnoopingConfig 2 }
+
+luxlIpmcSnoopingConfigIgmpPortEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingConfigIgmpPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters"
+    INDEX       { luxlIpmcSnoopingConfigIgmpPortPortIndex }
+    ::= { luxlIpmcSnoopingConfigIgmpPortTable 1 }
+
+LUXLIpmcSnoopingConfigIgmpPortEntry ::= SEQUENCE {
+    luxlIpmcSnoopingConfigIgmpPortPortIndex     LUXLInterfaceIndex,
+    luxlIpmcSnoopingConfigIgmpPortAsRouterPort      TruthValue,
+    luxlIpmcSnoopingConfigIgmpPortDoFastLeave   TruthValue,
+    luxlIpmcSnoopingConfigIgmpPortThrottlingNumber      Integer32,
+    luxlIpmcSnoopingConfigIgmpPortFilteringProfile      LUXLDisplayString
+}
+
+luxlIpmcSnoopingConfigIgmpPortPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlIpmcSnoopingConfigIgmpPortEntry 1 }
+
+luxlIpmcSnoopingConfigIgmpPortAsRouterPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the IGMP static router port functionality."
+    ::= { luxlIpmcSnoopingConfigIgmpPortEntry 2 }
+
+luxlIpmcSnoopingConfigIgmpPortDoFastLeave OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the IGMP fast leave functionality."
+    ::= { luxlIpmcSnoopingConfigIgmpPortEntry 3 }
+
+luxlIpmcSnoopingConfigIgmpPortThrottlingNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The maximum number of groups to be registered on the specific port."
+    ::= { luxlIpmcSnoopingConfigIgmpPortEntry 4 }
+
+luxlIpmcSnoopingConfigIgmpPortFilteringProfile OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The profile used for IGMP filtering per-port basis."
+    ::= { luxlIpmcSnoopingConfigIgmpPortEntry 5 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingConfigIgmpInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing IGMP Snooping VLAN interface entries."
+    ::= { luxlIpmcSnoopingConfig 3 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingConfigIgmpInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlIpmcSnoopingConfigIgmpInterfaceIfIndex }
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTable 1 }
+
+LUXLIpmcSnoopingConfigIgmpInterfaceEntry ::= SEQUENCE {
+    luxlIpmcSnoopingConfigIgmpInterfaceIfIndex      LUXLInterfaceIndex,
+    luxlIpmcSnoopingConfigIgmpInterfaceAdminState   TruthValue,
+    luxlIpmcSnoopingConfigIgmpInterfaceQuerierElection      TruthValue,
+    luxlIpmcSnoopingConfigIgmpInterfaceQuerierAddress   IpAddress,
+    luxlIpmcSnoopingConfigIgmpInterfaceCompatibility    LUXLIpmcSnoopingIgmpInterfaceCompatibilityEnum,
+    luxlIpmcSnoopingConfigIgmpInterfacePriority     LUXLUnsigned8,
+    luxlIpmcSnoopingConfigIgmpInterfaceRv   Unsigned32,
+    luxlIpmcSnoopingConfigIgmpInterfaceQi   Unsigned32,
+    luxlIpmcSnoopingConfigIgmpInterfaceQri      Unsigned32,
+    luxlIpmcSnoopingConfigIgmpInterfaceLmqi     Unsigned32,
+    luxlIpmcSnoopingConfigIgmpInterfaceUri      Unsigned32,
+    luxlIpmcSnoopingConfigIgmpInterfaceAction   LUXLRowEditorState
+}
+
+luxlIpmcSnoopingConfigIgmpInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 1 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the IGMP snooping per-VLAN functionality."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 2 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceQuerierElection OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the capability to run IGMP Querier election per-VLAN
+         basis."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 3 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceQuerierAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The static IPv4 source address of the specific IGMP interface for
+         seding IGMP Query message with respect to IGMP Querier election."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 4 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceCompatibility OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingIgmpInterfaceCompatibilityEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The compatibility control for IGMP snooping to run the corresponding
+         protocol version."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 5 }
+
+luxlIpmcSnoopingConfigIgmpInterfacePriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used for prioritizing the IGMP control frames to be
+         sent for IGMP snooping."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 6 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceRv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Robustness Variable is used to control IGMP protocol stack
+         as stated in RFC-3376 8.1."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 7 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceQi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Query Interval is used to control IGMP protocol stack as
+         stated in RFC-3376 8.2."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 8 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceQri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Query Response Intervalis used to control IGMP protocol
+         stack as stated in RFC-3376 8.3."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 9 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceLmqi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Last Member Query Interval is used to control IGMP
+         protocol stack as stated in RFC-3376 8.8."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 10 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceUri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Unsolicited Report Interval is used to control IGMP
+         protocol stack as stated in RFC-3376 8.11."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 11 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceEntry 100 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingConfig 4 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 1 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the IGMP snooping per-VLAN functionality."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 2 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorQuerierElection OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the capability to run IGMP Querier election per-VLAN
+         basis."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 3 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorQuerierAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The static IPv4 source address of the specific IGMP interface for
+         seding IGMP Query message with respect to IGMP Querier election."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 4 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorCompatibility OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingIgmpInterfaceCompatibilityEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The compatibility control for IGMP snooping to run the corresponding
+         protocol version."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 5 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorPriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used for prioritizing the IGMP control frames to be
+         sent for IGMP snooping."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 6 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorRv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Robustness Variable is used to control IGMP protocol stack
+         as stated in RFC-3376 8.1."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 7 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorQi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Query Interval is used to control IGMP protocol stack as
+         stated in RFC-3376 8.2."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 8 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorQri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Query Response Intervalis used to control IGMP protocol
+         stack as stated in RFC-3376 8.3."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 9 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorLmqi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Last Member Query Interval is used to control IGMP
+         protocol stack as stated in RFC-3376 8.8."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 10 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorUri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Unsolicited Report Interval is used to control IGMP
+         protocol stack as stated in RFC-3376 8.11."
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 11 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditor 100 }
+
+luxlIpmcSnoopingConfigMldGlobals OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingConfig 5 }
+
+luxlIpmcSnoopingConfigMldGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the MLD snooping global functionality."
+    ::= { luxlIpmcSnoopingConfigMldGlobals 1 }
+
+luxlIpmcSnoopingConfigMldGlobalsUnregisteredFlooding OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the control for flooding unregistered IPv6 multicast
+         traffic."
+    ::= { luxlIpmcSnoopingConfigMldGlobals 2 }
+
+luxlIpmcSnoopingConfigMldGlobalsSsmRangeAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The address prefix value defined for MLD SSM service model."
+    ::= { luxlIpmcSnoopingConfigMldGlobals 3 }
+
+luxlIpmcSnoopingConfigMldGlobalsSsmRangeMask OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The address prefix length defined for MLD SSM service model."
+    ::= { luxlIpmcSnoopingConfigMldGlobals 4 }
+
+luxlIpmcSnoopingConfigMldGlobalsProxy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the MLD proxy functionality."
+    ::= { luxlIpmcSnoopingConfigMldGlobals 5 }
+
+luxlIpmcSnoopingConfigMldGlobalsLeaveProxy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the MLD leave-proxy functionality."
+    ::= { luxlIpmcSnoopingConfigMldGlobals 6 }
+
+luxlIpmcSnoopingConfigMldPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingConfigMldPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing extra MLD snooping helper features per
+         port basis"
+    ::= { luxlIpmcSnoopingConfig 6 }
+
+luxlIpmcSnoopingConfigMldPortEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingConfigMldPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters"
+    INDEX       { luxlIpmcSnoopingConfigMldPortPortIndex }
+    ::= { luxlIpmcSnoopingConfigMldPortTable 1 }
+
+LUXLIpmcSnoopingConfigMldPortEntry ::= SEQUENCE {
+    luxlIpmcSnoopingConfigMldPortPortIndex      LUXLInterfaceIndex,
+    luxlIpmcSnoopingConfigMldPortAsRouterPort   TruthValue,
+    luxlIpmcSnoopingConfigMldPortDoFastLeave    TruthValue,
+    luxlIpmcSnoopingConfigMldPortThrottlingNumber   Integer32,
+    luxlIpmcSnoopingConfigMldPortFilteringProfile   LUXLDisplayString
+}
+
+luxlIpmcSnoopingConfigMldPortPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlIpmcSnoopingConfigMldPortEntry 1 }
+
+luxlIpmcSnoopingConfigMldPortAsRouterPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the MLD static router port functionality."
+    ::= { luxlIpmcSnoopingConfigMldPortEntry 2 }
+
+luxlIpmcSnoopingConfigMldPortDoFastLeave OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the MLD fast leave functionality."
+    ::= { luxlIpmcSnoopingConfigMldPortEntry 3 }
+
+luxlIpmcSnoopingConfigMldPortThrottlingNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The maximum number of groups to be registered on the specific port."
+    ::= { luxlIpmcSnoopingConfigMldPortEntry 4 }
+
+luxlIpmcSnoopingConfigMldPortFilteringProfile OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The profile used for MLD filtering per-port basis."
+    ::= { luxlIpmcSnoopingConfigMldPortEntry 5 }
+
+luxlIpmcSnoopingConfigMldInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingConfigMldInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for managing MLD Snooping VLAN interface entries."
+    ::= { luxlIpmcSnoopingConfig 7 }
+
+luxlIpmcSnoopingConfigMldInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingConfigMldInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlIpmcSnoopingConfigMldInterfaceIfIndex }
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTable 1 }
+
+LUXLIpmcSnoopingConfigMldInterfaceEntry ::= SEQUENCE {
+    luxlIpmcSnoopingConfigMldInterfaceIfIndex   LUXLInterfaceIndex,
+    luxlIpmcSnoopingConfigMldInterfaceAdminState    TruthValue,
+    luxlIpmcSnoopingConfigMldInterfaceQuerierElection   TruthValue,
+    luxlIpmcSnoopingConfigMldInterfaceCompatibility     LUXLIpmcSnoopingMldInterfaceCompatibilityEnum,
+    luxlIpmcSnoopingConfigMldInterfacePriority      LUXLUnsigned8,
+    luxlIpmcSnoopingConfigMldInterfaceRv    Unsigned32,
+    luxlIpmcSnoopingConfigMldInterfaceQi    Unsigned32,
+    luxlIpmcSnoopingConfigMldInterfaceQri   Unsigned32,
+    luxlIpmcSnoopingConfigMldInterfaceLlqi      Unsigned32,
+    luxlIpmcSnoopingConfigMldInterfaceUri   Unsigned32,
+    luxlIpmcSnoopingConfigMldInterfaceAction    LUXLRowEditorState
+}
+
+luxlIpmcSnoopingConfigMldInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 1 }
+
+luxlIpmcSnoopingConfigMldInterfaceAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the MLD snooping per-VLAN functionality."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 2 }
+
+luxlIpmcSnoopingConfigMldInterfaceQuerierElection OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the capability to run MLD Querier election per-VLAN
+         basis."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 3 }
+
+luxlIpmcSnoopingConfigMldInterfaceCompatibility OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingMldInterfaceCompatibilityEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The compatibility control for MLD snooping to run the corresponding
+         protocol version."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 4 }
+
+luxlIpmcSnoopingConfigMldInterfacePriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used for prioritizing the MLD control frames to be sent
+         for MLD snooping."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 5 }
+
+luxlIpmcSnoopingConfigMldInterfaceRv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Robustness Variableis used to control MLD protocol stack
+         as stated in RFC-3810 9.1."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 6 }
+
+luxlIpmcSnoopingConfigMldInterfaceQi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Query Intervalis used to control MLD protocol stack as
+         stated in RFC-3810 9.2."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 7 }
+
+luxlIpmcSnoopingConfigMldInterfaceQri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Query Response Intervalis used to control MLD protocol
+         stack as stated in RFC-3810 9.3."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 8 }
+
+luxlIpmcSnoopingConfigMldInterfaceLlqi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Last Listener Query Interval is used to control MLD
+         protocol stack as stated in RFC-3810 9.8."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 9 }
+
+luxlIpmcSnoopingConfigMldInterfaceUri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Unsolicited Report Intervalis used to control MLD protocol
+         stack as stated in RFC-3810 9.11."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 10 }
+
+luxlIpmcSnoopingConfigMldInterfaceAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcSnoopingConfigMldInterfaceEntry 100 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingConfig 8 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 1 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the MLD snooping per-VLAN functionality."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 2 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorQuerierElection OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/Disable the capability to run MLD Querier election per-VLAN
+         basis."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 3 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorCompatibility OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingMldInterfaceCompatibilityEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The compatibility control for MLD snooping to run the corresponding
+         protocol version."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 4 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorPriority OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used for prioritizing the MLD control frames to be sent
+         for MLD snooping."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 5 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorRv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Robustness Variableis used to control MLD protocol stack
+         as stated in RFC-3810 9.1."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 6 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorQi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Query Intervalis used to control MLD protocol stack as
+         stated in RFC-3810 9.2."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 7 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorQri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Query Response Intervalis used to control MLD protocol
+         stack as stated in RFC-3810 9.3."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 8 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorLlqi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Last Listener Query Interval is used to control MLD
+         protocol stack as stated in RFC-3810 9.8."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 9 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorUri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This setting Unsolicited Report Intervalis used to control MLD protocol
+         stack as stated in RFC-3810 9.11."
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 10 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlIpmcSnoopingConfigMldInterfaceTableRowEditor 100 }
+
+luxlIpmcSnoopingStatus OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingMibObjects 3 }
+
+luxlIpmcSnoopingStatusGroupAddressCount OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingStatus 1 }
+
+luxlIpmcSnoopingStatusGroupAddressCountFromIgmp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the total number of registered multicast group
+         address from IGMP snooping."
+    ::= { luxlIpmcSnoopingStatusGroupAddressCount 1 }
+
+luxlIpmcSnoopingStatusGroupAddressCountFromMld OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the total number of registered multicast group
+         address from MLD snooping."
+    ::= { luxlIpmcSnoopingStatusGroupAddressCount 2 }
+
+luxlIpmcSnoopingStatusIgmpRouterPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingStatusIgmpRouterPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the router port status from IGMP
+         snooping configuration."
+    ::= { luxlIpmcSnoopingStatus 2 }
+
+luxlIpmcSnoopingStatusIgmpRouterPortEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingStatusIgmpRouterPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcSnoopingStatusIgmpRouterPortPortIndex }
+    ::= { luxlIpmcSnoopingStatusIgmpRouterPortTable 1 }
+
+LUXLIpmcSnoopingStatusIgmpRouterPortEntry ::= SEQUENCE {
+    luxlIpmcSnoopingStatusIgmpRouterPortPortIndex   LUXLInterfaceIndex,
+    luxlIpmcSnoopingStatusIgmpRouterPortStatus      LUXLIpmcSnoopingIgmpRouterPortStatusEnum
+}
+
+luxlIpmcSnoopingStatusIgmpRouterPortPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlIpmcSnoopingStatusIgmpRouterPortEntry 1 }
+
+luxlIpmcSnoopingStatusIgmpRouterPortStatus OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingIgmpRouterPortStatusEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The IGMP snooping router port status."
+    ::= { luxlIpmcSnoopingStatusIgmpRouterPortEntry 2 }
+
+luxlIpmcSnoopingStatusIgmpVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingStatusIgmpVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the per VLAN interface status in IGMP
+         snooping configuration."
+    ::= { luxlIpmcSnoopingStatus 3 }
+
+luxlIpmcSnoopingStatusIgmpVlanEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingStatusIgmpVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcSnoopingStatusIgmpVlanIfIndex }
+    ::= { luxlIpmcSnoopingStatusIgmpVlanTable 1 }
+
+LUXLIpmcSnoopingStatusIgmpVlanEntry ::= SEQUENCE {
+    luxlIpmcSnoopingStatusIgmpVlanIfIndex   LUXLInterfaceIndex,
+    luxlIpmcSnoopingStatusIgmpVlanQuerierStatus     LUXLIpmcSnoopingIgmpVlanStatusQuerierStatusEnum,
+    luxlIpmcSnoopingStatusIgmpVlanActiveQuerierAddress      IpAddress,
+    luxlIpmcSnoopingStatusIgmpVlanQuerierUptime     Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanQueryInterval     Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanStartupQueryCount     Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanQuerierExpiryTime     Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanQuerierVersion    LUXLUnsigned8,
+    luxlIpmcSnoopingStatusIgmpVlanQuerierPresentTimeout     Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanHostVersion   LUXLUnsigned8,
+    luxlIpmcSnoopingStatusIgmpVlanHostPresentTimeout    Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanCounterTxQuery    Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanCounterTxSpecificQuery    Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanCounterRxQuery    Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanCounterRxV1Join   Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanCounterRxV2Join   Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanCounterRxV2Leave      Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanCounterRxV3Join   Unsigned32,
+    luxlIpmcSnoopingStatusIgmpVlanCounterRxErrors   Unsigned32
+}
+
+luxlIpmcSnoopingStatusIgmpVlanIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 1 }
+
+luxlIpmcSnoopingStatusIgmpVlanQuerierStatus OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingIgmpVlanStatusQuerierStatusEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The IGMP Querier status of the specific VLAN interface."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 2 }
+
+luxlIpmcSnoopingStatusIgmpVlanActiveQuerierAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The active IGMP Querier address on the specific VLAN interface."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 3 }
+
+luxlIpmcSnoopingStatusIgmpVlanQuerierUptime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the in operation timer for the specific interface act as a
+         IGMP Querier."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 4 }
+
+luxlIpmcSnoopingStatusIgmpVlanQueryInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.2."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 5 }
+
+luxlIpmcSnoopingStatusIgmpVlanStartupQueryCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.7."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 6 }
+
+luxlIpmcSnoopingStatusIgmpVlanQuerierExpiryTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.5."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 7 }
+
+luxlIpmcSnoopingStatusIgmpVlanQuerierVersion OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current IGMP version that the IGMP interface should
+         behave in running IGMP protocol as a router."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 8 }
+
+luxlIpmcSnoopingStatusIgmpVlanQuerierPresentTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.12."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 9 }
+
+luxlIpmcSnoopingStatusIgmpVlanHostVersion OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current IGMP version that the IGMP interface should
+         behave in running IGMP protocol as a host."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 10 }
+
+luxlIpmcSnoopingStatusIgmpVlanHostPresentTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.13."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 11 }
+
+luxlIpmcSnoopingStatusIgmpVlanCounterTxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         transmitting IGMP Query control frames."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 12 }
+
+luxlIpmcSnoopingStatusIgmpVlanCounterTxSpecificQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         transmitting IGMP Specific Query control frames."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 13 }
+
+luxlIpmcSnoopingStatusIgmpVlanCounterRxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMP Query control frames."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 14 }
+
+luxlIpmcSnoopingStatusIgmpVlanCounterRxV1Join OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv1 Join control frames."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 15 }
+
+luxlIpmcSnoopingStatusIgmpVlanCounterRxV2Join OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv2 Join control frames."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 16 }
+
+luxlIpmcSnoopingStatusIgmpVlanCounterRxV2Leave OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv2 Leave control frames."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 17 }
+
+luxlIpmcSnoopingStatusIgmpVlanCounterRxV3Join OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv3 Join control frames."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 18 }
+
+luxlIpmcSnoopingStatusIgmpVlanCounterRxErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific IGMP interface for
+         receiving invalid IGMP control frames."
+    ::= { luxlIpmcSnoopingStatusIgmpVlanEntry 19 }
+
+luxlIpmcSnoopingStatusIgmpGroupAddressTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingStatusIgmpGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the registered IPv4 multicast group
+         address status from IGMP snooping."
+    ::= { luxlIpmcSnoopingStatus 4 }
+
+luxlIpmcSnoopingStatusIgmpGroupAddressEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingStatusIgmpGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcSnoopingStatusIgmpGroupAddressIfIndex, luxlIpmcSnoopingStatusIgmpGroupAddressGroupAddress }
+    ::= { luxlIpmcSnoopingStatusIgmpGroupAddressTable 1 }
+
+LUXLIpmcSnoopingStatusIgmpGroupAddressEntry ::= SEQUENCE {
+    luxlIpmcSnoopingStatusIgmpGroupAddressIfIndex   LUXLInterfaceIndex,
+    luxlIpmcSnoopingStatusIgmpGroupAddressGroupAddress      IpAddress,
+    luxlIpmcSnoopingStatusIgmpGroupAddressMemberPorts   LUXLPortList,
+    luxlIpmcSnoopingStatusIgmpGroupAddressHardwareSwitch    TruthValue
+}
+
+luxlIpmcSnoopingStatusIgmpGroupAddressIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupAddressEntry 1 }
+
+luxlIpmcSnoopingStatusIgmpGroupAddressGroupAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv4 multicast address."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupAddressEntry 2 }
+
+luxlIpmcSnoopingStatusIgmpGroupAddressMemberPorts OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the memberships of the registered multicast group
+         address from IGMP snooping."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupAddressEntry 3 }
+
+luxlIpmcSnoopingStatusIgmpGroupAddressHardwareSwitch OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote whether the multicast traffic destined to the
+         registered group address could be forwarding by switch hardware or not."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupAddressEntry 4 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingStatusIgmpGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the address SFM (a.k.a Source List
+         Multicast) status in source list of the registered IPv4 multicast group
+         from IGMP snooping."
+    ::= { luxlIpmcSnoopingStatus 5 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingStatusIgmpGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcSnoopingStatusIgmpGroupSrcListIfIndex, luxlIpmcSnoopingStatusIgmpGroupSrcListGroupAddress, luxlIpmcSnoopingStatusIgmpGroupSrcListPortIndex, luxlIpmcSnoopingStatusIgmpGroupSrcListHostAddress }
+    ::= { luxlIpmcSnoopingStatusIgmpGroupSrcListTable 1 }
+
+LUXLIpmcSnoopingStatusIgmpGroupSrcListEntry ::= SEQUENCE {
+    luxlIpmcSnoopingStatusIgmpGroupSrcListIfIndex   LUXLInterfaceIndex,
+    luxlIpmcSnoopingStatusIgmpGroupSrcListGroupAddress      IpAddress,
+    luxlIpmcSnoopingStatusIgmpGroupSrcListPortIndex     LUXLInterfaceIndex,
+    luxlIpmcSnoopingStatusIgmpGroupSrcListHostAddress   IpAddress,
+    luxlIpmcSnoopingStatusIgmpGroupSrcListGroupFilterMode   LUXLIpmcSnoopingIgmpGroupSrcListGroupFilterModeEnum,
+    luxlIpmcSnoopingStatusIgmpGroupSrcListFilterTimer   Unsigned32,
+    luxlIpmcSnoopingStatusIgmpGroupSrcListSourceType    LUXLIpmcSnoopingIgmpGroupSrcListSourceTypeEnum,
+    luxlIpmcSnoopingStatusIgmpGroupSrcListSourceTimer   Unsigned32,
+    luxlIpmcSnoopingStatusIgmpGroupSrcListHardwareFilter    TruthValue
+}
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupSrcListEntry 1 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListGroupAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv4 multicast address."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupSrcListEntry 2 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupSrcListEntry 3 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListHostAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv4 source address."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupSrcListEntry 4 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListGroupFilterMode OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingIgmpGroupSrcListGroupFilterModeEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the source filtering mode of the specific
+         registered multicast group address from IGMP snooping."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupSrcListEntry 5 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListFilterTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to count down the timer for the specific multicast group's
+         filtering mode transition."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupSrcListEntry 6 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListSourceType OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingIgmpGroupSrcListSourceTypeEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the filtering type of the specific source address
+         in multicasting to the registered group address."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupSrcListEntry 7 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListSourceTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to count down the timer for purging the specific source
+         address from the registered multicast group's source list."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupSrcListEntry 8 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListHardwareFilter OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote whether the traffic destined to the multicast
+         group address from the specific source address could be forwarding by
+         switch hardware or not."
+    ::= { luxlIpmcSnoopingStatusIgmpGroupSrcListEntry 9 }
+
+luxlIpmcSnoopingStatusMldRouterPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingStatusMldRouterPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the router port status from MLD snooping
+         configuration."
+    ::= { luxlIpmcSnoopingStatus 6 }
+
+luxlIpmcSnoopingStatusMldRouterPortEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingStatusMldRouterPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcSnoopingStatusMldRouterPortPortIndex }
+    ::= { luxlIpmcSnoopingStatusMldRouterPortTable 1 }
+
+LUXLIpmcSnoopingStatusMldRouterPortEntry ::= SEQUENCE {
+    luxlIpmcSnoopingStatusMldRouterPortPortIndex    LUXLInterfaceIndex,
+    luxlIpmcSnoopingStatusMldRouterPortStatus   LUXLIpmcSnoopingMldRouterPortStatusEnum
+}
+
+luxlIpmcSnoopingStatusMldRouterPortPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlIpmcSnoopingStatusMldRouterPortEntry 1 }
+
+luxlIpmcSnoopingStatusMldRouterPortStatus OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingMldRouterPortStatusEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The MLD snooping router port status."
+    ::= { luxlIpmcSnoopingStatusMldRouterPortEntry 2 }
+
+luxlIpmcSnoopingStatusMldVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingStatusMldVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the per VLAN interface status in MLD
+         snooping configuration."
+    ::= { luxlIpmcSnoopingStatus 7 }
+
+luxlIpmcSnoopingStatusMldVlanEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingStatusMldVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcSnoopingStatusMldVlanIfIndex }
+    ::= { luxlIpmcSnoopingStatusMldVlanTable 1 }
+
+LUXLIpmcSnoopingStatusMldVlanEntry ::= SEQUENCE {
+    luxlIpmcSnoopingStatusMldVlanIfIndex    LUXLInterfaceIndex,
+    luxlIpmcSnoopingStatusMldVlanQuerierStatus      LUXLIpmcSnoopingMldVlanStatusQuerierStatusEnum,
+    luxlIpmcSnoopingStatusMldVlanActiveQuerierAddress   InetAddressIPv6,
+    luxlIpmcSnoopingStatusMldVlanQuerierUptime      Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanQueryInterval      Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanStartupQueryCount      Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanQuerierExpiryTime      Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanQuerierVersion     LUXLUnsigned8,
+    luxlIpmcSnoopingStatusMldVlanQuerierPresentTimeout      Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanHostVersion    LUXLUnsigned8,
+    luxlIpmcSnoopingStatusMldVlanHostPresentTimeout     Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanCounterTxQuery     Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanCounterTxSpecificQuery     Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanCounterRxQuery     Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanCounterRxV1Report      Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanCounterRxV1Done    Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanCounterRxV2Report      Unsigned32,
+    luxlIpmcSnoopingStatusMldVlanCounterRxErrors    Unsigned32
+}
+
+luxlIpmcSnoopingStatusMldVlanIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 1 }
+
+luxlIpmcSnoopingStatusMldVlanQuerierStatus OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingMldVlanStatusQuerierStatusEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The MLD Querier status of the specific VLAN interface."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 2 }
+
+luxlIpmcSnoopingStatusMldVlanActiveQuerierAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The active MLD Querier address on the specific VLAN interface."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 3 }
+
+luxlIpmcSnoopingStatusMldVlanQuerierUptime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the in operation timer for the specific interface act as a
+         MLD Querier."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 4 }
+
+luxlIpmcSnoopingStatusMldVlanQueryInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.2."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 5 }
+
+luxlIpmcSnoopingStatusMldVlanStartupQueryCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.7."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 6 }
+
+luxlIpmcSnoopingStatusMldVlanQuerierExpiryTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.5."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 7 }
+
+luxlIpmcSnoopingStatusMldVlanQuerierVersion OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current MLD version that the MLD interface should
+         behave in running MLD protocol as a router."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 8 }
+
+luxlIpmcSnoopingStatusMldVlanQuerierPresentTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.12."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 9 }
+
+luxlIpmcSnoopingStatusMldVlanHostVersion OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current MLD version that the MLD interface should
+         behave in running MLD protocol as a host."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 10 }
+
+luxlIpmcSnoopingStatusMldVlanHostPresentTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.13."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 11 }
+
+luxlIpmcSnoopingStatusMldVlanCounterTxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         transmitting MLD Query control frames."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 12 }
+
+luxlIpmcSnoopingStatusMldVlanCounterTxSpecificQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         transmitting MLD Specific Query control frames."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 13 }
+
+luxlIpmcSnoopingStatusMldVlanCounterRxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLD Query control frames."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 14 }
+
+luxlIpmcSnoopingStatusMldVlanCounterRxV1Report OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLDv1 Report control frames."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 15 }
+
+luxlIpmcSnoopingStatusMldVlanCounterRxV1Done OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLDv1 Done control frames."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 16 }
+
+luxlIpmcSnoopingStatusMldVlanCounterRxV2Report OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLDv2 Report control frames."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 17 }
+
+luxlIpmcSnoopingStatusMldVlanCounterRxErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It presents the current packet count on the specific MLD interface for
+         receiving invalid MLD control frames."
+    ::= { luxlIpmcSnoopingStatusMldVlanEntry 18 }
+
+luxlIpmcSnoopingStatusMldGroupAddressTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingStatusMldGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the registered IPv6 multicast group
+         address status from MLD snooping."
+    ::= { luxlIpmcSnoopingStatus 8 }
+
+luxlIpmcSnoopingStatusMldGroupAddressEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingStatusMldGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcSnoopingStatusMldGroupAddressIfIndex, luxlIpmcSnoopingStatusMldGroupAddressGroupAddress }
+    ::= { luxlIpmcSnoopingStatusMldGroupAddressTable 1 }
+
+LUXLIpmcSnoopingStatusMldGroupAddressEntry ::= SEQUENCE {
+    luxlIpmcSnoopingStatusMldGroupAddressIfIndex    LUXLInterfaceIndex,
+    luxlIpmcSnoopingStatusMldGroupAddressGroupAddress   InetAddressIPv6,
+    luxlIpmcSnoopingStatusMldGroupAddressMemberPorts    LUXLPortList,
+    luxlIpmcSnoopingStatusMldGroupAddressHardwareSwitch     TruthValue
+}
+
+luxlIpmcSnoopingStatusMldGroupAddressIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingStatusMldGroupAddressEntry 1 }
+
+luxlIpmcSnoopingStatusMldGroupAddressGroupAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv6 multicast address."
+    ::= { luxlIpmcSnoopingStatusMldGroupAddressEntry 2 }
+
+luxlIpmcSnoopingStatusMldGroupAddressMemberPorts OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the memberships of the registered multicast group
+         address from MLD snooping."
+    ::= { luxlIpmcSnoopingStatusMldGroupAddressEntry 3 }
+
+luxlIpmcSnoopingStatusMldGroupAddressHardwareSwitch OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote whether the multicast traffic destined to the
+         registered group address could be forwarding by switch hardware or not."
+    ::= { luxlIpmcSnoopingStatusMldGroupAddressEntry 4 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIpmcSnoopingStatusMldGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for displaying the address SFM (a.k.a Source List
+         Multicast) status in source list of the registered IPv6 multicast group
+         from MLD snooping."
+    ::= { luxlIpmcSnoopingStatus 9 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListEntry OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingStatusMldGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters."
+    INDEX       { luxlIpmcSnoopingStatusMldGroupSrcListIfIndex, luxlIpmcSnoopingStatusMldGroupSrcListGroupAddress, luxlIpmcSnoopingStatusMldGroupSrcListPortIndex, luxlIpmcSnoopingStatusMldGroupSrcListHostAddress }
+    ::= { luxlIpmcSnoopingStatusMldGroupSrcListTable 1 }
+
+LUXLIpmcSnoopingStatusMldGroupSrcListEntry ::= SEQUENCE {
+    luxlIpmcSnoopingStatusMldGroupSrcListIfIndex    LUXLInterfaceIndex,
+    luxlIpmcSnoopingStatusMldGroupSrcListGroupAddress   InetAddressIPv6,
+    luxlIpmcSnoopingStatusMldGroupSrcListPortIndex      LUXLInterfaceIndex,
+    luxlIpmcSnoopingStatusMldGroupSrcListHostAddress    InetAddressIPv6,
+    luxlIpmcSnoopingStatusMldGroupSrcListGroupFilterMode    LUXLIpmcSnoopingMldGroupSrcListGroupFilterModeEnum,
+    luxlIpmcSnoopingStatusMldGroupSrcListFilterTimer    Unsigned32,
+    luxlIpmcSnoopingStatusMldGroupSrcListSourceType     LUXLIpmcSnoopingMldGroupSrcListSourceEnum,
+    luxlIpmcSnoopingStatusMldGroupSrcListSourceTimer    Unsigned32,
+    luxlIpmcSnoopingStatusMldGroupSrcListHardwareFilter     TruthValue
+}
+
+luxlIpmcSnoopingStatusMldGroupSrcListIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingStatusMldGroupSrcListEntry 1 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListGroupAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv6 multicast address."
+    ::= { luxlIpmcSnoopingStatusMldGroupSrcListEntry 2 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListPortIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlIpmcSnoopingStatusMldGroupSrcListEntry 3 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListHostAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Assigned IPv6 source address."
+    ::= { luxlIpmcSnoopingStatusMldGroupSrcListEntry 4 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListGroupFilterMode OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingMldGroupSrcListGroupFilterModeEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the source filtering mode of the specific
+         registered multicast group address from MLD snooping."
+    ::= { luxlIpmcSnoopingStatusMldGroupSrcListEntry 5 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListFilterTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to count down the timer for the specific multicast group's
+         filtering mode transition."
+    ::= { luxlIpmcSnoopingStatusMldGroupSrcListEntry 6 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListSourceType OBJECT-TYPE
+    SYNTAX      LUXLIpmcSnoopingMldGroupSrcListSourceEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote the filtering type of the specific source address
+         in multicasting to the registered group address."
+    ::= { luxlIpmcSnoopingStatusMldGroupSrcListEntry 7 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListSourceTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to count down the timer for purging the specific source
+         address from the registered multicast group's source list."
+    ::= { luxlIpmcSnoopingStatusMldGroupSrcListEntry 8 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListHardwareFilter OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "It is used to denote whether the traffic destined to the multicast
+         group address from the specific source address could be forwarding by
+         switch hardware or not."
+    ::= { luxlIpmcSnoopingStatusMldGroupSrcListEntry 9 }
+
+luxlIpmcSnoopingControl OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingMibObjects 4 }
+
+luxlIpmcSnoopingControlStatistics OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingControl 1 }
+
+luxlIpmcSnoopingControlStatisticsIgmpClearByIfIndex OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingControlStatistics 1 }
+
+luxlIpmcSnoopingControlStatisticsIgmpClearByIfIndexIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingControlStatisticsIgmpClearByIfIndex 1 }
+
+luxlIpmcSnoopingControlStatisticsMldClearByIfIndex OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingControlStatistics 2 }
+
+luxlIpmcSnoopingControlStatisticsMldClearByIfIndexIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the VLAN interface."
+    ::= { luxlIpmcSnoopingControlStatisticsMldClearByIfIndex 1 }
+
+luxlIpmcSnoopingMibConformance OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingMib 2 }
+
+luxlIpmcSnoopingMibCompliances OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingMibConformance 1 }
+
+luxlIpmcSnoopingMibGroups OBJECT IDENTIFIER
+    ::= { luxlIpmcSnoopingMibConformance 2 }
+
+luxlIpmcSnoopingConfigIgmpGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingConfigIgmpGlobalsAdminState, 
+                  luxlIpmcSnoopingConfigIgmpGlobalsUnregisteredFlooding, 
+                  luxlIpmcSnoopingConfigIgmpGlobalsSsmRangeAddress, 
+                  luxlIpmcSnoopingConfigIgmpGlobalsSsmRangeMask, 
+                  luxlIpmcSnoopingConfigIgmpGlobalsProxy, 
+                  luxlIpmcSnoopingConfigIgmpGlobalsLeaveProxy }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 1 }
+
+luxlIpmcSnoopingConfigIgmpPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingConfigIgmpPortAsRouterPort, 
+                  luxlIpmcSnoopingConfigIgmpPortDoFastLeave, 
+                  luxlIpmcSnoopingConfigIgmpPortThrottlingNumber, 
+                  luxlIpmcSnoopingConfigIgmpPortFilteringProfile }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 2 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingConfigIgmpInterfaceAdminState, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceQuerierElection, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceQuerierAddress, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceCompatibility, 
+                  luxlIpmcSnoopingConfigIgmpInterfacePriority, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceRv, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceQi, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceQri, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceLmqi, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceUri, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 3 }
+
+luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorIfIndex, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorAdminState, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorQuerierElection, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorQuerierAddress, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorCompatibility, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorPriority, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorRv, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorQi, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorQri, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorLmqi, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorUri, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 4 }
+
+luxlIpmcSnoopingConfigMldGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingConfigMldGlobalsAdminState, 
+                  luxlIpmcSnoopingConfigMldGlobalsUnregisteredFlooding, 
+                  luxlIpmcSnoopingConfigMldGlobalsSsmRangeAddress, 
+                  luxlIpmcSnoopingConfigMldGlobalsSsmRangeMask, 
+                  luxlIpmcSnoopingConfigMldGlobalsProxy, 
+                  luxlIpmcSnoopingConfigMldGlobalsLeaveProxy }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 5 }
+
+luxlIpmcSnoopingConfigMldPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingConfigMldPortAsRouterPort, 
+                  luxlIpmcSnoopingConfigMldPortDoFastLeave, 
+                  luxlIpmcSnoopingConfigMldPortThrottlingNumber, 
+                  luxlIpmcSnoopingConfigMldPortFilteringProfile }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 6 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingConfigMldInterfaceAdminState, 
+                  luxlIpmcSnoopingConfigMldInterfaceQuerierElection, 
+                  luxlIpmcSnoopingConfigMldInterfaceCompatibility, 
+                  luxlIpmcSnoopingConfigMldInterfacePriority, 
+                  luxlIpmcSnoopingConfigMldInterfaceRv, 
+                  luxlIpmcSnoopingConfigMldInterfaceQi, 
+                  luxlIpmcSnoopingConfigMldInterfaceQri, 
+                  luxlIpmcSnoopingConfigMldInterfaceLlqi, 
+                  luxlIpmcSnoopingConfigMldInterfaceUri, 
+                  luxlIpmcSnoopingConfigMldInterfaceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 7 }
+
+luxlIpmcSnoopingConfigMldInterfaceTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingConfigMldInterfaceTableRowEditorIfIndex, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorAdminState, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorQuerierElection, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorCompatibility, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorPriority, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorRv, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorQi, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorQri, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorLlqi, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorUri, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 8 }
+
+luxlIpmcSnoopingStatusGroupAddressCountInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingStatusGroupAddressCountFromIgmp, 
+                  luxlIpmcSnoopingStatusGroupAddressCountFromMld }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 9 }
+
+luxlIpmcSnoopingStatusIgmpRouterPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingStatusIgmpRouterPortStatus }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 10 }
+
+luxlIpmcSnoopingStatusIgmpVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingStatusIgmpVlanQuerierStatus, 
+                  luxlIpmcSnoopingStatusIgmpVlanActiveQuerierAddress, 
+                  luxlIpmcSnoopingStatusIgmpVlanQuerierUptime, 
+                  luxlIpmcSnoopingStatusIgmpVlanQueryInterval, 
+                  luxlIpmcSnoopingStatusIgmpVlanStartupQueryCount, 
+                  luxlIpmcSnoopingStatusIgmpVlanQuerierExpiryTime, 
+                  luxlIpmcSnoopingStatusIgmpVlanQuerierVersion, 
+                  luxlIpmcSnoopingStatusIgmpVlanQuerierPresentTimeout, 
+                  luxlIpmcSnoopingStatusIgmpVlanHostVersion, 
+                  luxlIpmcSnoopingStatusIgmpVlanHostPresentTimeout, 
+                  luxlIpmcSnoopingStatusIgmpVlanCounterTxQuery, 
+                  luxlIpmcSnoopingStatusIgmpVlanCounterTxSpecificQuery, 
+                  luxlIpmcSnoopingStatusIgmpVlanCounterRxQuery, 
+                  luxlIpmcSnoopingStatusIgmpVlanCounterRxV1Join, 
+                  luxlIpmcSnoopingStatusIgmpVlanCounterRxV2Join, 
+                  luxlIpmcSnoopingStatusIgmpVlanCounterRxV2Leave, 
+                  luxlIpmcSnoopingStatusIgmpVlanCounterRxV3Join, 
+                  luxlIpmcSnoopingStatusIgmpVlanCounterRxErrors }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 11 }
+
+luxlIpmcSnoopingStatusIgmpGroupAddressTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingStatusIgmpGroupAddressMemberPorts, 
+                  luxlIpmcSnoopingStatusIgmpGroupAddressHardwareSwitch }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 12 }
+
+luxlIpmcSnoopingStatusIgmpGroupSrcListTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingStatusIgmpGroupSrcListGroupFilterMode, 
+                  luxlIpmcSnoopingStatusIgmpGroupSrcListFilterTimer, 
+                  luxlIpmcSnoopingStatusIgmpGroupSrcListSourceType, 
+                  luxlIpmcSnoopingStatusIgmpGroupSrcListSourceTimer, 
+                  luxlIpmcSnoopingStatusIgmpGroupSrcListHardwareFilter }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 13 }
+
+luxlIpmcSnoopingStatusMldRouterPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingStatusMldRouterPortStatus }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 14 }
+
+luxlIpmcSnoopingStatusMldVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingStatusMldVlanQuerierStatus, 
+                  luxlIpmcSnoopingStatusMldVlanActiveQuerierAddress, 
+                  luxlIpmcSnoopingStatusMldVlanQuerierUptime, 
+                  luxlIpmcSnoopingStatusMldVlanQueryInterval, 
+                  luxlIpmcSnoopingStatusMldVlanStartupQueryCount, 
+                  luxlIpmcSnoopingStatusMldVlanQuerierExpiryTime, 
+                  luxlIpmcSnoopingStatusMldVlanQuerierVersion, 
+                  luxlIpmcSnoopingStatusMldVlanQuerierPresentTimeout, 
+                  luxlIpmcSnoopingStatusMldVlanHostVersion, 
+                  luxlIpmcSnoopingStatusMldVlanHostPresentTimeout, 
+                  luxlIpmcSnoopingStatusMldVlanCounterTxQuery, 
+                  luxlIpmcSnoopingStatusMldVlanCounterTxSpecificQuery, 
+                  luxlIpmcSnoopingStatusMldVlanCounterRxQuery, 
+                  luxlIpmcSnoopingStatusMldVlanCounterRxV1Report, 
+                  luxlIpmcSnoopingStatusMldVlanCounterRxV1Done, 
+                  luxlIpmcSnoopingStatusMldVlanCounterRxV2Report, 
+                  luxlIpmcSnoopingStatusMldVlanCounterRxErrors }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 15 }
+
+luxlIpmcSnoopingStatusMldGroupAddressTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingStatusMldGroupAddressMemberPorts, 
+                  luxlIpmcSnoopingStatusMldGroupAddressHardwareSwitch }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 16 }
+
+luxlIpmcSnoopingStatusMldGroupSrcListTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingStatusMldGroupSrcListGroupFilterMode, 
+                  luxlIpmcSnoopingStatusMldGroupSrcListFilterTimer, 
+                  luxlIpmcSnoopingStatusMldGroupSrcListSourceType, 
+                  luxlIpmcSnoopingStatusMldGroupSrcListSourceTimer, 
+                  luxlIpmcSnoopingStatusMldGroupSrcListHardwareFilter }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 17 }
+
+luxlIpmcSnoopingControlStatisticsIgmpClearByIfIndexInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingControlStatisticsIgmpClearByIfIndexIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 18 }
+
+luxlIpmcSnoopingControlStatisticsMldClearByIfIndexInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIpmcSnoopingControlStatisticsMldClearByIfIndexIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIpmcSnoopingMibGroups 19 }
+
+luxlIpmcSnoopingMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlIpmcSnoopingConfigIgmpGlobalsInfoGroup, 
+                  luxlIpmcSnoopingConfigIgmpPortTableInfoGroup, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableInfoGroup, 
+                  luxlIpmcSnoopingConfigIgmpInterfaceTableRowEditorInfoGroup, 
+                  luxlIpmcSnoopingConfigMldGlobalsInfoGroup, 
+                  luxlIpmcSnoopingConfigMldPortTableInfoGroup, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableInfoGroup, 
+                  luxlIpmcSnoopingConfigMldInterfaceTableRowEditorInfoGroup, 
+                  luxlIpmcSnoopingStatusGroupAddressCountInfoGroup, 
+                  luxlIpmcSnoopingStatusIgmpRouterPortTableInfoGroup, 
+                  luxlIpmcSnoopingStatusIgmpVlanTableInfoGroup, 
+                  luxlIpmcSnoopingStatusIgmpGroupAddressTableInfoGroup, 
+                  luxlIpmcSnoopingStatusIgmpGroupSrcListTableInfoGroup, 
+                  luxlIpmcSnoopingStatusMldRouterPortTableInfoGroup, 
+                  luxlIpmcSnoopingStatusMldVlanTableInfoGroup, 
+                  luxlIpmcSnoopingStatusMldGroupAddressTableInfoGroup, 
+                  luxlIpmcSnoopingStatusMldGroupSrcListTableInfoGroup, 
+                  luxlIpmcSnoopingControlStatisticsIgmpClearByIfIndexInfoGroup, 
+                  luxlIpmcSnoopingControlStatisticsMldClearByIfIndexInfoGroup }
+
+    ::= { luxlIpmcSnoopingMibCompliances 1 }
+
+END

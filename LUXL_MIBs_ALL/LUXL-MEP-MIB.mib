@@ -1,0 +1,5337 @@
+-- *****************************************************************
+-- MEP-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-MEP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Counter64 FROM SNMPv2-SMI
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    LUXLUnsigned64 FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    ;
+
+luxlMepMib MODULE-IDENTITY
+    LAST-UPDATED "201412030000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private service OAM (Y.1731/G802.1ag/G8113.1/G8113.2) MIB"
+    REVISION    "201412030000Z"
+    DESCRIPTION
+        "Adding Link State Tracking"
+    REVISION    "201411260000Z"
+    DESCRIPTION
+        "Adding Loss Measurement OAM frame counting object"
+    REVISION    "201411140000Z"
+    DESCRIPTION
+        "Refactoring regarding Ifindex. Domain element is removed and flow
+         element is changed to be Ifindex containing domain"
+    REVISION    "201409300000Z"
+    DESCRIPTION
+        "Added luxlMepConfigRt and luxlMepStatusRt for Route Trace configuration
+         and status"
+    REVISION    "201409030000Z"
+    DESCRIPTION
+        "Added luxlMepConfigClientFlowDomain and luxlMepConfigClientFlowFlowId
+         to luxlMepConfigClientFlowTable"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 46 }
+
+
+LUXLMepApsType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Type of APS."
+    SYNTAX      INTEGER { invalidAps(0), linearAps(1), ringAps(2) }
+
+LUXLMepBfdAuthenticationType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "BFD authentication type."
+    SYNTAX      INTEGER { disabled(0), simplePwd(1), keyedMD5(2), meticulousKeyedMD5(3), keyedSHA1(4), meticulousKeyedSHA1(5) }
+
+LUXLMepBfdDiagnosticCode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "BFD diagnostic code."
+    SYNTAX      INTEGER { none(0), detectExpired(1), echoFailed(2), remoteDown(3), fwdPlaneReset(4), pathDown(5), concatPathDown(6), adminDown(7), reverseConcatDown(8), misconnectivity(9) }
+
+LUXLMepBfdSessionState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "State of BFD session."
+    SYNTAX      INTEGER { adminDown(0), down(1), init(2), up(3) }
+
+LUXLMepCast ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Unicast or Multicast selection."
+    SYNTAX      INTEGER { uniCast(0), multiCast(1) }
+
+LUXLMepDmCalcWay ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Round trip or flow calculation way selection."
+    SYNTAX      INTEGER { roundTrip(0), flow(1) }
+
+LUXLMepDmOverflowAction ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Action when internal total delay counter overflow."
+    SYNTAX      INTEGER { disableDm(0), continueDm(1) }
+
+LUXLMepDmTimeUnit ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Calculation time unit."
+    SYNTAX      INTEGER { microSeconds(0), nanoSeconds(1) }
+
+LUXLMepEnded ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Dual/single ended selection."
+    SYNTAX      INTEGER { singleEnded(0), dualEnded(1) }
+
+LUXLMepInstanceDirection ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance direction."
+    SYNTAX      INTEGER { down(0), up(1) }
+
+LUXLMepInstanceMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance mode."
+    SYNTAX      INTEGER { mep(0), mip(1) }
+
+LUXLMepLtRelayAction ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The Link Trace relay action."
+    SYNTAX      INTEGER { relayUnknown(0), relayHit(1), relayFdb(2), relayMpdb(3) }
+
+LUXLMepMegIdFormat ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The MEG-ID format."
+    SYNTAX      INTEGER { ituIcc(0), ieeeString(1), ituCcIcc(2) }
+
+LUXLMepOamCount ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Loss Measurement OAM frame counting selection."
+    SYNTAX      INTEGER { countAsY1731(0), countNone(1), countAll(2) }
+
+LUXLMepRtPadTlvType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "RT Pad TLV type."
+    SYNTAX      INTEGER { none(0), drop(1), copy(2) }
+
+LUXLMepRtReturnCode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "RT return code type."
+    SYNTAX      INTEGER { none(0), malformed(1), tlvError(2), isEgress(3), noMapping(4), downMapMismatch(5), upIfUnknown(6), labelSwitch(8), labelSwitchNoFwd(9), mappingWrong(10), noLabel(11), protocolError(12), premature(13) }
+
+LUXLMepTstPattern ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Pattern in TST frame Data TLV."
+    SYNTAX      INTEGER { allZero(0), allOne(1), hexAA(2) }
+
+LUXLMepTxRate ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "PDU transmission rate."
+    SYNTAX      INTEGER { invalid(0), frames300PerSecond(1), frames100PerSecond(2), frames10PerSecond(3), frames1PerSecond(4), frames6PerMinute(5), frames1PerMinute(6), frames6PerHour(7) }
+
+luxlMepMibObjects OBJECT IDENTIFIER
+    ::= { luxlMepMib 1 }
+
+luxlMepCapabilities OBJECT IDENTIFIER
+    ::= { luxlMepMibObjects 1 }
+
+luxlMepCapabilitiesInstanceMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Max number of MEP instance"
+    ::= { luxlMepCapabilities 1 }
+
+luxlMepCapabilitiesPeerMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Max number of peer MEP"
+    ::= { luxlMepCapabilities 2 }
+
+luxlMepCapabilitiesTransactionMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Max number of Link Trace transaction"
+    ::= { luxlMepCapabilities 3 }
+
+luxlMepCapabilitiesReplyMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Max number of reply in a transaction"
+    ::= { luxlMepCapabilities 4 }
+
+luxlMepCapabilitiesClientFlowsMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Max number of client flows"
+    ::= { luxlMepCapabilities 5 }
+
+luxlMepCapabilitiesMacMength OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAC length"
+    ::= { luxlMepCapabilities 6 }
+
+luxlMepCapabilitiesMegCodeLength OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAX length of Both Maintenance Domain Name and MEG-ID include a NULL
+         termination"
+    ::= { luxlMepCapabilities 7 }
+
+luxlMepCapabilitiesDmIntervalMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MIN DM transmission interval "
+    ::= { luxlMepCapabilities 8 }
+
+luxlMepCapabilitiesDmIntervalMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAX DM transmission interval"
+    ::= { luxlMepCapabilities 9 }
+
+luxlMepCapabilitiesDmLastnMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MIN number of DM LastN for average calculation"
+    ::= { luxlMepCapabilities 10 }
+
+luxlMepCapabilitiesDmLastnMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "MAX number of DM LastN for average calculation"
+    ::= { luxlMepCapabilities 11 }
+
+luxlMepCapabilitiesLbmSizeMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum LBM frame size"
+    ::= { luxlMepCapabilities 12 }
+
+luxlMepCapabilitiesLbmSizeMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum LBM frame size"
+    ::= { luxlMepCapabilities 13 }
+
+luxlMepCapabilitiesTstSizeMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum TST frame size"
+    ::= { luxlMepCapabilities 14 }
+
+luxlMepCapabilitiesTstSizeMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum TST frame size"
+    ::= { luxlMepCapabilities 15 }
+
+luxlMepCapabilitiesTstRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum TST bit rate"
+    ::= { luxlMepCapabilities 16 }
+
+luxlMepCapabilitiesClientPrioHighest OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The highest possible client priority is requested"
+    ::= { luxlMepCapabilities 17 }
+
+luxlMepCapabilitiesItuG8113dot2 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if ITU G8113.2 is supported on this system"
+    ::= { luxlMepCapabilities 18 }
+
+luxlMepCapabilitiesVoeSupport OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Indicates if VOE is supported on this system"
+    ::= { luxlMepCapabilities 19 }
+
+luxlMepCapabilitiesLbToSendInfinite OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Send LBM infinite - test behaviour"
+    ::= { luxlMepCapabilities 20 }
+
+luxlMepCapabilitiesBfdAuthKeyMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of BFD authentication keys"
+    ::= { luxlMepCapabilities 21 }
+
+luxlMepConfig OBJECT IDENTIFIER
+    ::= { luxlMepMibObjects 2 }
+
+luxlMepConfigInstance OBJECT IDENTIFIER
+    ::= { luxlMepConfig 1 }
+
+luxlMepConfigInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance configuration parameters"
+    ::= { luxlMepConfigInstance 1 }
+
+luxlMepConfigInstanceEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance configuration parameters. Not all parameters
+         can be changed"
+    INDEX       { luxlMepConfigInstanceId }
+    ::= { luxlMepConfigInstanceTable 1 }
+
+LUXLMepConfigInstanceEntry ::= SEQUENCE {
+    luxlMepConfigInstanceId     Integer32,
+    luxlMepConfigInstanceMode   LUXLMepInstanceMode,
+    luxlMepConfigInstanceDirection      LUXLMepInstanceDirection,
+    luxlMepConfigInstanceFlow   LUXLInterfaceIndex,
+    luxlMepConfigInstancePort   LUXLInterfaceIndex,
+    luxlMepConfigInstanceLevel      Unsigned32,
+    luxlMepConfigInstanceVid    LUXLUnsigned16,
+    luxlMepConfigInstanceVoe    TruthValue,
+    luxlMepConfigInstanceMac    MacAddress,
+    luxlMepConfigInstanceFormat     LUXLMepMegIdFormat,
+    luxlMepConfigInstanceName   LUXLDisplayString,
+    luxlMepConfigInstanceMeg    LUXLDisplayString,
+    luxlMepConfigInstanceMep    Unsigned32,
+    luxlMepConfigInstanceEvcPag     Unsigned32,
+    luxlMepConfigInstanceEvcQos     Unsigned32,
+    luxlMepConfigInstanceAction     LUXLRowEditorState
+}
+
+luxlMepConfigInstanceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigInstanceEntry 1 }
+
+luxlMepConfigInstanceMode OBJECT-TYPE
+    SYNTAX      LUXLMepInstanceMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance mode. Cannot be changed after creation."
+    ::= { luxlMepConfigInstanceEntry 2 }
+
+luxlMepConfigInstanceDirection OBJECT-TYPE
+    SYNTAX      LUXLMepInstanceDirection
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance direction. Cannot be changed after creation."
+    ::= { luxlMepConfigInstanceEntry 3 }
+
+luxlMepConfigInstanceFlow OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The flow instance (VLAN - EVC). Cannot be changed after creation."
+    ::= { luxlMepConfigInstanceEntry 4 }
+
+luxlMepConfigInstancePort OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance residence port. Cannot be changed after creation."
+    ::= { luxlMepConfigInstanceEntry 5 }
+
+luxlMepConfigInstanceLevel OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance level"
+    ::= { luxlMepConfigInstanceEntry 6 }
+
+luxlMepConfigInstanceVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VID used for tagged Port domain OAM. Create a VLAN MEP instead - if
+         possible"
+    ::= { luxlMepConfigInstanceEntry 7 }
+
+luxlMepConfigInstanceVoe OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Make the instance VOE based - if possible"
+    ::= { luxlMepConfigInstanceEntry 8 }
+
+luxlMepConfigInstanceMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance unicast MAC. If 'all zero' the residence port MAC is used"
+    ::= { luxlMepConfigInstanceEntry 9 }
+
+luxlMepConfigInstanceFormat OBJECT-TYPE
+    SYNTAX      LUXLMepMegIdFormat
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEG-ID format"
+    ::= { luxlMepConfigInstanceEntry 10 }
+
+luxlMepConfigInstanceName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "IEEE Maintenance Domain Name (string)"
+    ::= { luxlMepConfigInstanceEntry 11 }
+
+luxlMepConfigInstanceMeg OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Unique MEG ID (string)"
+    ::= { luxlMepConfigInstanceEntry 12 }
+
+luxlMepConfigInstanceMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MEP id of this instance"
+    ::= { luxlMepConfigInstanceEntry 13 }
+
+luxlMepConfigInstanceEvcPag OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "EVC generated policy PAG value. This is used as IS2 key"
+    ::= { luxlMepConfigInstanceEntry 14 }
+
+luxlMepConfigInstanceEvcQos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "EVC QoS value. Used for getting queue frame LM counters."
+    ::= { luxlMepConfigInstanceEntry 15 }
+
+luxlMepConfigInstanceAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigInstanceEntry 100 }
+
+luxlMepConfigInstanceRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigInstance 2 }
+
+luxlMepConfigInstanceRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigInstanceRowEditor 1 }
+
+luxlMepConfigInstanceRowEditorMode OBJECT-TYPE
+    SYNTAX      LUXLMepInstanceMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance mode. Cannot be changed after creation."
+    ::= { luxlMepConfigInstanceRowEditor 2 }
+
+luxlMepConfigInstanceRowEditorDirection OBJECT-TYPE
+    SYNTAX      LUXLMepInstanceDirection
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance direction. Cannot be changed after creation."
+    ::= { luxlMepConfigInstanceRowEditor 3 }
+
+luxlMepConfigInstanceRowEditorFlow OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The flow instance (VLAN - EVC). Cannot be changed after creation."
+    ::= { luxlMepConfigInstanceRowEditor 4 }
+
+luxlMepConfigInstanceRowEditorPort OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance residence port. Cannot be changed after creation."
+    ::= { luxlMepConfigInstanceRowEditor 5 }
+
+luxlMepConfigInstanceRowEditorLevel OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance level"
+    ::= { luxlMepConfigInstanceRowEditor 6 }
+
+luxlMepConfigInstanceRowEditorVid OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "VID used for tagged Port domain OAM. Create a VLAN MEP instead - if
+         possible"
+    ::= { luxlMepConfigInstanceRowEditor 7 }
+
+luxlMepConfigInstanceRowEditorVoe OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Make the instance VOE based - if possible"
+    ::= { luxlMepConfigInstanceRowEditor 8 }
+
+luxlMepConfigInstanceRowEditorMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance unicast MAC. If 'all zero' the residence port MAC is used"
+    ::= { luxlMepConfigInstanceRowEditor 9 }
+
+luxlMepConfigInstanceRowEditorFormat OBJECT-TYPE
+    SYNTAX      LUXLMepMegIdFormat
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEG-ID format"
+    ::= { luxlMepConfigInstanceRowEditor 10 }
+
+luxlMepConfigInstanceRowEditorName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "IEEE Maintenance Domain Name (string)"
+    ::= { luxlMepConfigInstanceRowEditor 11 }
+
+luxlMepConfigInstanceRowEditorMeg OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Unique MEG ID (string)"
+    ::= { luxlMepConfigInstanceRowEditor 12 }
+
+luxlMepConfigInstanceRowEditorMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "MEP id of this instance"
+    ::= { luxlMepConfigInstanceRowEditor 13 }
+
+luxlMepConfigInstanceRowEditorEvcPag OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "EVC generated policy PAG value. This is used as IS2 key"
+    ::= { luxlMepConfigInstanceRowEditor 14 }
+
+luxlMepConfigInstanceRowEditorEvcQos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "EVC QoS value. Used for getting queue frame LM counters."
+    ::= { luxlMepConfigInstanceRowEditor 15 }
+
+luxlMepConfigInstanceRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigInstanceRowEditor 100 }
+
+luxlMepConfigInstancePeerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigInstancePeerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of peer MEP configuration parameters"
+    ::= { luxlMepConfigInstance 3 }
+
+luxlMepConfigInstancePeerEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigInstancePeerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a peer MEP configuration parameters"
+    INDEX       { luxlMepConfigInstancePeerId, luxlMepConfigInstancePeerPeerId }
+    ::= { luxlMepConfigInstancePeerTable 1 }
+
+LUXLMepConfigInstancePeerEntry ::= SEQUENCE {
+    luxlMepConfigInstancePeerId     Integer32,
+    luxlMepConfigInstancePeerPeerId     Integer32,
+    luxlMepConfigInstancePeerMac    MacAddress,
+    luxlMepConfigInstancePeerAction     LUXLRowEditorState
+}
+
+luxlMepConfigInstancePeerId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigInstancePeerEntry 1 }
+
+luxlMepConfigInstancePeerPeerId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The Peer MEP ID"
+    ::= { luxlMepConfigInstancePeerEntry 2 }
+
+luxlMepConfigInstancePeerMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The peer unicast MAC"
+    ::= { luxlMepConfigInstancePeerEntry 3 }
+
+luxlMepConfigInstancePeerAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigInstancePeerEntry 100 }
+
+luxlMepConfigInstancePeerRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigInstance 4 }
+
+luxlMepConfigInstancePeerRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigInstancePeerRowEditor 1 }
+
+luxlMepConfigInstancePeerRowEditorPeerId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Peer MEP ID"
+    ::= { luxlMepConfigInstancePeerRowEditor 2 }
+
+luxlMepConfigInstancePeerRowEditorMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The peer unicast MAC"
+    ::= { luxlMepConfigInstancePeerRowEditor 3 }
+
+luxlMepConfigInstancePeerRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigInstancePeerRowEditor 100 }
+
+luxlMepConfigPm OBJECT IDENTIFIER
+    ::= { luxlMepConfig 2 }
+
+luxlMepConfigPmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigPmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Performance Monitoring
+         configuration parameters"
+    ::= { luxlMepConfigPm 1 }
+
+luxlMepConfigPmEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigPmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Performance Monitoring configuration
+         parameters"
+    INDEX       { luxlMepConfigPmId }
+    ::= { luxlMepConfigPmTable 1 }
+
+LUXLMepConfigPmEntry ::= SEQUENCE {
+    luxlMepConfigPmId   Integer32,
+    luxlMepConfigPmEnable   TruthValue
+}
+
+luxlMepConfigPmId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigPmEntry 1 }
+
+luxlMepConfigPmEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance can enable contribution of LM and DM results to the
+         Performance Monitoring "
+    ::= { luxlMepConfigPmEntry 2 }
+
+luxlMepConfigCc OBJECT IDENTIFIER
+    ::= { luxlMepConfig 3 }
+
+luxlMepConfigCcTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigCcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Continuity Check configuration
+         parameters"
+    ::= { luxlMepConfigCc 1 }
+
+luxlMepConfigCcEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigCcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Continuity Check configuration parameters."
+    INDEX       { luxlMepConfigCcId }
+    ::= { luxlMepConfigCcTable 1 }
+
+LUXLMepConfigCcEntry ::= SEQUENCE {
+    luxlMepConfigCcId   Integer32,
+    luxlMepConfigCcPrio     Unsigned32,
+    luxlMepConfigCcRate     LUXLMepTxRate,
+    luxlMepConfigCcTlv      TruthValue,
+    luxlMepConfigCcAction   LUXLRowEditorState
+}
+
+luxlMepConfigCcId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigCcEntry 1 }
+
+luxlMepConfigCcPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted CCM. Range 0 to 7"
+    ::= { luxlMepConfigCcEntry 3 }
+
+luxlMepConfigCcRate OBJECT-TYPE
+    SYNTAX      LUXLMepTxRate
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "CCM transmission and expected reception rate"
+    ::= { luxlMepConfigCcEntry 4 }
+
+luxlMepConfigCcTlv OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/disable insertion of TLV in CCM PDU. OS, PS and IS TLV are
+         inserted"
+    ::= { luxlMepConfigCcEntry 5 }
+
+luxlMepConfigCcAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigCcEntry 100 }
+
+luxlMepConfigCcRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigCc 2 }
+
+luxlMepConfigCcRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigCcRowEditor 1 }
+
+luxlMepConfigCcRowEditorPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted CCM. Range 0 to 7"
+    ::= { luxlMepConfigCcRowEditor 3 }
+
+luxlMepConfigCcRowEditorRate OBJECT-TYPE
+    SYNTAX      LUXLMepTxRate
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "CCM transmission and expected reception rate"
+    ::= { luxlMepConfigCcRowEditor 4 }
+
+luxlMepConfigCcRowEditorTlv OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/disable insertion of TLV in CCM PDU. OS, PS and IS TLV are
+         inserted"
+    ::= { luxlMepConfigCcRowEditor 5 }
+
+luxlMepConfigCcRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigCcRowEditor 100 }
+
+luxlMepConfigLm OBJECT IDENTIFIER
+    ::= { luxlMepConfig 4 }
+
+luxlMepConfigLmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigLmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Loss Measurement configuration
+         parameters"
+    ::= { luxlMepConfigLm 1 }
+
+luxlMepConfigLmEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigLmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Loss Measurement parameters."
+    INDEX       { luxlMepConfigLmId }
+    ::= { luxlMepConfigLmTable 1 }
+
+LUXLMepConfigLmEntry ::= SEQUENCE {
+    luxlMepConfigLmId   Integer32,
+    luxlMepConfigLmEnable   TruthValue,
+    luxlMepConfigLmEnded    LUXLMepEnded,
+    luxlMepConfigLmPrio     Unsigned32,
+    luxlMepConfigLmRate     LUXLMepTxRate,
+    luxlMepConfigLmCast     LUXLMepCast,
+    luxlMepConfigLmFlrInterval      Unsigned32,
+    luxlMepConfigLmFlowCount    TruthValue,
+    luxlMepConfigLmOamCount     LUXLMepOamCount
+}
+
+luxlMepConfigLmId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigLmEntry 1 }
+
+luxlMepConfigLmEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Loss Measurement is enabled"
+    ::= { luxlMepConfigLmEntry 2 }
+
+luxlMepConfigLmEnded OBJECT-TYPE
+    SYNTAX      LUXLMepEnded
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Dual/single ended selection. CCM or LMM/LMR based. Cannot be changed
+         after creation."
+    ::= { luxlMepConfigLmEntry 3 }
+
+luxlMepConfigLmPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted LM PDU. Range 0 to 7"
+    ::= { luxlMepConfigLmEntry 5 }
+
+luxlMepConfigLmRate OBJECT-TYPE
+    SYNTAX      LUXLMepTxRate
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "LM PDU transmission rate"
+    ::= { luxlMepConfigLmEntry 6 }
+
+luxlMepConfigLmCast OBJECT-TYPE
+    SYNTAX      LUXLMepCast
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Uni/Multicast selection - on CCM based LM only multicast is possible"
+    ::= { luxlMepConfigLmEntry 7 }
+
+luxlMepConfigLmFlrInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Frame loss ratio time interval in sec."
+    ::= { luxlMepConfigLmEntry 8 }
+
+luxlMepConfigLmFlowCount OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Traffic (service frames) are counted per flow - all priority in one"
+    ::= { luxlMepConfigLmEntry 9 }
+
+luxlMepConfigLmOamCount OBJECT-TYPE
+    SYNTAX      LUXLMepOamCount
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Loss Measurement can count OAM frames in different ways."
+    ::= { luxlMepConfigLmEntry 10 }
+
+luxlMepConfigDm OBJECT IDENTIFIER
+    ::= { luxlMepConfig 5 }
+
+luxlMepConfigDmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigDmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Delay Measurement configuration
+         parameters"
+    ::= { luxlMepConfigDm 1 }
+
+luxlMepConfigDmEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigDmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Delay Measurement parameters."
+    INDEX       { luxlMepConfigDmId }
+    ::= { luxlMepConfigDmTable 1 }
+
+LUXLMepConfigDmEntry ::= SEQUENCE {
+    luxlMepConfigDmId   Integer32,
+    luxlMepConfigDmEnable   TruthValue,
+    luxlMepConfigDmEnded    LUXLMepEnded,
+    luxlMepConfigDmPrio     Unsigned32,
+    luxlMepConfigDmCast     LUXLMepCast,
+    luxlMepConfigDmMep      Unsigned32,
+    luxlMepConfigDmCalcWay      LUXLMepDmCalcWay,
+    luxlMepConfigDmInterval     Unsigned32,
+    luxlMepConfigDmLastN    Unsigned32,
+    luxlMepConfigDmTimeUnit     LUXLMepDmTimeUnit,
+    luxlMepConfigDmOverflowAct      LUXLMepDmOverflowAction,
+    luxlMepConfigDmSynchronized     TruthValue
+}
+
+luxlMepConfigDmId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigDmEntry 1 }
+
+luxlMepConfigDmEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Delay Measurement is enabled"
+    ::= { luxlMepConfigDmEntry 2 }
+
+luxlMepConfigDmEnded OBJECT-TYPE
+    SYNTAX      LUXLMepEnded
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Dual/single ended selection. CCM or LMM/LMR based. Cannot be changed
+         after creation."
+    ::= { luxlMepConfigDmEntry 3 }
+
+luxlMepConfigDmPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted DM PDU. Range 0 to 7"
+    ::= { luxlMepConfigDmEntry 5 }
+
+luxlMepConfigDmCast OBJECT-TYPE
+    SYNTAX      LUXLMepCast
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Uni/Multicast selection"
+    ::= { luxlMepConfigDmEntry 6 }
+
+luxlMepConfigDmMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Peer MEP to receive DMM/1DM - only used if unicast"
+    ::= { luxlMepConfigDmEntry 7 }
+
+luxlMepConfigDmCalcWay OBJECT-TYPE
+    SYNTAX      LUXLMepDmCalcWay
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Round trip or flow calculation way selection."
+    ::= { luxlMepConfigDmEntry 8 }
+
+luxlMepConfigDmInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Interval between 1DM/DMM in 10 ms. Range Capability dm_interval_min to
+         dm_interval_max."
+    ::= { luxlMepConfigDmEntry 9 }
+
+luxlMepConfigDmLastN OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The number of last N measurements used to calculate average delay and
+         variation. Range Capability dm_lastn_min to dm_lastn_max."
+    ::= { luxlMepConfigDmEntry 10 }
+
+luxlMepConfigDmTimeUnit OBJECT-TYPE
+    SYNTAX      LUXLMepDmTimeUnit
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Calculation time unit."
+    ::= { luxlMepConfigDmEntry 11 }
+
+luxlMepConfigDmOverflowAct OBJECT-TYPE
+    SYNTAX      LUXLMepDmOverflowAction
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action when internal total delay counter overflow."
+    ::= { luxlMepConfigDmEntry 12 }
+
+luxlMepConfigDmSynchronized OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Near-end and far-end is real-time synchronized. One-way DM calculation
+         on receiving DMR."
+    ::= { luxlMepConfigDmEntry 13 }
+
+luxlMepConfigLb OBJECT IDENTIFIER
+    ::= { luxlMepConfig 6 }
+
+luxlMepConfigLbTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigLbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Loop Back configuration parameters"
+    ::= { luxlMepConfigLb 1 }
+
+luxlMepConfigLbEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigLbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Loop Back parameters. This cannot be changed"
+    INDEX       { luxlMepConfigLbId }
+    ::= { luxlMepConfigLbTable 1 }
+
+LUXLMepConfigLbEntry ::= SEQUENCE {
+    luxlMepConfigLbId   Integer32,
+    luxlMepConfigLbDei      TruthValue,
+    luxlMepConfigLbPrio     Unsigned32,
+    luxlMepConfigLbCast     LUXLMepCast,
+    luxlMepConfigLbMep      Unsigned32,
+    luxlMepConfigLbMac      MacAddress,
+    luxlMepConfigLbToSend   Unsigned32,
+    luxlMepConfigLbSize     Unsigned32,
+    luxlMepConfigLbInterval     Unsigned32,
+    luxlMepConfigLbTimeToLive   LUXLUnsigned8,
+    luxlMepConfigLbAction   LUXLRowEditorState
+}
+
+luxlMepConfigLbId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigLbEntry 1 }
+
+luxlMepConfigLbDei OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Drop Eligibility Indicator of transmitted LBM PDU"
+    ::= { luxlMepConfigLbEntry 2 }
+
+luxlMepConfigLbPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted LBM PDU. Range 0 to 7"
+    ::= { luxlMepConfigLbEntry 3 }
+
+luxlMepConfigLbCast OBJECT-TYPE
+    SYNTAX      LUXLMepCast
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Uni/Multicast selection"
+    ::= { luxlMepConfigLbEntry 4 }
+
+luxlMepConfigLbMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Peer MEP to receive LBM - only used if unicast and 'mac' is 'all zero'."
+    ::= { luxlMepConfigLbEntry 5 }
+
+luxlMepConfigLbMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Unicast MAC address to receive LBM - has to be used to send LBM to MIP."
+    ::= { luxlMepConfigLbEntry 6 }
+
+luxlMepConfigLbToSend OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of LBM to send. Capability lb_to_send_infinite => test
+         behaviour. Requires VOE."
+    ::= { luxlMepConfigLbEntry 7 }
+
+luxlMepConfigLbSize OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Size of LBM frame to send - Range Capability lbm_size_min to
+         lbm_size_max"
+    ::= { luxlMepConfigLbEntry 8 }
+
+luxlMepConfigLbInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Frame interval.
+         
+         If 'ToSend' != Capability lb_to_send_infinite then the 'Interval' is in
+         10 ms. Max 1 s.
+         
+         If 'ToSend' == Capability lb_to_send_infinite then the 'Interval' is in
+         1 us. Max 10 ms."
+    ::= { luxlMepConfigLbEntry 9 }
+
+luxlMepConfigLbTimeToLive OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Time To Live."
+    ::= { luxlMepConfigLbEntry 10 }
+
+luxlMepConfigLbAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigLbEntry 101 }
+
+luxlMepConfigLbRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigLb 2 }
+
+luxlMepConfigLbRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigLbRowEditor 1 }
+
+luxlMepConfigLbRowEditorDei OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Drop Eligibility Indicator of transmitted LBM PDU"
+    ::= { luxlMepConfigLbRowEditor 2 }
+
+luxlMepConfigLbRowEditorPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted LBM PDU. Range 0 to 7"
+    ::= { luxlMepConfigLbRowEditor 3 }
+
+luxlMepConfigLbRowEditorCast OBJECT-TYPE
+    SYNTAX      LUXLMepCast
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Uni/Multicast selection"
+    ::= { luxlMepConfigLbRowEditor 4 }
+
+luxlMepConfigLbRowEditorMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Peer MEP to receive LBM - only used if unicast and 'mac' is 'all zero'."
+    ::= { luxlMepConfigLbRowEditor 5 }
+
+luxlMepConfigLbRowEditorMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Unicast MAC address to receive LBM - has to be used to send LBM to MIP."
+    ::= { luxlMepConfigLbRowEditor 6 }
+
+luxlMepConfigLbRowEditorToSend OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Number of LBM to send. Capability lb_to_send_infinite => test
+         behaviour. Requires VOE."
+    ::= { luxlMepConfigLbRowEditor 7 }
+
+luxlMepConfigLbRowEditorSize OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Size of LBM frame to send - Range Capability lbm_size_min to
+         lbm_size_max"
+    ::= { luxlMepConfigLbRowEditor 8 }
+
+luxlMepConfigLbRowEditorInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Frame interval.
+         
+         If 'ToSend' != Capability lb_to_send_infinite then the 'Interval' is in
+         10 ms. Max 1 s.
+         
+         If 'ToSend' == Capability lb_to_send_infinite then the 'Interval' is in
+         1 us. Max 10 ms."
+    ::= { luxlMepConfigLbRowEditor 9 }
+
+luxlMepConfigLbRowEditorTimeToLive OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Time To Live."
+    ::= { luxlMepConfigLbRowEditor 10 }
+
+luxlMepConfigLbRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigLbRowEditor 101 }
+
+luxlMepConfigTst OBJECT IDENTIFIER
+    ::= { luxlMepConfig 7 }
+
+luxlMepConfigTstTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigTstEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Test Signal configuration
+         parameters"
+    ::= { luxlMepConfigTst 1 }
+
+luxlMepConfigTstEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigTstEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Test Signal parameters."
+    INDEX       { luxlMepConfigTstId }
+    ::= { luxlMepConfigTstTable 1 }
+
+LUXLMepConfigTstEntry ::= SEQUENCE {
+    luxlMepConfigTstId      Integer32,
+    luxlMepConfigTstTxEnable    TruthValue,
+    luxlMepConfigTstRxEnable    TruthValue,
+    luxlMepConfigTstDei     TruthValue,
+    luxlMepConfigTstPrio    Unsigned32,
+    luxlMepConfigTstMep     Unsigned32,
+    luxlMepConfigTstRate    Unsigned32,
+    luxlMepConfigTstSize    Unsigned32,
+    luxlMepConfigTstPattern     LUXLMepTstPattern,
+    luxlMepConfigTstSequence    TruthValue,
+    luxlMepConfigTstAction      LUXLRowEditorState
+}
+
+luxlMepConfigTstId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigTstEntry 1 }
+
+luxlMepConfigTstTxEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/disable transmission of TST PDU."
+    ::= { luxlMepConfigTstEntry 2 }
+
+luxlMepConfigTstRxEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/disable reception and analyse of TST PDU."
+    ::= { luxlMepConfigTstEntry 3 }
+
+luxlMepConfigTstDei OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Drop Eligibility Indicator of transmitted TST PDU"
+    ::= { luxlMepConfigTstEntry 4 }
+
+luxlMepConfigTstPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted TST PDU. Range 0 to 7"
+    ::= { luxlMepConfigTstEntry 5 }
+
+luxlMepConfigTstMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Peer MEP to receive TST"
+    ::= { luxlMepConfigTstEntry 6 }
+
+luxlMepConfigTstRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The transmission rate in Kbps - Range 1 to Capability tst_rate_max."
+    ::= { luxlMepConfigTstEntry 7 }
+
+luxlMepConfigTstSize OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Size of TST frame to send - Range Capability tst_size_min to
+         tst_size_max."
+    ::= { luxlMepConfigTstEntry 8 }
+
+luxlMepConfigTstPattern OBJECT-TYPE
+    SYNTAX      LUXLMepTstPattern
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Pattern in TST frame Data TLV."
+    ::= { luxlMepConfigTstEntry 9 }
+
+luxlMepConfigTstSequence OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Sequence number will be inserted - not checked in receiver on Caracal
+         and Jaguar."
+    ::= { luxlMepConfigTstEntry 10 }
+
+luxlMepConfigTstAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigTstEntry 101 }
+
+luxlMepConfigTstRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigTst 2 }
+
+luxlMepConfigTstRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigTstRowEditor 1 }
+
+luxlMepConfigTstRowEditorTxEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/disable transmission of TST PDU."
+    ::= { luxlMepConfigTstRowEditor 2 }
+
+luxlMepConfigTstRowEditorRxEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Enable/disable reception and analyse of TST PDU."
+    ::= { luxlMepConfigTstRowEditor 3 }
+
+luxlMepConfigTstRowEditorDei OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Drop Eligibility Indicator of transmitted TST PDU"
+    ::= { luxlMepConfigTstRowEditor 4 }
+
+luxlMepConfigTstRowEditorPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted TST PDU. Range 0 to 7"
+    ::= { luxlMepConfigTstRowEditor 5 }
+
+luxlMepConfigTstRowEditorMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Peer MEP to receive TST"
+    ::= { luxlMepConfigTstRowEditor 6 }
+
+luxlMepConfigTstRowEditorRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The transmission rate in Kbps - Range 1 to Capability tst_rate_max."
+    ::= { luxlMepConfigTstRowEditor 7 }
+
+luxlMepConfigTstRowEditorSize OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Size of TST frame to send - Range Capability tst_size_min to
+         tst_size_max."
+    ::= { luxlMepConfigTstRowEditor 8 }
+
+luxlMepConfigTstRowEditorPattern OBJECT-TYPE
+    SYNTAX      LUXLMepTstPattern
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Pattern in TST frame Data TLV."
+    ::= { luxlMepConfigTstRowEditor 9 }
+
+luxlMepConfigTstRowEditorSequence OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Sequence number will be inserted - not checked in receiver on Caracal
+         and Jaguar."
+    ::= { luxlMepConfigTstRowEditor 10 }
+
+luxlMepConfigTstRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigTstRowEditor 101 }
+
+luxlMepConfigLt OBJECT IDENTIFIER
+    ::= { luxlMepConfig 8 }
+
+luxlMepConfigLtTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigLtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Link Trace configuration parameters"
+    ::= { luxlMepConfigLt 1 }
+
+luxlMepConfigLtEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigLtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Link Trace parameters. This cannot be
+         changed"
+    INDEX       { luxlMepConfigLtId }
+    ::= { luxlMepConfigLtTable 1 }
+
+LUXLMepConfigLtEntry ::= SEQUENCE {
+    luxlMepConfigLtId   Integer32,
+    luxlMepConfigLtPrio     Unsigned32,
+    luxlMepConfigLtMep      Unsigned32,
+    luxlMepConfigLtMac      MacAddress,
+    luxlMepConfigLtTimeToLive   Unsigned32,
+    luxlMepConfigLtAction   LUXLRowEditorState
+}
+
+luxlMepConfigLtId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigLtEntry 1 }
+
+luxlMepConfigLtPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted LTM PDU. Range 0 to 7"
+    ::= { luxlMepConfigLtEntry 3 }
+
+luxlMepConfigLtMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Target Peer Mep to receive LTM - only used if 'mac' is 'all zero'"
+    ::= { luxlMepConfigLtEntry 4 }
+
+luxlMepConfigLtMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Unicast MAC address to receive LTM - has to be used to send LTM to MIP."
+    ::= { luxlMepConfigLtEntry 5 }
+
+luxlMepConfigLtTimeToLive OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Time To Live."
+    ::= { luxlMepConfigLtEntry 6 }
+
+luxlMepConfigLtAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigLtEntry 101 }
+
+luxlMepConfigLtRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigLt 2 }
+
+luxlMepConfigLtRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigLtRowEditor 1 }
+
+luxlMepConfigLtRowEditorPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted LTM PDU. Range 0 to 7"
+    ::= { luxlMepConfigLtRowEditor 3 }
+
+luxlMepConfigLtRowEditorMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Target Peer Mep to receive LTM - only used if 'mac' is 'all zero'"
+    ::= { luxlMepConfigLtRowEditor 4 }
+
+luxlMepConfigLtRowEditorMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Unicast MAC address to receive LTM - has to be used to send LTM to MIP."
+    ::= { luxlMepConfigLtRowEditor 5 }
+
+luxlMepConfigLtRowEditorTimeToLive OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Time To Live."
+    ::= { luxlMepConfigLtRowEditor 6 }
+
+luxlMepConfigLtRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigLtRowEditor 101 }
+
+luxlMepConfigAps OBJECT IDENTIFIER
+    ::= { luxlMepConfig 9 }
+
+luxlMepConfigApsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigApsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Automatic Protection Switching
+         configuration parameters"
+    ::= { luxlMepConfigAps 1 }
+
+luxlMepConfigApsEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigApsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Automatic Protection Switching parameters."
+    INDEX       { luxlMepConfigApsId }
+    ::= { luxlMepConfigApsTable 1 }
+
+LUXLMepConfigApsEntry ::= SEQUENCE {
+    luxlMepConfigApsId      Integer32,
+    luxlMepConfigApsPrio    Unsigned32,
+    luxlMepConfigApsApsType     LUXLMepApsType,
+    luxlMepConfigApsCast    LUXLMepCast,
+    luxlMepConfigApsRapsOctet   Unsigned32,
+    luxlMepConfigApsAction      LUXLRowEditorState
+}
+
+luxlMepConfigApsId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigApsEntry 1 }
+
+luxlMepConfigApsPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted APS PDU. Range 0 to 7"
+    ::= { luxlMepConfigApsEntry 3 }
+
+luxlMepConfigApsApsType OBJECT-TYPE
+    SYNTAX      LUXLMepApsType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of APS"
+    ::= { luxlMepConfigApsEntry 4 }
+
+luxlMepConfigApsCast OBJECT-TYPE
+    SYNTAX      LUXLMepCast
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Uni/multicast selection"
+    ::= { luxlMepConfigApsEntry 5 }
+
+luxlMepConfigApsRapsOctet OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Last octet in the R-APS multicast DA"
+    ::= { luxlMepConfigApsEntry 6 }
+
+luxlMepConfigApsAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigApsEntry 101 }
+
+luxlMepConfigApsRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigAps 2 }
+
+luxlMepConfigApsRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigApsRowEditor 1 }
+
+luxlMepConfigApsRowEditorPrio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Priority of the transmitted APS PDU. Range 0 to 7"
+    ::= { luxlMepConfigApsRowEditor 3 }
+
+luxlMepConfigApsRowEditorApsType OBJECT-TYPE
+    SYNTAX      LUXLMepApsType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of APS"
+    ::= { luxlMepConfigApsRowEditor 4 }
+
+luxlMepConfigApsRowEditorCast OBJECT-TYPE
+    SYNTAX      LUXLMepCast
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Uni/multicast selection"
+    ::= { luxlMepConfigApsRowEditor 5 }
+
+luxlMepConfigApsRowEditorRapsOctet OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Last octet in the R-APS multicast DA"
+    ::= { luxlMepConfigApsRowEditor 6 }
+
+luxlMepConfigApsRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigApsRowEditor 101 }
+
+luxlMepConfigAis OBJECT IDENTIFIER
+    ::= { luxlMepConfig 10 }
+
+luxlMepConfigAisTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigAisEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Alarm Indication Signal
+         configuration parameters"
+    ::= { luxlMepConfigAis 1 }
+
+luxlMepConfigAisEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigAisEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Alarm Indication Signal parameters."
+    INDEX       { luxlMepConfigAisId }
+    ::= { luxlMepConfigAisTable 1 }
+
+LUXLMepConfigAisEntry ::= SEQUENCE {
+    luxlMepConfigAisId      Integer32,
+    luxlMepConfigAisProtection      TruthValue,
+    luxlMepConfigAisRate    LUXLMepTxRate,
+    luxlMepConfigAisAction      LUXLRowEditorState
+}
+
+luxlMepConfigAisId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigAisEntry 1 }
+
+luxlMepConfigAisProtection OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The first three AIS frames are transmitted as fast as possible."
+    ::= { luxlMepConfigAisEntry 2 }
+
+luxlMepConfigAisRate OBJECT-TYPE
+    SYNTAX      LUXLMepTxRate
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "AIS transmission rate"
+    ::= { luxlMepConfigAisEntry 3 }
+
+luxlMepConfigAisAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigAisEntry 101 }
+
+luxlMepConfigAisRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigAis 2 }
+
+luxlMepConfigAisRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigAisRowEditor 1 }
+
+luxlMepConfigAisRowEditorProtection OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The first three AIS frames are transmitted as fast as possible."
+    ::= { luxlMepConfigAisRowEditor 2 }
+
+luxlMepConfigAisRowEditorRate OBJECT-TYPE
+    SYNTAX      LUXLMepTxRate
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "AIS transmission rate"
+    ::= { luxlMepConfigAisRowEditor 3 }
+
+luxlMepConfigAisRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigAisRowEditor 101 }
+
+luxlMepConfigLck OBJECT IDENTIFIER
+    ::= { luxlMepConfig 11 }
+
+luxlMepConfigLckTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigLckEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Locked Signal configuration
+         parameters"
+    ::= { luxlMepConfigLck 1 }
+
+luxlMepConfigLckEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigLckEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Locked Signal parameters."
+    INDEX       { luxlMepConfigLckId }
+    ::= { luxlMepConfigLckTable 1 }
+
+LUXLMepConfigLckEntry ::= SEQUENCE {
+    luxlMepConfigLckId      Integer32,
+    luxlMepConfigLckRate    LUXLMepTxRate,
+    luxlMepConfigLckAction      LUXLRowEditorState
+}
+
+luxlMepConfigLckId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigLckEntry 1 }
+
+luxlMepConfigLckRate OBJECT-TYPE
+    SYNTAX      LUXLMepTxRate
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "LCK transmission rate"
+    ::= { luxlMepConfigLckEntry 2 }
+
+luxlMepConfigLckAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigLckEntry 101 }
+
+luxlMepConfigLckRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigLck 2 }
+
+luxlMepConfigLckRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigLckRowEditor 1 }
+
+luxlMepConfigLckRowEditorRate OBJECT-TYPE
+    SYNTAX      LUXLMepTxRate
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "LCK transmission rate"
+    ::= { luxlMepConfigLckRowEditor 2 }
+
+luxlMepConfigLckRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigLckRowEditor 101 }
+
+luxlMepConfigClient OBJECT IDENTIFIER
+    ::= { luxlMepConfig 12 }
+
+luxlMepConfigClientFlowTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigClientFlowEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of client flow configuration parameters"
+    ::= { luxlMepConfigClient 2 }
+
+luxlMepConfigClientFlowEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigClientFlowEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a client flow configuration parameters"
+    INDEX       { luxlMepConfigClientFlowId, luxlMepConfigClientFlowFlowId }
+    ::= { luxlMepConfigClientFlowTable 1 }
+
+LUXLMepConfigClientFlowEntry ::= SEQUENCE {
+    luxlMepConfigClientFlowId   Integer32,
+    luxlMepConfigClientFlowFlowId   LUXLInterfaceIndex,
+    luxlMepConfigClientFlowAisPrio      LUXLUnsigned8,
+    luxlMepConfigClientFlowLckPrio      LUXLUnsigned8,
+    luxlMepConfigClientFlowLevel    LUXLUnsigned8,
+    luxlMepConfigClientFlowAction   LUXLRowEditorState
+}
+
+luxlMepConfigClientFlowId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigClientFlowEntry 1 }
+
+luxlMepConfigClientFlowFlowId OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The Client Flow id - ifindex"
+    ::= { luxlMepConfigClientFlowEntry 2 }
+
+luxlMepConfigClientFlowAisPrio OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "AIS Priority (EVC COS-ID) 0-7. Capability client_prio_highest indicate
+         highest possible is requested"
+    ::= { luxlMepConfigClientFlowEntry 3 }
+
+luxlMepConfigClientFlowLckPrio OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "LCK Priority (EVC COS-ID) 0-7. Capability client_prio_highest indicate
+         highest possible is requested"
+    ::= { luxlMepConfigClientFlowEntry 4 }
+
+luxlMepConfigClientFlowLevel OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Client flow level"
+    ::= { luxlMepConfigClientFlowEntry 5 }
+
+luxlMepConfigClientFlowAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigClientFlowEntry 100 }
+
+luxlMepConfigClientFlowRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigClient 3 }
+
+luxlMepConfigClientFlowRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigClientFlowRowEditor 1 }
+
+luxlMepConfigClientFlowRowEditorFlowId OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The Client Flow id - ifindex"
+    ::= { luxlMepConfigClientFlowRowEditor 2 }
+
+luxlMepConfigClientFlowRowEditorAisPrio OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "AIS Priority (EVC COS-ID) 0-7. Capability client_prio_highest indicate
+         highest possible is requested"
+    ::= { luxlMepConfigClientFlowRowEditor 3 }
+
+luxlMepConfigClientFlowRowEditorLckPrio OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "LCK Priority (EVC COS-ID) 0-7. Capability client_prio_highest indicate
+         highest possible is requested"
+    ::= { luxlMepConfigClientFlowRowEditor 4 }
+
+luxlMepConfigClientFlowRowEditorLevel OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Client flow level"
+    ::= { luxlMepConfigClientFlowRowEditor 5 }
+
+luxlMepConfigClientFlowRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigClientFlowRowEditor 100 }
+
+luxlMepConfigSyslog OBJECT IDENTIFIER
+    ::= { luxlMepConfig 13 }
+
+luxlMepConfigSyslogTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigSyslogEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Syslog configuration parameters"
+    ::= { luxlMepConfigSyslog 1 }
+
+luxlMepConfigSyslogEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigSyslogEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Syslog configuration parameters"
+    INDEX       { luxlMepConfigSyslogId }
+    ::= { luxlMepConfigSyslogTable 1 }
+
+LUXLMepConfigSyslogEntry ::= SEQUENCE {
+    luxlMepConfigSyslogId   Integer32,
+    luxlMepConfigSyslogEnable   TruthValue
+}
+
+luxlMepConfigSyslogId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigSyslogEntry 1 }
+
+luxlMepConfigSyslogEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance can enable generation of syslog entries "
+    ::= { luxlMepConfigSyslogEntry 2 }
+
+luxlMepConfigTlv OBJECT IDENTIFIER
+    ::= { luxlMepConfig 14 }
+
+luxlMepConfigTlvLeaf OBJECT IDENTIFIER
+    ::= { luxlMepConfigTlv 1 }
+
+luxlMepConfigTlvLeafOsTlvOuiFirst OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted OS TLV - The OUI content first nibble"
+    ::= { luxlMepConfigTlvLeaf 2 }
+
+luxlMepConfigTlvLeafOsTlvOuiSecond OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted OS TLV - The OUI content second nibble"
+    ::= { luxlMepConfigTlvLeaf 3 }
+
+luxlMepConfigTlvLeafOsTlvOuiThird OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted OS TLV - The OUI content third nibble"
+    ::= { luxlMepConfigTlvLeaf 4 }
+
+luxlMepConfigTlvLeafOsTlvSubType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted OS TLV - The Sub-Type content"
+    ::= { luxlMepConfigTlvLeaf 5 }
+
+luxlMepConfigTlvLeafOsTlvValue OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted OS TLV - The Value content"
+    ::= { luxlMepConfigTlvLeaf 6 }
+
+luxlMepConfigBfd OBJECT IDENTIFIER
+    ::= { luxlMepConfig 15 }
+
+luxlMepConfigBfdTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigBfdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Bidirectional Forwarding Detection
+         configuration parameters"
+    ::= { luxlMepConfigBfd 1 }
+
+luxlMepConfigBfdEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigBfdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Bidirectional Forwarding Detection
+         configuration parameters."
+    INDEX       { luxlMepConfigBfdId }
+    ::= { luxlMepConfigBfdTable 1 }
+
+LUXLMepConfigBfdEntry ::= SEQUENCE {
+    luxlMepConfigBfdId      Integer32,
+    luxlMepConfigBfdEnable      TruthValue,
+    luxlMepConfigBfdIsIndependent   TruthValue,
+    luxlMepConfigBfdCcOnly      TruthValue,
+    luxlMepConfigBfdTxAuthEnabled   TruthValue,
+    luxlMepConfigBfdRxAuthEnabled   TruthValue,
+    luxlMepConfigBfdTxAuthKeyId     LUXLUnsigned8,
+    luxlMepConfigBfdCcPeriod    Unsigned32,
+    luxlMepConfigBfdRxFlow      Unsigned32,
+    luxlMepConfigBfdAction      LUXLRowEditorState
+}
+
+luxlMepConfigBfdId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigBfdEntry 1 }
+
+luxlMepConfigBfdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "CC/CV transmission and LOC detection is enabled if true."
+    ::= { luxlMepConfigBfdEntry 2 }
+
+luxlMepConfigBfdIsIndependent OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Independent mode if true, coordinated if false."
+    ::= { luxlMepConfigBfdEntry 3 }
+
+luxlMepConfigBfdCcOnly OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Only transmit CC frames (no CV frames) if true."
+    ::= { luxlMepConfigBfdEntry 4 }
+
+luxlMepConfigBfdTxAuthEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication enabled for transmission of CC/CV frames to peer if
+         true."
+    ::= { luxlMepConfigBfdEntry 5 }
+
+luxlMepConfigBfdRxAuthEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication enabled for reception of CC/CV frames from peer if true."
+    ::= { luxlMepConfigBfdEntry 6 }
+
+luxlMepConfigBfdTxAuthKeyId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication used for transmission of CC/CV frames to peer."
+    ::= { luxlMepConfigBfdEntry 7 }
+
+luxlMepConfigBfdCcPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Desired CC transmission period in us, 1 us - 60 sec."
+    ::= { luxlMepConfigBfdEntry 8 }
+
+luxlMepConfigBfdRxFlow OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Rx flow number (MPLS-TP link, MPLS-TP tunnel, MPLS-TP LSP or MPLS-TP
+         Pseudo-Wire) for independent mode."
+    ::= { luxlMepConfigBfdEntry 9 }
+
+luxlMepConfigBfdAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigBfdEntry 100 }
+
+luxlMepConfigBfdRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigBfd 2 }
+
+luxlMepConfigBfdRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigBfdRowEditor 1 }
+
+luxlMepConfigBfdRowEditorEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "CC/CV transmission and LOC detection is enabled if true."
+    ::= { luxlMepConfigBfdRowEditor 2 }
+
+luxlMepConfigBfdRowEditorIsIndependent OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Independent mode if true, coordinated if false."
+    ::= { luxlMepConfigBfdRowEditor 3 }
+
+luxlMepConfigBfdRowEditorCcOnly OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Only transmit CC frames (no CV frames) if true."
+    ::= { luxlMepConfigBfdRowEditor 4 }
+
+luxlMepConfigBfdRowEditorTxAuthEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication enabled for transmission of CC/CV frames to peer if
+         true."
+    ::= { luxlMepConfigBfdRowEditor 5 }
+
+luxlMepConfigBfdRowEditorRxAuthEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication enabled for reception of CC/CV frames from peer if true."
+    ::= { luxlMepConfigBfdRowEditor 6 }
+
+luxlMepConfigBfdRowEditorTxAuthKeyId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Authentication used for transmission of CC/CV frames to peer."
+    ::= { luxlMepConfigBfdRowEditor 7 }
+
+luxlMepConfigBfdRowEditorCcPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Desired CC transmission period in us, 1 us - 60 sec."
+    ::= { luxlMepConfigBfdRowEditor 8 }
+
+luxlMepConfigBfdRowEditorRxFlow OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Rx flow number (MPLS-TP link, MPLS-TP tunnel, MPLS-TP LSP or MPLS-TP
+         Pseudo-Wire) for independent mode."
+    ::= { luxlMepConfigBfdRowEditor 9 }
+
+luxlMepConfigBfdRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigBfdRowEditor 100 }
+
+luxlMepConfigBfdAuth OBJECT IDENTIFIER
+    ::= { luxlMepConfig 16 }
+
+luxlMepConfigBfdAuthTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigBfdAuthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Bidirectional Forwarding Detection
+         Authentication configuration parameters"
+    ::= { luxlMepConfigBfdAuth 1 }
+
+luxlMepConfigBfdAuthEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigBfdAuthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Bidirectional Forwarding Detection
+         Authentication configuration parameters."
+    INDEX       { luxlMepConfigBfdAuthId }
+    ::= { luxlMepConfigBfdAuthTable 1 }
+
+LUXLMepConfigBfdAuthEntry ::= SEQUENCE {
+    luxlMepConfigBfdAuthId      Integer32,
+    luxlMepConfigBfdAuthKeyType     LUXLMepBfdAuthenticationType,
+    luxlMepConfigBfdAuthKeyLen      LUXLUnsigned8,
+    luxlMepConfigBfdAuthKey     OCTET STRING,
+    luxlMepConfigBfdAuthAction      LUXLRowEditorState
+}
+
+luxlMepConfigBfdAuthId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigBfdAuthEntry 1 }
+
+luxlMepConfigBfdAuthKeyType OBJECT-TYPE
+    SYNTAX      LUXLMepBfdAuthenticationType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Key type."
+    ::= { luxlMepConfigBfdAuthEntry 2 }
+
+luxlMepConfigBfdAuthKeyLen OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Key length in bytes. 1-16 for Simple Password, 16 for MD5 and 20 for
+         SHA1."
+    ::= { luxlMepConfigBfdAuthEntry 3 }
+
+luxlMepConfigBfdAuthKey OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(20))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Key value."
+    ::= { luxlMepConfigBfdAuthEntry 4 }
+
+luxlMepConfigBfdAuthAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigBfdAuthEntry 100 }
+
+luxlMepConfigBfdAuthRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigBfdAuth 2 }
+
+luxlMepConfigBfdAuthRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigBfdAuthRowEditor 1 }
+
+luxlMepConfigBfdAuthRowEditorKeyType OBJECT-TYPE
+    SYNTAX      LUXLMepBfdAuthenticationType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Key type."
+    ::= { luxlMepConfigBfdAuthRowEditor 2 }
+
+luxlMepConfigBfdAuthRowEditorKeyLen OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Key length in bytes. 1-16 for Simple Password, 16 for MD5 and 20 for
+         SHA1."
+    ::= { luxlMepConfigBfdAuthRowEditor 3 }
+
+luxlMepConfigBfdAuthRowEditorKey OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(20))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Key value."
+    ::= { luxlMepConfigBfdAuthRowEditor 4 }
+
+luxlMepConfigBfdAuthRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigBfdAuthRowEditor 100 }
+
+luxlMepConfigRt OBJECT IDENTIFIER
+    ::= { luxlMepConfig 17 }
+
+luxlMepConfigRtTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigRtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Route Trace configuration
+         parameters"
+    ::= { luxlMepConfigRt 1 }
+
+luxlMepConfigRtEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigRtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Route Trace configuration parameters."
+    INDEX       { luxlMepConfigRtId }
+    ::= { luxlMepConfigRtTable 1 }
+
+LUXLMepConfigRtEntry ::= SEQUENCE {
+    luxlMepConfigRtId   Integer32,
+    luxlMepConfigRtTrafficClass     LUXLUnsigned8,
+    luxlMepConfigRtSrcIdTlv     TruthValue,
+    luxlMepConfigRtDstIdTlv     TruthValue,
+    luxlMepConfigRtPadTlvType   LUXLMepRtPadTlvType,
+    luxlMepConfigRtPadTlvLen    LUXLUnsigned16,
+    luxlMepConfigRtFlags    LUXLUnsigned8,
+    luxlMepConfigRtMaxTimeToLive    LUXLUnsigned8,
+    luxlMepConfigRtAction   LUXLRowEditorState
+}
+
+luxlMepConfigRtId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigRtEntry 1 }
+
+luxlMepConfigRtTrafficClass OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Traffic class value used in the transmitted RT request PDU. Range 0 to
+         7"
+    ::= { luxlMepConfigRtEntry 2 }
+
+luxlMepConfigRtSrcIdTlv OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Include Source ID TLV in the RT request"
+    ::= { luxlMepConfigRtEntry 3 }
+
+luxlMepConfigRtDstIdTlv OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Include Destination ID TLV in the RT request"
+    ::= { luxlMepConfigRtEntry 4 }
+
+luxlMepConfigRtPadTlvType OBJECT-TYPE
+    SYNTAX      LUXLMepRtPadTlvType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Pad TLV type"
+    ::= { luxlMepConfigRtEntry 5 }
+
+luxlMepConfigRtPadTlvLen OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Pad TLV data length. Range 1 to 1024."
+    ::= { luxlMepConfigRtEntry 6 }
+
+luxlMepConfigRtFlags OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Flags for RT request. Bit 0: V flag (Validate FEC stack), bit 1: T flag
+         (Respond Only If TTL Expired), bit 2: R flag (Validate Reverse Path)"
+    ::= { luxlMepConfigRtEntry 7 }
+
+luxlMepConfigRtMaxTimeToLive OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Max. Time To Live for RT request."
+    ::= { luxlMepConfigRtEntry 8 }
+
+luxlMepConfigRtAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigRtEntry 100 }
+
+luxlMepConfigRtRowEditor OBJECT IDENTIFIER
+    ::= { luxlMepConfigRt 2 }
+
+luxlMepConfigRtRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigRtRowEditor 1 }
+
+luxlMepConfigRtRowEditorTrafficClass OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Traffic class value used in the transmitted RT request PDU. Range 0 to
+         7"
+    ::= { luxlMepConfigRtRowEditor 2 }
+
+luxlMepConfigRtRowEditorSrcIdTlv OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Include Source ID TLV in the RT request"
+    ::= { luxlMepConfigRtRowEditor 3 }
+
+luxlMepConfigRtRowEditorDstIdTlv OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Include Destination ID TLV in the RT request"
+    ::= { luxlMepConfigRtRowEditor 4 }
+
+luxlMepConfigRtRowEditorPadTlvType OBJECT-TYPE
+    SYNTAX      LUXLMepRtPadTlvType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Pad TLV type"
+    ::= { luxlMepConfigRtRowEditor 5 }
+
+luxlMepConfigRtRowEditorPadTlvLen OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Pad TLV data length. Range 1 to 1024."
+    ::= { luxlMepConfigRtRowEditor 6 }
+
+luxlMepConfigRtRowEditorFlags OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Flags for RT request. Bit 0: V flag (Validate FEC stack), bit 1: T flag
+         (Respond Only If TTL Expired), bit 2: R flag (Validate Reverse Path)"
+    ::= { luxlMepConfigRtRowEditor 7 }
+
+luxlMepConfigRtRowEditorMaxTimeToLive OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Max. Time To Live for RT request."
+    ::= { luxlMepConfigRtRowEditor 8 }
+
+luxlMepConfigRtRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMepConfigRtRowEditor 100 }
+
+luxlMepConfigLst OBJECT IDENTIFIER
+    ::= { luxlMepConfig 18 }
+
+luxlMepConfigLstTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepConfigLstEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Link State Tracking configuration
+         parameters"
+    ::= { luxlMepConfigLst 1 }
+
+luxlMepConfigLstEntry OBJECT-TYPE
+    SYNTAX      LUXLMepConfigLstEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Link State Tracking configuration parameters"
+    INDEX       { luxlMepConfigLstId }
+    ::= { luxlMepConfigLstTable 1 }
+
+LUXLMepConfigLstEntry ::= SEQUENCE {
+    luxlMepConfigLstId      Integer32,
+    luxlMepConfigLstEnable      TruthValue
+}
+
+luxlMepConfigLstId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepConfigLstEntry 1 }
+
+luxlMepConfigLstEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The instance can enable Link State Tracking. When LST is enabled, Local
+         SF or received 'isDown' in CCM Interface Status TLV, will bring down
+         the residence port. Only valid in Up-MEP."
+    ::= { luxlMepConfigLstEntry 2 }
+
+luxlMepStatus OBJECT IDENTIFIER
+    ::= { luxlMepMibObjects 3 }
+
+luxlMepStatusInstance OBJECT IDENTIFIER
+    ::= { luxlMepStatus 1 }
+
+luxlMepStatusInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance status"
+    ::= { luxlMepStatusInstance 1 }
+
+luxlMepStatusInstanceEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance status"
+    INDEX       { luxlMepStatusInstanceId }
+    ::= { luxlMepStatusInstanceTable 1 }
+
+LUXLMepStatusInstanceEntry ::= SEQUENCE {
+    luxlMepStatusInstanceId     Integer32,
+    luxlMepStatusInstanceClevel     TruthValue,
+    luxlMepStatusInstanceCmeg   TruthValue,
+    luxlMepStatusInstanceCmep   TruthValue,
+    luxlMepStatusInstanceCssf   TruthValue,
+    luxlMepStatusInstanceCais   TruthValue,
+    luxlMepStatusInstanceClck   TruthValue,
+    luxlMepStatusInstanceAtsf   TruthValue,
+    luxlMepStatusInstanceAtsd   TruthValue,
+    luxlMepStatusInstanceAblk   TruthValue,
+    luxlMepStatusInstanceCloop      TruthValue,
+    luxlMepStatusInstanceCconfig    TruthValue
+}
+
+luxlMepStatusInstanceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusInstanceEntry 1 }
+
+luxlMepStatusInstanceClevel OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Incorrect CCM level received"
+    ::= { luxlMepStatusInstanceEntry 2 }
+
+luxlMepStatusInstanceCmeg OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Incorrect CCM MEG id received"
+    ::= { luxlMepStatusInstanceEntry 3 }
+
+luxlMepStatusInstanceCmep OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Incorrect CCM MEP id received"
+    ::= { luxlMepStatusInstanceEntry 4 }
+
+luxlMepStatusInstanceCssf OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "SSF state"
+    ::= { luxlMepStatusInstanceEntry 5 }
+
+luxlMepStatusInstanceCais OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "AIS state. AIS is received."
+    ::= { luxlMepStatusInstanceEntry 6 }
+
+luxlMepStatusInstanceClck OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Locked State. LCK is received."
+    ::= { luxlMepStatusInstanceEntry 7 }
+
+luxlMepStatusInstanceAtsf OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Trail Signal fail consequent action is calculated"
+    ::= { luxlMepStatusInstanceEntry 8 }
+
+luxlMepStatusInstanceAtsd OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Trail Signal degrade consequent action is calculated"
+    ::= { luxlMepStatusInstanceEntry 9 }
+
+luxlMepStatusInstanceAblk OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Block consequent action is calculated"
+    ::= { luxlMepStatusInstanceEntry 10 }
+
+luxlMepStatusInstanceCloop OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Loop is detected. CCM is received with own MEP ID and SMAC."
+    ::= { luxlMepStatusInstanceEntry 11 }
+
+luxlMepStatusInstanceCconfig OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Configuration error detected. CCM is received with own MEP ID."
+    ::= { luxlMepStatusInstanceEntry 12 }
+
+luxlMepStatusInstancePeerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusInstancePeerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of peer MEP status"
+    ::= { luxlMepStatusInstance 2 }
+
+luxlMepStatusInstancePeerEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusInstancePeerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a peer MEP status"
+    INDEX       { luxlMepStatusInstancePeerId, luxlMepStatusInstancePeerPeerId }
+    ::= { luxlMepStatusInstancePeerTable 1 }
+
+LUXLMepStatusInstancePeerEntry ::= SEQUENCE {
+    luxlMepStatusInstancePeerId     Integer32,
+    luxlMepStatusInstancePeerPeerId     Integer32,
+    luxlMepStatusInstancePeerCloc   TruthValue,
+    luxlMepStatusInstancePeerCrdi   TruthValue,
+    luxlMepStatusInstancePeerCperiod    TruthValue,
+    luxlMepStatusInstancePeerCprio      TruthValue
+}
+
+luxlMepStatusInstancePeerId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusInstancePeerEntry 1 }
+
+luxlMepStatusInstancePeerPeerId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The Peer MEP ID"
+    ::= { luxlMepStatusInstancePeerEntry 2 }
+
+luxlMepStatusInstancePeerCloc OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "CCM LOC state from peer MEP"
+    ::= { luxlMepStatusInstancePeerEntry 3 }
+
+luxlMepStatusInstancePeerCrdi OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "CCM RDI state from peer MEP"
+    ::= { luxlMepStatusInstancePeerEntry 4 }
+
+luxlMepStatusInstancePeerCperiod OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "CCM Period state from peer MEP"
+    ::= { luxlMepStatusInstancePeerEntry 5 }
+
+luxlMepStatusInstancePeerCprio OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "CCM Priority state from peer MEP"
+    ::= { luxlMepStatusInstancePeerEntry 6 }
+
+luxlMepStatusLm OBJECT IDENTIFIER
+    ::= { luxlMepStatus 2 }
+
+luxlMepStatusLmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusLmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Loss Measurement status"
+    ::= { luxlMepStatusLm 1 }
+
+luxlMepStatusLmEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusLmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Loss Measurement status"
+    INDEX       { luxlMepStatusLmId }
+    ::= { luxlMepStatusLmTable 1 }
+
+LUXLMepStatusLmEntry ::= SEQUENCE {
+    luxlMepStatusLmId   Integer32,
+    luxlMepStatusLmTxCounter    Unsigned32,
+    luxlMepStatusLmRxCounter    Unsigned32,
+    luxlMepStatusLmNearEndLosCounter    Integer32,
+    luxlMepStatusLmFarEndLosCounter     Integer32,
+    luxlMepStatusLmNearEndLosRatio      Unsigned32,
+    luxlMepStatusLmFarEndLosRatio   Unsigned32
+}
+
+luxlMepStatusLmId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusLmEntry 1 }
+
+luxlMepStatusLmTxCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted PDU (LMM - CCM) containing counters."
+    ::= { luxlMepStatusLmEntry 2 }
+
+luxlMepStatusLmRxCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received PDU (LMM - CCM) containing counters."
+    ::= { luxlMepStatusLmEntry 3 }
+
+luxlMepStatusLmNearEndLosCounter OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Near end frame loss counter."
+    ::= { luxlMepStatusLmEntry 4 }
+
+luxlMepStatusLmFarEndLosCounter OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Far end frame loss counter."
+    ::= { luxlMepStatusLmEntry 5 }
+
+luxlMepStatusLmNearEndLosRatio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Near end frame loss ratio."
+    ::= { luxlMepStatusLmEntry 6 }
+
+luxlMepStatusLmFarEndLosRatio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Far end frame loss ratio."
+    ::= { luxlMepStatusLmEntry 7 }
+
+luxlMepStatusDm OBJECT IDENTIFIER
+    ::= { luxlMepStatus 3 }
+
+luxlMepStatusDmTwoWayTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusDmTwoWayEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Delay Measurement Two Way status"
+    ::= { luxlMepStatusDm 1 }
+
+luxlMepStatusDmTwoWayEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusDmTwoWayEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Delay Measurement Two Way status"
+    INDEX       { luxlMepStatusDmTwoWayId }
+    ::= { luxlMepStatusDmTwoWayTable 1 }
+
+LUXLMepStatusDmTwoWayEntry ::= SEQUENCE {
+    luxlMepStatusDmTwoWayId     Integer32,
+    luxlMepStatusDmTwoWayTxCounter      Unsigned32,
+    luxlMepStatusDmTwoWayRxCounter      Unsigned32,
+    luxlMepStatusDmTwoWayRxTimeOutCounter   Unsigned32,
+    luxlMepStatusDmTwoWayRxErrorCounter     Unsigned32,
+    luxlMepStatusDmTwoWayInternalOverflowCounter    Unsigned32,
+    luxlMepStatusDmTwoWayAverageDelay   Unsigned32,
+    luxlMepStatusDmTwoWayAverageLastnDelay      Unsigned32,
+    luxlMepStatusDmTwoWayAverageDelayVariation      Unsigned32,
+    luxlMepStatusDmTwoWayAverageLastnDelayVariation     Unsigned32,
+    luxlMepStatusDmTwoWayMinimumDelay   Unsigned32,
+    luxlMepStatusDmTwoWayMaximumDelay   Unsigned32,
+    luxlMepStatusDmTwoWayMinimumDelayVariation      Unsigned32,
+    luxlMepStatusDmTwoWayMaximumDelayVariation      Unsigned32,
+    luxlMepStatusDmTwoWayTimeUnit   LUXLMepDmTimeUnit
+}
+
+luxlMepStatusDmTwoWayId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusDmTwoWayEntry 1 }
+
+luxlMepStatusDmTwoWayTxCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DMM/1DM frames."
+    ::= { luxlMepStatusDmTwoWayEntry 2 }
+
+luxlMepStatusDmTwoWayRxCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DMM/1DM frames."
+    ::= { luxlMepStatusDmTwoWayEntry 3 }
+
+luxlMepStatusDmTwoWayRxTimeOutCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DMR time-out. After transmission of DMM, the DMR is expected
+         to be received within 1 sec."
+    ::= { luxlMepStatusDmTwoWayEntry 4 }
+
+luxlMepStatusDmTwoWayRxErrorCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received error counter. It is considered an error if a delay is
+         negative or above 1 sec."
+    ::= { luxlMepStatusDmTwoWayEntry 5 }
+
+luxlMepStatusDmTwoWayInternalOverflowCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The internal total delay counter overflow counter."
+    ::= { luxlMepStatusDmTwoWayEntry 6 }
+
+luxlMepStatusDmTwoWayAverageDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The total average delay."
+    ::= { luxlMepStatusDmTwoWayEntry 7 }
+
+luxlMepStatusDmTwoWayAverageLastnDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The last N average delay."
+    ::= { luxlMepStatusDmTwoWayEntry 8 }
+
+luxlMepStatusDmTwoWayAverageDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The total average delay variation."
+    ::= { luxlMepStatusDmTwoWayEntry 9 }
+
+luxlMepStatusDmTwoWayAverageLastnDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The last N average delay variation."
+    ::= { luxlMepStatusDmTwoWayEntry 10 }
+
+luxlMepStatusDmTwoWayMinimumDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum delay measured."
+    ::= { luxlMepStatusDmTwoWayEntry 11 }
+
+luxlMepStatusDmTwoWayMaximumDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum delay measured."
+    ::= { luxlMepStatusDmTwoWayEntry 12 }
+
+luxlMepStatusDmTwoWayMinimumDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum delay variation measured."
+    ::= { luxlMepStatusDmTwoWayEntry 13 }
+
+luxlMepStatusDmTwoWayMaximumDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum delay variation measured."
+    ::= { luxlMepStatusDmTwoWayEntry 14 }
+
+luxlMepStatusDmTwoWayTimeUnit OBJECT-TYPE
+    SYNTAX      LUXLMepDmTimeUnit
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Calculation time unit."
+    ::= { luxlMepStatusDmTwoWayEntry 15 }
+
+luxlMepStatusDmOneWayFarNearTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusDmOneWayFarNearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Delay Measurement One Way Far to Near status"
+    ::= { luxlMepStatusDm 2 }
+
+luxlMepStatusDmOneWayFarNearEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusDmOneWayFarNearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Delay Measurement Two Way Far to Near status"
+    INDEX       { luxlMepStatusDmOneWayFarNearId }
+    ::= { luxlMepStatusDmOneWayFarNearTable 1 }
+
+LUXLMepStatusDmOneWayFarNearEntry ::= SEQUENCE {
+    luxlMepStatusDmOneWayFarNearId      Integer32,
+    luxlMepStatusDmOneWayFarNearTxCounter   Unsigned32,
+    luxlMepStatusDmOneWayFarNearRxCounter   Unsigned32,
+    luxlMepStatusDmOneWayFarNearRxTimeOutCounter    Unsigned32,
+    luxlMepStatusDmOneWayFarNearRxErrorCounter      Unsigned32,
+    luxlMepStatusDmOneWayFarNearInternalOverflowCounter     Unsigned32,
+    luxlMepStatusDmOneWayFarNearAverageDelay    Unsigned32,
+    luxlMepStatusDmOneWayFarNearAverageLastnDelay   Unsigned32,
+    luxlMepStatusDmOneWayFarNearAverageDelayVariation   Unsigned32,
+    luxlMepStatusDmOneWayFarNearAverageLastnDelayVariation      Unsigned32,
+    luxlMepStatusDmOneWayFarNearMinimumDelay    Unsigned32,
+    luxlMepStatusDmOneWayFarNearMaximumDelay    Unsigned32,
+    luxlMepStatusDmOneWayFarNearMinimumDelayVariation   Unsigned32,
+    luxlMepStatusDmOneWayFarNearMaximumDelayVariation   Unsigned32,
+    luxlMepStatusDmOneWayFarNearTimeUnit    LUXLMepDmTimeUnit
+}
+
+luxlMepStatusDmOneWayFarNearId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusDmOneWayFarNearEntry 1 }
+
+luxlMepStatusDmOneWayFarNearTxCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DMM/1DM frames."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 2 }
+
+luxlMepStatusDmOneWayFarNearRxCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DMM/1DM frames."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 3 }
+
+luxlMepStatusDmOneWayFarNearRxTimeOutCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DMR time-out. After transmission of DMM, the DMR is expected
+         to be received within 1 sec."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 4 }
+
+luxlMepStatusDmOneWayFarNearRxErrorCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received error counter. It is considered an error if a delay is
+         negative or above 1 sec."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 5 }
+
+luxlMepStatusDmOneWayFarNearInternalOverflowCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The internal total delay counter overflow counter."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 6 }
+
+luxlMepStatusDmOneWayFarNearAverageDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The total average delay."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 7 }
+
+luxlMepStatusDmOneWayFarNearAverageLastnDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The last N average delay."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 8 }
+
+luxlMepStatusDmOneWayFarNearAverageDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The total average delay variation."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 9 }
+
+luxlMepStatusDmOneWayFarNearAverageLastnDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The last N average delay variation."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 10 }
+
+luxlMepStatusDmOneWayFarNearMinimumDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum delay measured."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 11 }
+
+luxlMepStatusDmOneWayFarNearMaximumDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum delay measured."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 12 }
+
+luxlMepStatusDmOneWayFarNearMinimumDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum delay variation measured."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 13 }
+
+luxlMepStatusDmOneWayFarNearMaximumDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum delay variation measured."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 14 }
+
+luxlMepStatusDmOneWayFarNearTimeUnit OBJECT-TYPE
+    SYNTAX      LUXLMepDmTimeUnit
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Calculation time unit."
+    ::= { luxlMepStatusDmOneWayFarNearEntry 15 }
+
+luxlMepStatusDmOneWayNearFarTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusDmOneWayNearFarEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Delay Measurement One Way Near to Far status"
+    ::= { luxlMepStatusDm 3 }
+
+luxlMepStatusDmOneWayNearFarEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusDmOneWayNearFarEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Delay Measurement Two Way Near to Far status"
+    INDEX       { luxlMepStatusDmOneWayNearFarId }
+    ::= { luxlMepStatusDmOneWayNearFarTable 1 }
+
+LUXLMepStatusDmOneWayNearFarEntry ::= SEQUENCE {
+    luxlMepStatusDmOneWayNearFarId      Integer32,
+    luxlMepStatusDmOneWayNearFarTxCounter   Unsigned32,
+    luxlMepStatusDmOneWayNearFarRxCounter   Unsigned32,
+    luxlMepStatusDmOneWayNearFarRxTimeOutCounter    Unsigned32,
+    luxlMepStatusDmOneWayNearFarRxErrorCounter      Unsigned32,
+    luxlMepStatusDmOneWayNearFarInternalOverflowCounter     Unsigned32,
+    luxlMepStatusDmOneWayNearFarAverageDelay    Unsigned32,
+    luxlMepStatusDmOneWayNearFarAverageLastnDelay   Unsigned32,
+    luxlMepStatusDmOneWayNearFarAverageDelayVariation   Unsigned32,
+    luxlMepStatusDmOneWayNearFarAverageLastnDelayVariation      Unsigned32,
+    luxlMepStatusDmOneWayNearFarMinimumDelay    Unsigned32,
+    luxlMepStatusDmOneWayNearFarMaximumDelay    Unsigned32,
+    luxlMepStatusDmOneWayNearFarMinimumDelayVariation   Unsigned32,
+    luxlMepStatusDmOneWayNearFarMaximumDelayVariation   Unsigned32,
+    luxlMepStatusDmOneWayNearFarTimeUnit    LUXLMepDmTimeUnit
+}
+
+luxlMepStatusDmOneWayNearFarId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusDmOneWayNearFarEntry 1 }
+
+luxlMepStatusDmOneWayNearFarTxCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted DMM/1DM frames."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 2 }
+
+luxlMepStatusDmOneWayNearFarRxCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DMM/1DM frames."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 3 }
+
+luxlMepStatusDmOneWayNearFarRxTimeOutCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received DMR time-out. After transmission of DMM, the DMR is expected
+         to be received within 1 sec."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 4 }
+
+luxlMepStatusDmOneWayNearFarRxErrorCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Received error counter. It is considered an error if a delay is
+         negative or above 1 sec."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 5 }
+
+luxlMepStatusDmOneWayNearFarInternalOverflowCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The internal total delay counter overflow counter."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 6 }
+
+luxlMepStatusDmOneWayNearFarAverageDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The total average delay."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 7 }
+
+luxlMepStatusDmOneWayNearFarAverageLastnDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The last N average delay."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 8 }
+
+luxlMepStatusDmOneWayNearFarAverageDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The total average delay variation."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 9 }
+
+luxlMepStatusDmOneWayNearFarAverageLastnDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The last N average delay variation."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 10 }
+
+luxlMepStatusDmOneWayNearFarMinimumDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum delay measured."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 11 }
+
+luxlMepStatusDmOneWayNearFarMaximumDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum delay measured."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 12 }
+
+luxlMepStatusDmOneWayNearFarMinimumDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The minimum delay variation measured."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 13 }
+
+luxlMepStatusDmOneWayNearFarMaximumDelayVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The maximum delay variation measured."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 14 }
+
+luxlMepStatusDmOneWayNearFarTimeUnit OBJECT-TYPE
+    SYNTAX      LUXLMepDmTimeUnit
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Calculation time unit."
+    ::= { luxlMepStatusDmOneWayNearFarEntry 15 }
+
+luxlMepStatusLb OBJECT IDENTIFIER
+    ::= { luxlMepStatus 4 }
+
+luxlMepStatusLbTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusLbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Loop Back status"
+    ::= { luxlMepStatusLb 1 }
+
+luxlMepStatusLbEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusLbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Loop Back status"
+    INDEX       { luxlMepStatusLbId }
+    ::= { luxlMepStatusLbTable 1 }
+
+LUXLMepStatusLbEntry ::= SEQUENCE {
+    luxlMepStatusLbId   Integer32,
+    luxlMepStatusLbTransactionId    Unsigned32,
+    luxlMepStatusLbReplyCounter     Unsigned32,
+    luxlMepStatusLbLbmTransmitted   Counter64
+}
+
+luxlMepStatusLbId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusLbEntry 1 }
+
+luxlMepStatusLbTransactionId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "This is the transaction id that is used to send the next LBM."
+    ::= { luxlMepStatusLbEntry 2 }
+
+luxlMepStatusLbReplyCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of replying MAC. In case of 'infinite' LBM there is only one
+         reply."
+    ::= { luxlMepStatusLbEntry 3 }
+
+luxlMepStatusLbLbmTransmitted OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of transmitted LBM."
+    ::= { luxlMepStatusLbEntry 4 }
+
+luxlMepStatusLbReplyTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusLbReplyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Loop Back reply status"
+    ::= { luxlMepStatusLb 2 }
+
+luxlMepStatusLbReplyEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusLbReplyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Loop Back reply status"
+    INDEX       { luxlMepStatusLbReplyId, luxlMepStatusLbReplyReplyId }
+    ::= { luxlMepStatusLbReplyTable 1 }
+
+LUXLMepStatusLbReplyEntry ::= SEQUENCE {
+    luxlMepStatusLbReplyId      Integer32,
+    luxlMepStatusLbReplyReplyId     Integer32,
+    luxlMepStatusLbReplyMac     MacAddress,
+    luxlMepStatusLbReplyLbrReceived     Counter64,
+    luxlMepStatusLbReplyOutOfOrder      Counter64,
+    luxlMepStatusLbReplyMepMipId    OCTET STRING
+}
+
+luxlMepStatusLbReplyId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusLbReplyEntry 1 }
+
+luxlMepStatusLbReplyReplyId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The LB or LT Reply id"
+    ::= { luxlMepStatusLbReplyEntry 2 }
+
+luxlMepStatusLbReplyMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "LBR source MAC - this is only relevant if not 'infinite' LBM and not
+         MPLS loopback"
+    ::= { luxlMepStatusLbReplyEntry 3 }
+
+luxlMepStatusLbReplyLbrReceived OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number LBR received from MAC."
+    ::= { luxlMepStatusLbReplyEntry 4 }
+
+luxlMepStatusLbReplyOutOfOrder OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The OOO counter."
+    ::= { luxlMepStatusLbReplyEntry 5 }
+
+luxlMepStatusLbReplyMepMipId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Replying MEP/MIP ID - only relevant for loopback on MPLS"
+    ::= { luxlMepStatusLbReplyEntry 6 }
+
+luxlMepStatusTst OBJECT IDENTIFIER
+    ::= { luxlMepStatus 5 }
+
+luxlMepStatusTstTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusTstEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Test Signal status"
+    ::= { luxlMepStatusTst 1 }
+
+luxlMepStatusTstEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusTstEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Test Signal status"
+    INDEX       { luxlMepStatusTstId }
+    ::= { luxlMepStatusTstTable 1 }
+
+LUXLMepStatusTstEntry ::= SEQUENCE {
+    luxlMepStatusTstId      Integer32,
+    luxlMepStatusTstTxCounter   Counter64,
+    luxlMepStatusTstRxCounter   Counter64,
+    luxlMepStatusTstOutOfOrderCounter   Counter64,
+    luxlMepStatusTstRxRate      Unsigned32,
+    luxlMepStatusTstTestTime    Unsigned32
+}
+
+luxlMepStatusTstId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusTstEntry 1 }
+
+luxlMepStatusTstTxCounter OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Transmitted TST frames counter."
+    ::= { luxlMepStatusTstEntry 2 }
+
+luxlMepStatusTstRxCounter OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "REceived TST frames counter."
+    ::= { luxlMepStatusTstEntry 3 }
+
+luxlMepStatusTstOutOfOrderCounter OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Out of Order counter."
+    ::= { luxlMepStatusTstEntry 4 }
+
+luxlMepStatusTstRxRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Receive bit rate in Kbit/s."
+    ::= { luxlMepStatusTstEntry 5 }
+
+luxlMepStatusTstTestTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Test time in seconds. The elapsed time since last clear."
+    ::= { luxlMepStatusTstEntry 6 }
+
+luxlMepStatusLt OBJECT IDENTIFIER
+    ::= { luxlMepStatus 6 }
+
+luxlMepStatusLtTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusLtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Link Trace status"
+    ::= { luxlMepStatusLt 1 }
+
+luxlMepStatusLtEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusLtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Link Trace status"
+    INDEX       { luxlMepStatusLtId }
+    ::= { luxlMepStatusLtTable 1 }
+
+LUXLMepStatusLtEntry ::= SEQUENCE {
+    luxlMepStatusLtId   Integer32,
+    luxlMepStatusLtTransactionId    Unsigned32,
+    luxlMepStatusLtReplyCount   Unsigned32
+}
+
+luxlMepStatusLtId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusLtEntry 1 }
+
+luxlMepStatusLtTransactionId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The transaction id of the latest Link Trace."
+    ::= { luxlMepStatusLtEntry 2 }
+
+luxlMepStatusLtReplyCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of replies for this Link Trace transaction."
+    ::= { luxlMepStatusLtEntry 3 }
+
+luxlMepStatusLtReplyTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusLtReplyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Link Trace reply status"
+    ::= { luxlMepStatusLt 2 }
+
+luxlMepStatusLtReplyEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusLtReplyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Link Trace reply status"
+    INDEX       { luxlMepStatusLtReplyId, luxlMepStatusLtReplyReplyId }
+    ::= { luxlMepStatusLtReplyTable 1 }
+
+LUXLMepStatusLtReplyEntry ::= SEQUENCE {
+    luxlMepStatusLtReplyId      Integer32,
+    luxlMepStatusLtReplyReplyId     Integer32,
+    luxlMepStatusLtReplyMode    LUXLMepInstanceMode,
+    luxlMepStatusLtReplyDirection   LUXLMepInstanceDirection,
+    luxlMepStatusLtReplyTtl     LUXLUnsigned8,
+    luxlMepStatusLtReplyForwarded   TruthValue,
+    luxlMepStatusLtReplyRelayAction     LUXLMepLtRelayAction,
+    luxlMepStatusLtReplyLastEgressMac   MacAddress,
+    luxlMepStatusLtReplyNextEgressMac   MacAddress
+}
+
+luxlMepStatusLtReplyId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusLtReplyEntry 1 }
+
+luxlMepStatusLtReplyReplyId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The LB or LT Reply id"
+    ::= { luxlMepStatusLtReplyEntry 2 }
+
+luxlMepStatusLtReplyMode OBJECT-TYPE
+    SYNTAX      LUXLMepInstanceMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The reply is done by a MEP or a MIP."
+    ::= { luxlMepStatusLtReplyEntry 3 }
+
+luxlMepStatusLtReplyDirection OBJECT-TYPE
+    SYNTAX      LUXLMepInstanceDirection
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The reply is done by a UP or a Down instance."
+    ::= { luxlMepStatusLtReplyEntry 4 }
+
+luxlMepStatusLtReplyTtl OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The reply TTL value."
+    ::= { luxlMepStatusLtReplyEntry 5 }
+
+luxlMepStatusLtReplyForwarded OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The LTM was forwarded."
+    ::= { luxlMepStatusLtReplyEntry 6 }
+
+luxlMepStatusLtReplyRelayAction OBJECT-TYPE
+    SYNTAX      LUXLMepLtRelayAction
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The relay action."
+    ::= { luxlMepStatusLtReplyEntry 7 }
+
+luxlMepStatusLtReplyLastEgressMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The Last Egress MAC for this reply."
+    ::= { luxlMepStatusLtReplyEntry 8 }
+
+luxlMepStatusLtReplyNextEgressMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The Next Egress MAC of this reply."
+    ::= { luxlMepStatusLtReplyEntry 9 }
+
+luxlMepStatusCc OBJECT IDENTIFIER
+    ::= { luxlMepStatus 7 }
+
+luxlMepStatusCcPeerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusCcPeerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of peer MEP CC status"
+    ::= { luxlMepStatusCc 2 }
+
+luxlMepStatusCcPeerEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusCcPeerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a peer MEP CC status"
+    INDEX       { luxlMepStatusCcPeerId, luxlMepStatusCcPeerPeerId }
+    ::= { luxlMepStatusCcPeerTable 1 }
+
+LUXLMepStatusCcPeerEntry ::= SEQUENCE {
+    luxlMepStatusCcPeerId   Integer32,
+    luxlMepStatusCcPeerPeerId   Integer32,
+    luxlMepStatusCcPeerOsTlvOuiFirst    LUXLUnsigned8,
+    luxlMepStatusCcPeerOsTlvOuiSecond   LUXLUnsigned8,
+    luxlMepStatusCcPeerOsTlvOuiThird    LUXLUnsigned8,
+    luxlMepStatusCcPeerOsTlvSubType     LUXLUnsigned8,
+    luxlMepStatusCcPeerOsTlvValue   LUXLUnsigned8,
+    luxlMepStatusCcPeerIsTlvValue   LUXLUnsigned8,
+    luxlMepStatusCcPeerPsTlvValue   LUXLUnsigned8,
+    luxlMepStatusCcPeerOsTlvReceived    TruthValue,
+    luxlMepStatusCcPeerIsTlvReceived    TruthValue,
+    luxlMepStatusCcPeerPsTlvReceived    TruthValue
+}
+
+luxlMepStatusCcPeerId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusCcPeerEntry 1 }
+
+luxlMepStatusCcPeerPeerId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The Peer MEP ID"
+    ::= { luxlMepStatusCcPeerEntry 2 }
+
+luxlMepStatusCcPeerOsTlvOuiFirst OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received OS TLV - The OUI content first nibble"
+    ::= { luxlMepStatusCcPeerEntry 3 }
+
+luxlMepStatusCcPeerOsTlvOuiSecond OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received OS TLV - The OUI content second nibble"
+    ::= { luxlMepStatusCcPeerEntry 4 }
+
+luxlMepStatusCcPeerOsTlvOuiThird OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received OS TLV - The OUI content third nibble"
+    ::= { luxlMepStatusCcPeerEntry 5 }
+
+luxlMepStatusCcPeerOsTlvSubType OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received OS TLV - The Sub-Type content"
+    ::= { luxlMepStatusCcPeerEntry 6 }
+
+luxlMepStatusCcPeerOsTlvValue OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received OS TLV - The Value content"
+    ::= { luxlMepStatusCcPeerEntry 7 }
+
+luxlMepStatusCcPeerIsTlvValue OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received IS TLV - The Value content"
+    ::= { luxlMepStatusCcPeerEntry 8 }
+
+luxlMepStatusCcPeerPsTlvValue OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received PS TLV - The Value content"
+    ::= { luxlMepStatusCcPeerEntry 9 }
+
+luxlMepStatusCcPeerOsTlvReceived OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received CCM PDU contained OS TLV"
+    ::= { luxlMepStatusCcPeerEntry 10 }
+
+luxlMepStatusCcPeerIsTlvReceived OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received CCM PDU contained IS TLV"
+    ::= { luxlMepStatusCcPeerEntry 11 }
+
+luxlMepStatusCcPeerPsTlvReceived OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received CCM PDU contained PS TLV"
+    ::= { luxlMepStatusCcPeerEntry 12 }
+
+luxlMepStatusBfd OBJECT IDENTIFIER
+    ::= { luxlMepStatus 8 }
+
+luxlMepStatusBfdTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusBfdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of MEP BFD status"
+    ::= { luxlMepStatusBfd 2 }
+
+luxlMepStatusBfdEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusBfdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a MEP BFD status"
+    INDEX       { luxlMepStatusBfdId }
+    ::= { luxlMepStatusBfdTable 1 }
+
+LUXLMepStatusBfdEntry ::= SEQUENCE {
+    luxlMepStatusBfdId      Integer32,
+    luxlMepStatusBfdCcTxCnt     LUXLUnsigned64,
+    luxlMepStatusBfdValidCcRxCnt    LUXLUnsigned64,
+    luxlMepStatusBfdInvalidCcRxCnt      LUXLUnsigned64,
+    luxlMepStatusBfdCvTxCnt     LUXLUnsigned64,
+    luxlMepStatusBfdValidCvRxCnt    LUXLUnsigned64,
+    luxlMepStatusBfdInvalidCvRxCnt      LUXLUnsigned64,
+    luxlMepStatusBfdMyDiscr     Unsigned32,
+    luxlMepStatusBfdSessionState0   LUXLMepBfdSessionState,
+    luxlMepStatusBfdSessionState1   LUXLMepBfdSessionState,
+    luxlMepStatusBfdLocalDiag   LUXLMepBfdDiagnosticCode,
+    luxlMepStatusBfdRemoteSessionState      LUXLMepBfdSessionState,
+    luxlMepStatusBfdRemoteDiag      LUXLMepBfdDiagnosticCode,
+    luxlMepStatusBfdRemoteDiscr     Unsigned32,
+    luxlMepStatusBfdRemoteMinRx     Unsigned32,
+    luxlMepStatusBfdRemoteFlags     LUXLUnsigned8,
+    luxlMepStatusBfdUnexpDiscr      Unsigned32,
+    luxlMepStatusBfdExpSrcMepIdTlv      OCTET STRING,
+    luxlMepStatusBfdUnexpSrcMepIdTlv    OCTET STRING
+}
+
+luxlMepStatusBfdId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusBfdEntry 1 }
+
+luxlMepStatusBfdCcTxCnt OBJECT-TYPE
+    SYNTAX      LUXLUnsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "BFD CC transmitted."
+    ::= { luxlMepStatusBfdEntry 3 }
+
+luxlMepStatusBfdValidCcRxCnt OBJECT-TYPE
+    SYNTAX      LUXLUnsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Valid BFD CC received."
+    ::= { luxlMepStatusBfdEntry 4 }
+
+luxlMepStatusBfdInvalidCcRxCnt OBJECT-TYPE
+    SYNTAX      LUXLUnsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Invalid BFD CC received."
+    ::= { luxlMepStatusBfdEntry 5 }
+
+luxlMepStatusBfdCvTxCnt OBJECT-TYPE
+    SYNTAX      LUXLUnsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "BFD CV transmitted."
+    ::= { luxlMepStatusBfdEntry 6 }
+
+luxlMepStatusBfdValidCvRxCnt OBJECT-TYPE
+    SYNTAX      LUXLUnsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Valid BFD CV received."
+    ::= { luxlMepStatusBfdEntry 7 }
+
+luxlMepStatusBfdInvalidCvRxCnt OBJECT-TYPE
+    SYNTAX      LUXLUnsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Invalid BFD CV received."
+    ::= { luxlMepStatusBfdEntry 8 }
+
+luxlMepStatusBfdMyDiscr OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Selected random 'My Discriminator' value, non-zero."
+    ::= { luxlMepStatusBfdEntry 9 }
+
+luxlMepStatusBfdSessionState0 OBJECT-TYPE
+    SYNTAX      LUXLMepBfdSessionState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Local BFD session state (for coordinated mode only SessionState0 is
+         valid, for independent mode SessionState0 is sink, SessionState1 is
+         source."
+    ::= { luxlMepStatusBfdEntry 10 }
+
+luxlMepStatusBfdSessionState1 OBJECT-TYPE
+    SYNTAX      LUXLMepBfdSessionState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Local BFD session state. Only valid in independent mode where
+         SessionState0 is sink, SessionState1 is source."
+    ::= { luxlMepStatusBfdEntry 11 }
+
+luxlMepStatusBfdLocalDiag OBJECT-TYPE
+    SYNTAX      LUXLMepBfdDiagnosticCode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Local diagnostic code."
+    ::= { luxlMepStatusBfdEntry 12 }
+
+luxlMepStatusBfdRemoteSessionState OBJECT-TYPE
+    SYNTAX      LUXLMepBfdSessionState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "BFD session state received from remote end."
+    ::= { luxlMepStatusBfdEntry 13 }
+
+luxlMepStatusBfdRemoteDiag OBJECT-TYPE
+    SYNTAX      LUXLMepBfdDiagnosticCode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Diagnostic code received from remote end."
+    ::= { luxlMepStatusBfdEntry 14 }
+
+luxlMepStatusBfdRemoteDiscr OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Discriminator value received from remote end."
+    ::= { luxlMepStatusBfdEntry 15 }
+
+luxlMepStatusBfdRemoteMinRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Required Min RX interval value received from remote end."
+    ::= { luxlMepStatusBfdEntry 16 }
+
+luxlMepStatusBfdRemoteFlags OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Flags received from remote end."
+    ::= { luxlMepStatusBfdEntry 17 }
+
+luxlMepStatusBfdUnexpDiscr OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received unexpected discriminator value (should be my configured)."
+    ::= { luxlMepStatusBfdEntry 18 }
+
+luxlMepStatusBfdExpSrcMepIdTlv OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(28))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Expected source MEP ID TLV."
+    ::= { luxlMepStatusBfdEntry 19 }
+
+luxlMepStatusBfdUnexpSrcMepIdTlv OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(28))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last received unexpected source MEP ID TLV."
+    ::= { luxlMepStatusBfdEntry 20 }
+
+luxlMepStatusRt OBJECT IDENTIFIER
+    ::= { luxlMepStatus 9 }
+
+luxlMepStatusRtTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusRtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Route Trace status"
+    ::= { luxlMepStatusRt 1 }
+
+luxlMepStatusRtEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusRtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Route Trace status"
+    INDEX       { luxlMepStatusRtId }
+    ::= { luxlMepStatusRtTable 1 }
+
+LUXLMepStatusRtEntry ::= SEQUENCE {
+    luxlMepStatusRtId   Integer32,
+    luxlMepStatusRtSeqNo    Unsigned32,
+    luxlMepStatusRtRequestCount     Unsigned32,
+    luxlMepStatusRtReplyCount   Unsigned32
+}
+
+luxlMepStatusRtId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusRtEntry 1 }
+
+luxlMepStatusRtSeqNo OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Sequence number of first RT request."
+    ::= { luxlMepStatusRtEntry 2 }
+
+luxlMepStatusRtRequestCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of RT requests sent for current session."
+    ::= { luxlMepStatusRtEntry 3 }
+
+luxlMepStatusRtReplyCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of replies received for this Route Trace session."
+    ::= { luxlMepStatusRtEntry 4 }
+
+luxlMepStatusRtReplyTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepStatusRtReplyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of Route Trace reply status"
+    ::= { luxlMepStatusRt 2 }
+
+luxlMepStatusRtReplyEntry OBJECT-TYPE
+    SYNTAX      LUXLMepStatusRtReplyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a Route Trace reply status"
+    INDEX       { luxlMepStatusRtReplyId, luxlMepStatusRtReplySeqNo }
+    ::= { luxlMepStatusRtReplyTable 1 }
+
+LUXLMepStatusRtReplyEntry ::= SEQUENCE {
+    luxlMepStatusRtReplyId      Integer32,
+    luxlMepStatusRtReplySeqNo   Unsigned32,
+    luxlMepStatusRtReplyReturnCode      LUXLMepRtReturnCode,
+    luxlMepStatusRtReplyReturnSubcode   LUXLUnsigned8,
+    luxlMepStatusRtReplyRttSec      Unsigned32,
+    luxlMepStatusRtReplyRttUsec     Unsigned32,
+    luxlMepStatusRtReplyTsSentSec   Unsigned32,
+    luxlMepStatusRtReplyTsSentUsec      Unsigned32,
+    luxlMepStatusRtReplyTsReceivedSec   Unsigned32,
+    luxlMepStatusRtReplyTsReceivedUsec      Unsigned32,
+    luxlMepStatusRtReplySrcGlobalId     Unsigned32,
+    luxlMepStatusRtReplySrcNodeId   IpAddress,
+    luxlMepStatusRtReplyFecSrcValue     Unsigned32,
+    luxlMepStatusRtReplyRxIfNum     Unsigned32,
+    luxlMepStatusRtReplyRxLabelCnt      Unsigned32,
+    luxlMepStatusRtReplyRxLabel1    Unsigned32,
+    luxlMepStatusRtReplyRxLabel2    Unsigned32,
+    luxlMepStatusRtReplyRxLabel3    Unsigned32,
+    luxlMepStatusRtReplyRxLabel4    Unsigned32,
+    luxlMepStatusRtReplyRxLabel5    Unsigned32,
+    luxlMepStatusRtReplyRxLabel6    Unsigned32,
+    luxlMepStatusRtReplyRxLabel7    Unsigned32,
+    luxlMepStatusRtReplyRxLabel8    Unsigned32
+}
+
+luxlMepStatusRtReplyId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepStatusRtReplyEntry 1 }
+
+luxlMepStatusRtReplySeqNo OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..4294967295)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The RT sequence number"
+    ::= { luxlMepStatusRtReplyEntry 2 }
+
+luxlMepStatusRtReplyReturnCode OBJECT-TYPE
+    SYNTAX      LUXLMepRtReturnCode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Return code from reply."
+    ::= { luxlMepStatusRtReplyEntry 3 }
+
+luxlMepStatusRtReplyReturnSubcode OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Return subcode from reply."
+    ::= { luxlMepStatusRtReplyEntry 4 }
+
+luxlMepStatusRtReplyRttSec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Round Trip Time (seconds)."
+    ::= { luxlMepStatusRtReplyEntry 5 }
+
+luxlMepStatusRtReplyRttUsec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Round Trip Time (microseconds)."
+    ::= { luxlMepStatusRtReplyEntry 6 }
+
+luxlMepStatusRtReplyTsSentSec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Timestamp sent (sender, seconds)."
+    ::= { luxlMepStatusRtReplyEntry 7 }
+
+luxlMepStatusRtReplyTsSentUsec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Timestamp sent (sender, microseconds)."
+    ::= { luxlMepStatusRtReplyEntry 8 }
+
+luxlMepStatusRtReplyTsReceivedSec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Timestamp received (receiver, seconds)."
+    ::= { luxlMepStatusRtReplyEntry 9 }
+
+luxlMepStatusRtReplyTsReceivedUsec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Timestamp received (receiver, microseconds)."
+    ::= { luxlMepStatusRtReplyEntry 10 }
+
+luxlMepStatusRtReplySrcGlobalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Source global ID from received FEC or source ID TLV in RT reply."
+    ::= { luxlMepStatusRtReplyEntry 11 }
+
+luxlMepStatusRtReplySrcNodeId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Source node ID from received FEC or source ID TLV in RT reply."
+    ::= { luxlMepStatusRtReplyEntry 12 }
+
+luxlMepStatusRtReplyFecSrcValue OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "For a reply from a PW MEP this is the source AC-ID from the received
+         FEC in the RT reply. For a Tunnel MEP or LSP MIP bit 31:16 is the
+         source tunnel number and bit 15:0 is the LSP number from the received
+         FEC in the RT reply."
+    ::= { luxlMepStatusRtReplyEntry 13 }
+
+luxlMepStatusRtReplyRxIfNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Receiver local interface index from reply."
+    ::= { luxlMepStatusRtReplyEntry 14 }
+
+luxlMepStatusRtReplyRxLabelCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of valid label values RxLabel1, RxLabel2 etc."
+    ::= { luxlMepStatusRtReplyEntry 15 }
+
+luxlMepStatusRtReplyRxLabel1 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "1st MPLS label (top label) of Label Stack of RT request as seen by
+         receiver."
+    ::= { luxlMepStatusRtReplyEntry 16 }
+
+luxlMepStatusRtReplyRxLabel2 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "2nd MPLS label of Label Stack of RT request as seen by receiver."
+    ::= { luxlMepStatusRtReplyEntry 17 }
+
+luxlMepStatusRtReplyRxLabel3 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "3rd MPLS label of Label Stack of RT request as seen by receiver."
+    ::= { luxlMepStatusRtReplyEntry 18 }
+
+luxlMepStatusRtReplyRxLabel4 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "4th MPLS label of Label Stack of RT request as seen by receiver."
+    ::= { luxlMepStatusRtReplyEntry 19 }
+
+luxlMepStatusRtReplyRxLabel5 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "5th MPLS label of Label Stack of RT request as seen by receiver."
+    ::= { luxlMepStatusRtReplyEntry 20 }
+
+luxlMepStatusRtReplyRxLabel6 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "6th MPLS label of Label Stack of RT request as seen by receiver."
+    ::= { luxlMepStatusRtReplyEntry 21 }
+
+luxlMepStatusRtReplyRxLabel7 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "7th MPLS label of Label Stack of RT request as seen by receiver."
+    ::= { luxlMepStatusRtReplyEntry 22 }
+
+luxlMepStatusRtReplyRxLabel8 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "8th MPLS label of Label Stack of RT request as seen by receiver."
+    ::= { luxlMepStatusRtReplyEntry 23 }
+
+luxlMepControl OBJECT IDENTIFIER
+    ::= { luxlMepMibObjects 4 }
+
+luxlMepControlLm OBJECT IDENTIFIER
+    ::= { luxlMepControl 1 }
+
+luxlMepControlLmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepControlLmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Loss Measurement control parameters"
+    ::= { luxlMepControlLm 1 }
+
+luxlMepControlLmEntry OBJECT-TYPE
+    SYNTAX      LUXLMepControlLmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Loss Measurement control parameters"
+    INDEX       { luxlMepControlLmId }
+    ::= { luxlMepControlLmTable 1 }
+
+LUXLMepControlLmEntry ::= SEQUENCE {
+    luxlMepControlLmId      Integer32,
+    luxlMepControlLmClear   TruthValue
+}
+
+luxlMepControlLmId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepControlLmEntry 1 }
+
+luxlMepControlLmClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear the LM results"
+    ::= { luxlMepControlLmEntry 2 }
+
+luxlMepControlDm OBJECT IDENTIFIER
+    ::= { luxlMepControl 2 }
+
+luxlMepControlDmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepControlDmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Delay Measurement control
+         parameters"
+    ::= { luxlMepControlDm 1 }
+
+luxlMepControlDmEntry OBJECT-TYPE
+    SYNTAX      LUXLMepControlDmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Delay Measurement control parameters"
+    INDEX       { luxlMepControlDmId }
+    ::= { luxlMepControlDmTable 1 }
+
+LUXLMepControlDmEntry ::= SEQUENCE {
+    luxlMepControlDmId      Integer32,
+    luxlMepControlDmClear   TruthValue
+}
+
+luxlMepControlDmId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepControlDmEntry 1 }
+
+luxlMepControlDmClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear the DM results"
+    ::= { luxlMepControlDmEntry 2 }
+
+luxlMepControlTst OBJECT IDENTIFIER
+    ::= { luxlMepControl 3 }
+
+luxlMepControlTstTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepControlTstEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance Test Signal control parameters"
+    ::= { luxlMepControlTst 1 }
+
+luxlMepControlTstEntry OBJECT-TYPE
+    SYNTAX      LUXLMepControlTstEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance Test Signal control parameters"
+    INDEX       { luxlMepControlTstId }
+    ::= { luxlMepControlTstTable 1 }
+
+LUXLMepControlTstEntry ::= SEQUENCE {
+    luxlMepControlTstId     Integer32,
+    luxlMepControlTstClear      TruthValue
+}
+
+luxlMepControlTstId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepControlTstEntry 1 }
+
+luxlMepControlTstClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear the TST results"
+    ::= { luxlMepControlTstEntry 2 }
+
+luxlMepControlBfd OBJECT IDENTIFIER
+    ::= { luxlMepControl 4 }
+
+luxlMepControlBfdTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMepControlBfdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of created instance BFD control parameters"
+    ::= { luxlMepControlBfd 1 }
+
+luxlMepControlBfdEntry OBJECT-TYPE
+    SYNTAX      LUXLMepControlBfdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a created instance BFD control parameters"
+    INDEX       { luxlMepControlBfdId }
+    ::= { luxlMepControlBfdTable 1 }
+
+LUXLMepControlBfdEntry ::= SEQUENCE {
+    luxlMepControlBfdId     Integer32,
+    luxlMepControlBfdClear      TruthValue
+}
+
+luxlMepControlBfdId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The MEP instance ID"
+    ::= { luxlMepControlBfdEntry 1 }
+
+luxlMepControlBfdClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Clear the BFD statistics counters"
+    ::= { luxlMepControlBfdEntry 2 }
+
+luxlMepMibConformance OBJECT IDENTIFIER
+    ::= { luxlMepMib 2 }
+
+luxlMepMibCompliances OBJECT IDENTIFIER
+    ::= { luxlMepMibConformance 1 }
+
+luxlMepMibGroups OBJECT IDENTIFIER
+    ::= { luxlMepMibConformance 2 }
+
+luxlMepCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepCapabilitiesInstanceMax, luxlMepCapabilitiesPeerMax, 
+                  luxlMepCapabilitiesTransactionMax, luxlMepCapabilitiesReplyMax, 
+                  luxlMepCapabilitiesClientFlowsMax, 
+                  luxlMepCapabilitiesMacMength, luxlMepCapabilitiesMegCodeLength, 
+                  luxlMepCapabilitiesDmIntervalMin, 
+                  luxlMepCapabilitiesDmIntervalMax, 
+                  luxlMepCapabilitiesDmLastnMin, luxlMepCapabilitiesDmLastnMax, 
+                  luxlMepCapabilitiesLbmSizeMax, luxlMepCapabilitiesLbmSizeMin, 
+                  luxlMepCapabilitiesTstSizeMax, luxlMepCapabilitiesTstSizeMin, 
+                  luxlMepCapabilitiesTstRateMax, 
+                  luxlMepCapabilitiesClientPrioHighest, 
+                  luxlMepCapabilitiesItuG8113dot2, luxlMepCapabilitiesVoeSupport, 
+                  luxlMepCapabilitiesLbToSendInfinite, 
+                  luxlMepCapabilitiesBfdAuthKeyMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 1 }
+
+luxlMepConfigInstanceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigInstanceMode, luxlMepConfigInstanceDirection, 
+                  luxlMepConfigInstanceFlow, luxlMepConfigInstancePort, 
+                  luxlMepConfigInstanceLevel, luxlMepConfigInstanceVid, 
+                  luxlMepConfigInstanceVoe, luxlMepConfigInstanceMac, 
+                  luxlMepConfigInstanceFormat, luxlMepConfigInstanceName, 
+                  luxlMepConfigInstanceMeg, luxlMepConfigInstanceMep, 
+                  luxlMepConfigInstanceEvcPag, luxlMepConfigInstanceEvcQos, 
+                  luxlMepConfigInstanceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 2 }
+
+luxlMepConfigInstanceRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigInstanceRowEditorId, 
+                  luxlMepConfigInstanceRowEditorMode, 
+                  luxlMepConfigInstanceRowEditorDirection, 
+                  luxlMepConfigInstanceRowEditorFlow, 
+                  luxlMepConfigInstanceRowEditorPort, 
+                  luxlMepConfigInstanceRowEditorLevel, 
+                  luxlMepConfigInstanceRowEditorVid, 
+                  luxlMepConfigInstanceRowEditorVoe, 
+                  luxlMepConfigInstanceRowEditorMac, 
+                  luxlMepConfigInstanceRowEditorFormat, 
+                  luxlMepConfigInstanceRowEditorName, 
+                  luxlMepConfigInstanceRowEditorMeg, 
+                  luxlMepConfigInstanceRowEditorMep, 
+                  luxlMepConfigInstanceRowEditorEvcPag, 
+                  luxlMepConfigInstanceRowEditorEvcQos, 
+                  luxlMepConfigInstanceRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 3 }
+
+luxlMepConfigInstancePeerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigInstancePeerMac, luxlMepConfigInstancePeerAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 4 }
+
+luxlMepConfigInstancePeerRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigInstancePeerRowEditorId, 
+                  luxlMepConfigInstancePeerRowEditorPeerId, 
+                  luxlMepConfigInstancePeerRowEditorMac, 
+                  luxlMepConfigInstancePeerRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 5 }
+
+luxlMepConfigPmTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigPmEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 6 }
+
+luxlMepConfigCcTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigCcPrio, luxlMepConfigCcRate, luxlMepConfigCcTlv, 
+                  luxlMepConfigCcAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 7 }
+
+luxlMepConfigCcRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigCcRowEditorId, luxlMepConfigCcRowEditorPrio, 
+                  luxlMepConfigCcRowEditorRate, luxlMepConfigCcRowEditorTlv, 
+                  luxlMepConfigCcRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 8 }
+
+luxlMepConfigLmTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigLmEnable, luxlMepConfigLmEnded, luxlMepConfigLmPrio, 
+                  luxlMepConfigLmRate, luxlMepConfigLmCast, 
+                  luxlMepConfigLmFlrInterval, luxlMepConfigLmFlowCount, 
+                  luxlMepConfigLmOamCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 9 }
+
+luxlMepConfigDmTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigDmEnable, luxlMepConfigDmEnded, luxlMepConfigDmPrio, 
+                  luxlMepConfigDmCast, luxlMepConfigDmMep, luxlMepConfigDmCalcWay, 
+                  luxlMepConfigDmInterval, luxlMepConfigDmLastN, 
+                  luxlMepConfigDmTimeUnit, luxlMepConfigDmOverflowAct, 
+                  luxlMepConfigDmSynchronized }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 10 }
+
+luxlMepConfigLbTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigLbDei, luxlMepConfigLbPrio, luxlMepConfigLbCast, 
+                  luxlMepConfigLbMep, luxlMepConfigLbMac, luxlMepConfigLbToSend, 
+                  luxlMepConfigLbSize, luxlMepConfigLbInterval, 
+                  luxlMepConfigLbTimeToLive, luxlMepConfigLbAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 11 }
+
+luxlMepConfigLbRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigLbRowEditorId, luxlMepConfigLbRowEditorDei, 
+                  luxlMepConfigLbRowEditorPrio, luxlMepConfigLbRowEditorCast, 
+                  luxlMepConfigLbRowEditorMep, luxlMepConfigLbRowEditorMac, 
+                  luxlMepConfigLbRowEditorToSend, luxlMepConfigLbRowEditorSize, 
+                  luxlMepConfigLbRowEditorInterval, 
+                  luxlMepConfigLbRowEditorTimeToLive, 
+                  luxlMepConfigLbRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 12 }
+
+luxlMepConfigTstTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigTstTxEnable, luxlMepConfigTstRxEnable, 
+                  luxlMepConfigTstDei, luxlMepConfigTstPrio, luxlMepConfigTstMep, 
+                  luxlMepConfigTstRate, luxlMepConfigTstSize, 
+                  luxlMepConfigTstPattern, luxlMepConfigTstSequence, 
+                  luxlMepConfigTstAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 13 }
+
+luxlMepConfigTstRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigTstRowEditorId, luxlMepConfigTstRowEditorTxEnable, 
+                  luxlMepConfigTstRowEditorRxEnable, 
+                  luxlMepConfigTstRowEditorDei, luxlMepConfigTstRowEditorPrio, 
+                  luxlMepConfigTstRowEditorMep, luxlMepConfigTstRowEditorRate, 
+                  luxlMepConfigTstRowEditorSize, 
+                  luxlMepConfigTstRowEditorPattern, 
+                  luxlMepConfigTstRowEditorSequence, 
+                  luxlMepConfigTstRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 14 }
+
+luxlMepConfigLtTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigLtPrio, luxlMepConfigLtMep, luxlMepConfigLtMac, 
+                  luxlMepConfigLtTimeToLive, luxlMepConfigLtAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 15 }
+
+luxlMepConfigLtRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigLtRowEditorId, luxlMepConfigLtRowEditorPrio, 
+                  luxlMepConfigLtRowEditorMep, luxlMepConfigLtRowEditorMac, 
+                  luxlMepConfigLtRowEditorTimeToLive, 
+                  luxlMepConfigLtRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 16 }
+
+luxlMepConfigApsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigApsPrio, luxlMepConfigApsApsType, 
+                  luxlMepConfigApsCast, luxlMepConfigApsRapsOctet, 
+                  luxlMepConfigApsAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 17 }
+
+luxlMepConfigApsRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigApsRowEditorId, luxlMepConfigApsRowEditorPrio, 
+                  luxlMepConfigApsRowEditorApsType, 
+                  luxlMepConfigApsRowEditorCast, 
+                  luxlMepConfigApsRowEditorRapsOctet, 
+                  luxlMepConfigApsRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 18 }
+
+luxlMepConfigAisTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigAisProtection, luxlMepConfigAisRate, 
+                  luxlMepConfigAisAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 19 }
+
+luxlMepConfigAisRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigAisRowEditorId, 
+                  luxlMepConfigAisRowEditorProtection, 
+                  luxlMepConfigAisRowEditorRate, luxlMepConfigAisRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 20 }
+
+luxlMepConfigLckTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigLckRate, luxlMepConfigLckAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 21 }
+
+luxlMepConfigLckRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigLckRowEditorId, luxlMepConfigLckRowEditorRate, 
+                  luxlMepConfigLckRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 22 }
+
+luxlMepConfigClientFlowTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigClientFlowAisPrio, luxlMepConfigClientFlowLckPrio, 
+                  luxlMepConfigClientFlowLevel, luxlMepConfigClientFlowAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 23 }
+
+luxlMepConfigClientFlowRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigClientFlowRowEditorId, 
+                  luxlMepConfigClientFlowRowEditorFlowId, 
+                  luxlMepConfigClientFlowRowEditorAisPrio, 
+                  luxlMepConfigClientFlowRowEditorLckPrio, 
+                  luxlMepConfigClientFlowRowEditorLevel, 
+                  luxlMepConfigClientFlowRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 24 }
+
+luxlMepConfigSyslogTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigSyslogEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 25 }
+
+luxlMepConfigTlvLeafInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigTlvLeafOsTlvOuiFirst, 
+                  luxlMepConfigTlvLeafOsTlvOuiSecond, 
+                  luxlMepConfigTlvLeafOsTlvOuiThird, 
+                  luxlMepConfigTlvLeafOsTlvSubType, 
+                  luxlMepConfigTlvLeafOsTlvValue }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 26 }
+
+luxlMepConfigBfdTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigBfdEnable, luxlMepConfigBfdIsIndependent, 
+                  luxlMepConfigBfdCcOnly, luxlMepConfigBfdTxAuthEnabled, 
+                  luxlMepConfigBfdRxAuthEnabled, luxlMepConfigBfdTxAuthKeyId, 
+                  luxlMepConfigBfdCcPeriod, luxlMepConfigBfdRxFlow, 
+                  luxlMepConfigBfdAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 27 }
+
+luxlMepConfigBfdRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigBfdRowEditorId, luxlMepConfigBfdRowEditorEnable, 
+                  luxlMepConfigBfdRowEditorIsIndependent, 
+                  luxlMepConfigBfdRowEditorCcOnly, 
+                  luxlMepConfigBfdRowEditorTxAuthEnabled, 
+                  luxlMepConfigBfdRowEditorRxAuthEnabled, 
+                  luxlMepConfigBfdRowEditorTxAuthKeyId, 
+                  luxlMepConfigBfdRowEditorCcPeriod, 
+                  luxlMepConfigBfdRowEditorRxFlow, 
+                  luxlMepConfigBfdRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 28 }
+
+luxlMepConfigBfdAuthTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigBfdAuthKeyType, luxlMepConfigBfdAuthKeyLen, 
+                  luxlMepConfigBfdAuthKey, luxlMepConfigBfdAuthAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 29 }
+
+luxlMepConfigBfdAuthRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigBfdAuthRowEditorId, 
+                  luxlMepConfigBfdAuthRowEditorKeyType, 
+                  luxlMepConfigBfdAuthRowEditorKeyLen, 
+                  luxlMepConfigBfdAuthRowEditorKey, 
+                  luxlMepConfigBfdAuthRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 30 }
+
+luxlMepConfigRtTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigRtTrafficClass, luxlMepConfigRtSrcIdTlv, 
+                  luxlMepConfigRtDstIdTlv, luxlMepConfigRtPadTlvType, 
+                  luxlMepConfigRtPadTlvLen, luxlMepConfigRtFlags, 
+                  luxlMepConfigRtMaxTimeToLive, luxlMepConfigRtAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 31 }
+
+luxlMepConfigRtRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigRtRowEditorId, 
+                  luxlMepConfigRtRowEditorTrafficClass, 
+                  luxlMepConfigRtRowEditorSrcIdTlv, 
+                  luxlMepConfigRtRowEditorDstIdTlv, 
+                  luxlMepConfigRtRowEditorPadTlvType, 
+                  luxlMepConfigRtRowEditorPadTlvLen, 
+                  luxlMepConfigRtRowEditorFlags, 
+                  luxlMepConfigRtRowEditorMaxTimeToLive, 
+                  luxlMepConfigRtRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 32 }
+
+luxlMepConfigLstTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepConfigLstEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 33 }
+
+luxlMepStatusInstanceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusInstanceClevel, luxlMepStatusInstanceCmeg, 
+                  luxlMepStatusInstanceCmep, luxlMepStatusInstanceCssf, 
+                  luxlMepStatusInstanceCais, luxlMepStatusInstanceClck, 
+                  luxlMepStatusInstanceAtsf, luxlMepStatusInstanceAtsd, 
+                  luxlMepStatusInstanceAblk, luxlMepStatusInstanceCloop, 
+                  luxlMepStatusInstanceCconfig }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 34 }
+
+luxlMepStatusInstancePeerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusInstancePeerCloc, luxlMepStatusInstancePeerCrdi, 
+                  luxlMepStatusInstancePeerCperiod, 
+                  luxlMepStatusInstancePeerCprio }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 35 }
+
+luxlMepStatusLmTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusLmTxCounter, luxlMepStatusLmRxCounter, 
+                  luxlMepStatusLmNearEndLosCounter, 
+                  luxlMepStatusLmFarEndLosCounter, 
+                  luxlMepStatusLmNearEndLosRatio, luxlMepStatusLmFarEndLosRatio }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 36 }
+
+luxlMepStatusDmTwoWayTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusDmTwoWayTxCounter, luxlMepStatusDmTwoWayRxCounter, 
+                  luxlMepStatusDmTwoWayRxTimeOutCounter, 
+                  luxlMepStatusDmTwoWayRxErrorCounter, 
+                  luxlMepStatusDmTwoWayInternalOverflowCounter, 
+                  luxlMepStatusDmTwoWayAverageDelay, 
+                  luxlMepStatusDmTwoWayAverageLastnDelay, 
+                  luxlMepStatusDmTwoWayAverageDelayVariation, 
+                  luxlMepStatusDmTwoWayAverageLastnDelayVariation, 
+                  luxlMepStatusDmTwoWayMinimumDelay, 
+                  luxlMepStatusDmTwoWayMaximumDelay, 
+                  luxlMepStatusDmTwoWayMinimumDelayVariation, 
+                  luxlMepStatusDmTwoWayMaximumDelayVariation, 
+                  luxlMepStatusDmTwoWayTimeUnit }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 37 }
+
+luxlMepStatusDmOneWayFarNearTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusDmOneWayFarNearTxCounter, 
+                  luxlMepStatusDmOneWayFarNearRxCounter, 
+                  luxlMepStatusDmOneWayFarNearRxTimeOutCounter, 
+                  luxlMepStatusDmOneWayFarNearRxErrorCounter, 
+                  luxlMepStatusDmOneWayFarNearInternalOverflowCounter, 
+                  luxlMepStatusDmOneWayFarNearAverageDelay, 
+                  luxlMepStatusDmOneWayFarNearAverageLastnDelay, 
+                  luxlMepStatusDmOneWayFarNearAverageDelayVariation, 
+                  luxlMepStatusDmOneWayFarNearAverageLastnDelayVariation, 
+                  luxlMepStatusDmOneWayFarNearMinimumDelay, 
+                  luxlMepStatusDmOneWayFarNearMaximumDelay, 
+                  luxlMepStatusDmOneWayFarNearMinimumDelayVariation, 
+                  luxlMepStatusDmOneWayFarNearMaximumDelayVariation, 
+                  luxlMepStatusDmOneWayFarNearTimeUnit }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 38 }
+
+luxlMepStatusDmOneWayNearFarTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusDmOneWayNearFarTxCounter, 
+                  luxlMepStatusDmOneWayNearFarRxCounter, 
+                  luxlMepStatusDmOneWayNearFarRxTimeOutCounter, 
+                  luxlMepStatusDmOneWayNearFarRxErrorCounter, 
+                  luxlMepStatusDmOneWayNearFarInternalOverflowCounter, 
+                  luxlMepStatusDmOneWayNearFarAverageDelay, 
+                  luxlMepStatusDmOneWayNearFarAverageLastnDelay, 
+                  luxlMepStatusDmOneWayNearFarAverageDelayVariation, 
+                  luxlMepStatusDmOneWayNearFarAverageLastnDelayVariation, 
+                  luxlMepStatusDmOneWayNearFarMinimumDelay, 
+                  luxlMepStatusDmOneWayNearFarMaximumDelay, 
+                  luxlMepStatusDmOneWayNearFarMinimumDelayVariation, 
+                  luxlMepStatusDmOneWayNearFarMaximumDelayVariation, 
+                  luxlMepStatusDmOneWayNearFarTimeUnit }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 39 }
+
+luxlMepStatusLbTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusLbTransactionId, luxlMepStatusLbReplyCounter, 
+                  luxlMepStatusLbLbmTransmitted }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 40 }
+
+luxlMepStatusLbReplyTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusLbReplyMac, luxlMepStatusLbReplyLbrReceived, 
+                  luxlMepStatusLbReplyOutOfOrder, luxlMepStatusLbReplyMepMipId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 41 }
+
+luxlMepStatusTstTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusTstTxCounter, luxlMepStatusTstRxCounter, 
+                  luxlMepStatusTstOutOfOrderCounter, luxlMepStatusTstRxRate, 
+                  luxlMepStatusTstTestTime }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 42 }
+
+luxlMepStatusLtTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusLtTransactionId, luxlMepStatusLtReplyCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 43 }
+
+luxlMepStatusLtReplyTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusLtReplyMode, luxlMepStatusLtReplyDirection, 
+                  luxlMepStatusLtReplyTtl, luxlMepStatusLtReplyForwarded, 
+                  luxlMepStatusLtReplyRelayAction, 
+                  luxlMepStatusLtReplyLastEgressMac, 
+                  luxlMepStatusLtReplyNextEgressMac }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 44 }
+
+luxlMepStatusCcPeerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusCcPeerOsTlvOuiFirst, 
+                  luxlMepStatusCcPeerOsTlvOuiSecond, 
+                  luxlMepStatusCcPeerOsTlvOuiThird, 
+                  luxlMepStatusCcPeerOsTlvSubType, luxlMepStatusCcPeerOsTlvValue, 
+                  luxlMepStatusCcPeerIsTlvValue, luxlMepStatusCcPeerPsTlvValue, 
+                  luxlMepStatusCcPeerOsTlvReceived, 
+                  luxlMepStatusCcPeerIsTlvReceived, 
+                  luxlMepStatusCcPeerPsTlvReceived }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 45 }
+
+luxlMepStatusBfdTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusBfdCcTxCnt, luxlMepStatusBfdValidCcRxCnt, 
+                  luxlMepStatusBfdInvalidCcRxCnt, luxlMepStatusBfdCvTxCnt, 
+                  luxlMepStatusBfdValidCvRxCnt, luxlMepStatusBfdInvalidCvRxCnt, 
+                  luxlMepStatusBfdMyDiscr, luxlMepStatusBfdSessionState0, 
+                  luxlMepStatusBfdSessionState1, luxlMepStatusBfdLocalDiag, 
+                  luxlMepStatusBfdRemoteSessionState, luxlMepStatusBfdRemoteDiag, 
+                  luxlMepStatusBfdRemoteDiscr, luxlMepStatusBfdRemoteMinRx, 
+                  luxlMepStatusBfdRemoteFlags, luxlMepStatusBfdUnexpDiscr, 
+                  luxlMepStatusBfdExpSrcMepIdTlv, 
+                  luxlMepStatusBfdUnexpSrcMepIdTlv }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 46 }
+
+luxlMepStatusRtTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusRtSeqNo, luxlMepStatusRtRequestCount, 
+                  luxlMepStatusRtReplyCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 47 }
+
+luxlMepStatusRtReplyTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepStatusRtReplyReturnCode, 
+                  luxlMepStatusRtReplyReturnSubcode, luxlMepStatusRtReplyRttSec, 
+                  luxlMepStatusRtReplyRttUsec, luxlMepStatusRtReplyTsSentSec, 
+                  luxlMepStatusRtReplyTsSentUsec, 
+                  luxlMepStatusRtReplyTsReceivedSec, 
+                  luxlMepStatusRtReplyTsReceivedUsec, 
+                  luxlMepStatusRtReplySrcGlobalId, luxlMepStatusRtReplySrcNodeId, 
+                  luxlMepStatusRtReplyFecSrcValue, luxlMepStatusRtReplyRxIfNum, 
+                  luxlMepStatusRtReplyRxLabelCnt, luxlMepStatusRtReplyRxLabel1, 
+                  luxlMepStatusRtReplyRxLabel2, luxlMepStatusRtReplyRxLabel3, 
+                  luxlMepStatusRtReplyRxLabel4, luxlMepStatusRtReplyRxLabel5, 
+                  luxlMepStatusRtReplyRxLabel6, luxlMepStatusRtReplyRxLabel7, 
+                  luxlMepStatusRtReplyRxLabel8 }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 48 }
+
+luxlMepControlLmTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepControlLmClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 49 }
+
+luxlMepControlDmTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepControlDmClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 50 }
+
+luxlMepControlTstTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepControlTstClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 51 }
+
+luxlMepControlBfdTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMepControlBfdClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMepMibGroups 52 }
+
+luxlMepMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlMepCapabilitiesInfoGroup, 
+                  luxlMepConfigInstanceTableInfoGroup, 
+                  luxlMepConfigInstanceRowEditorInfoGroup, 
+                  luxlMepConfigInstancePeerTableInfoGroup, 
+                  luxlMepConfigInstancePeerRowEditorInfoGroup, 
+                  luxlMepConfigPmTableInfoGroup, luxlMepConfigCcTableInfoGroup, 
+                  luxlMepConfigCcRowEditorInfoGroup, 
+                  luxlMepConfigLmTableInfoGroup, luxlMepConfigDmTableInfoGroup, 
+                  luxlMepConfigLbTableInfoGroup, 
+                  luxlMepConfigLbRowEditorInfoGroup, 
+                  luxlMepConfigTstTableInfoGroup, 
+                  luxlMepConfigTstRowEditorInfoGroup, 
+                  luxlMepConfigLtTableInfoGroup, 
+                  luxlMepConfigLtRowEditorInfoGroup, 
+                  luxlMepConfigApsTableInfoGroup, 
+                  luxlMepConfigApsRowEditorInfoGroup, 
+                  luxlMepConfigAisTableInfoGroup, 
+                  luxlMepConfigAisRowEditorInfoGroup, 
+                  luxlMepConfigLckTableInfoGroup, 
+                  luxlMepConfigLckRowEditorInfoGroup, 
+                  luxlMepConfigClientFlowTableInfoGroup, 
+                  luxlMepConfigClientFlowRowEditorInfoGroup, 
+                  luxlMepConfigSyslogTableInfoGroup, 
+                  luxlMepConfigTlvLeafInfoGroup, luxlMepConfigBfdTableInfoGroup, 
+                  luxlMepConfigBfdRowEditorInfoGroup, 
+                  luxlMepConfigBfdAuthTableInfoGroup, 
+                  luxlMepConfigBfdAuthRowEditorInfoGroup, 
+                  luxlMepConfigRtTableInfoGroup, 
+                  luxlMepConfigRtRowEditorInfoGroup, 
+                  luxlMepConfigLstTableInfoGroup, 
+                  luxlMepStatusInstanceTableInfoGroup, 
+                  luxlMepStatusInstancePeerTableInfoGroup, 
+                  luxlMepStatusLmTableInfoGroup, 
+                  luxlMepStatusDmTwoWayTableInfoGroup, 
+                  luxlMepStatusDmOneWayFarNearTableInfoGroup, 
+                  luxlMepStatusDmOneWayNearFarTableInfoGroup, 
+                  luxlMepStatusLbTableInfoGroup, 
+                  luxlMepStatusLbReplyTableInfoGroup, 
+                  luxlMepStatusTstTableInfoGroup, luxlMepStatusLtTableInfoGroup, 
+                  luxlMepStatusLtReplyTableInfoGroup, 
+                  luxlMepStatusCcPeerTableInfoGroup, 
+                  luxlMepStatusBfdTableInfoGroup, luxlMepStatusRtTableInfoGroup, 
+                  luxlMepStatusRtReplyTableInfoGroup, 
+                  luxlMepControlLmTableInfoGroup, luxlMepControlDmTableInfoGroup, 
+                  luxlMepControlTstTableInfoGroup, 
+                  luxlMepControlBfdTableInfoGroup }
+
+    ::= { luxlMepMibCompliances 1 }
+
+END

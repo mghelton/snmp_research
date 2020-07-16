@@ -1,0 +1,331 @@
+-- *****************************************************************
+-- ICFG-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-ICFG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    ;
+
+luxlIcfgMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of ICFG"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 101 }
+
+
+LUXLIcfgConfigStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of configuration."
+    SYNTAX      INTEGER { none(0), success(1), inProgress(2), errOtherInProcessing(3), errNoSuchFile(4), errSameSrcDst(5), errPermissionDenied(6), errLoadSrc(7), errSaveDst(8) }
+
+LUXLIcfgConfigType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of configuration."
+    SYNTAX      INTEGER { none(0), runningConfig(1), startupConfig(2), configFile(3) }
+
+LUXLIcfgReloadDefault ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of reload default."
+    SYNTAX      INTEGER { none(0), default(1), defaultKeepIp(2) }
+
+luxlIcfgMibObjects OBJECT IDENTIFIER
+    ::= { luxlIcfgMib 1 }
+
+luxlIcfgStatus OBJECT IDENTIFIER
+    ::= { luxlIcfgMibObjects 3 }
+
+luxlIcfgStatusFileStatistics OBJECT IDENTIFIER
+    ::= { luxlIcfgStatus 1 }
+
+luxlIcfgStatusFileStatisticsNumberOfFiles OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of files in flash."
+    ::= { luxlIcfgStatusFileStatistics 1 }
+
+luxlIcfgStatusFileStatisticsTotalBytes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Total number of bytes used by all files in flash."
+    ::= { luxlIcfgStatusFileStatistics 2 }
+
+luxlIcfgStatusFileTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLIcfgStatusFileEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of status of files in flash."
+    ::= { luxlIcfgStatus 2 }
+
+luxlIcfgStatusFileEntry OBJECT-TYPE
+    SYNTAX      LUXLIcfgStatusFileEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of file status."
+    INDEX       { luxlIcfgStatusFileFileNo }
+    ::= { luxlIcfgStatusFileTable 1 }
+
+LUXLIcfgStatusFileEntry ::= SEQUENCE {
+    luxlIcfgStatusFileFileNo    Integer32,
+    luxlIcfgStatusFileFileName      LUXLDisplayString,
+    luxlIcfgStatusFileBytes     Unsigned32,
+    luxlIcfgStatusFileModifiedTime      LUXLDisplayString,
+    luxlIcfgStatusFileAttribute     LUXLDisplayString
+}
+
+luxlIcfgStatusFileFileNo OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The number of File. The number starts from 1."
+    ::= { luxlIcfgStatusFileEntry 1 }
+
+luxlIcfgStatusFileFileName OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "File name."
+    ::= { luxlIcfgStatusFileEntry 2 }
+
+luxlIcfgStatusFileBytes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of bytes of the file."
+    ::= { luxlIcfgStatusFileEntry 3 }
+
+luxlIcfgStatusFileModifiedTime OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..39))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Last modified time of the file."
+    ::= { luxlIcfgStatusFileEntry 4 }
+
+luxlIcfgStatusFileAttribute OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..15))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "File attribute in the linux format of drwxrwxrwx. 'd' is directory or
+         not, the permission of rwx is for owner, group and other, respectively."
+    ::= { luxlIcfgStatusFileEntry 5 }
+
+luxlIcfgStatusCopyConfig OBJECT IDENTIFIER
+    ::= { luxlIcfgStatus 3 }
+
+luxlIcfgStatusCopyConfigStatus OBJECT-TYPE
+    SYNTAX      LUXLIcfgConfigStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The status indicates the status of current copy operation. none(0)
+         means no copy operation. success(1) means copy operation is successful.
+         inProgress(2) means current copy operation is in progress.
+         errOtherInProcessing(3) means copy operation is failed due to other in
+         processing. errNoSuchFile(4) means copy operation is failed due to file
+         not existing. errSameSrcDst(5) means copy operation is failed due to
+         the source and destination are the same. errPermissionDenied(6) means
+         copy operation is failed due to the destination is not permitted to
+         modify. errLoadSrc(7) means copy operation is failed due to the error
+         to load source file. errSaveDst(8) means copy operation is failed due
+         to the error to save or commit destination."
+    ::= { luxlIcfgStatusCopyConfig 1 }
+
+luxlIcfgControl OBJECT IDENTIFIER
+    ::= { luxlIcfgMibObjects 4 }
+
+luxlIcfgControlGlobals OBJECT IDENTIFIER
+    ::= { luxlIcfgControl 1 }
+
+luxlIcfgControlGlobalsReloadDefault OBJECT-TYPE
+    SYNTAX      LUXLIcfgReloadDefault
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Reset system to default. none(0) is to do nothing. default(1) is to
+         reset the whole system to default. defaultKeepIp(2) is to reset system
+         to default, but keep IP address of VLAN 1."
+    ::= { luxlIcfgControlGlobals 1 }
+
+luxlIcfgControlGlobalsDeleteFile OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Delete file in flash. The format is flash:filename. Where
+         'default-config' is read-only and not allowed to be deleted."
+    ::= { luxlIcfgControlGlobals 2 }
+
+luxlIcfgControlCopyConfig OBJECT IDENTIFIER
+    ::= { luxlIcfgControl 2 }
+
+luxlIcfgControlCopyConfigCopy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action to do copy or not. true is to do the copy operation. false is to
+         do nothing"
+    ::= { luxlIcfgControlCopyConfig 1 }
+
+luxlIcfgControlCopyConfigSourceConfigType OBJECT-TYPE
+    SYNTAX      LUXLIcfgConfigType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source configuration type. none(0) means no configuration file.
+         runningConfig(1) means running configuration. startupConfig(2) means
+         startup configuration file in flash. configFile(3) is the configuration
+         file specified in SourceConfigFile."
+    ::= { luxlIcfgControlCopyConfig 2 }
+
+luxlIcfgControlCopyConfigSourceConfigFile OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source configuration file. If the configuration file is in flash then
+         the format is flash:'filename'. If the configuration file is from tftp
+         then the format is tftp://server[:port]/path-to-file."
+    ::= { luxlIcfgControlCopyConfig 3 }
+
+luxlIcfgControlCopyConfigDestinationConfigType OBJECT-TYPE
+    SYNTAX      LUXLIcfgConfigType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Source configuration type. none(0) means no configuration file.
+         runningConfig(1) means running configuration. startupConfig(2) means
+         startup configuration file in flash. configFile(3) is the configuration
+         file specified in DestinationConfigFile."
+    ::= { luxlIcfgControlCopyConfig 4 }
+
+luxlIcfgControlCopyConfigDestinationConfigFile OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Destination configuration file. If the configuration file is in flash
+         then the format is flash:filename. If the configuration file is from
+         tftp then the format is tftp://server[:port]/filename_with_path. Where
+         'default-config' is read-only and not allowed to be deleted."
+    ::= { luxlIcfgControlCopyConfig 5 }
+
+luxlIcfgControlCopyConfigMerge OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "This flag works only if DestinationConfigType is runningConfig(1). true
+         is to merge the source configuration into the current running
+         configuration. false is to replace the current running configuration
+         with the source configuration."
+    ::= { luxlIcfgControlCopyConfig 6 }
+
+luxlIcfgMibConformance OBJECT IDENTIFIER
+    ::= { luxlIcfgMib 2 }
+
+luxlIcfgMibCompliances OBJECT IDENTIFIER
+    ::= { luxlIcfgMibConformance 1 }
+
+luxlIcfgMibGroups OBJECT IDENTIFIER
+    ::= { luxlIcfgMibConformance 2 }
+
+luxlIcfgStatusFileStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIcfgStatusFileStatisticsNumberOfFiles, 
+                  luxlIcfgStatusFileStatisticsTotalBytes }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIcfgMibGroups 1 }
+
+luxlIcfgStatusFileTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIcfgStatusFileFileName, luxlIcfgStatusFileBytes, 
+                  luxlIcfgStatusFileModifiedTime, luxlIcfgStatusFileAttribute }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIcfgMibGroups 2 }
+
+luxlIcfgStatusCopyConfigInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIcfgStatusCopyConfigStatus }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIcfgMibGroups 3 }
+
+luxlIcfgControlGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIcfgControlGlobalsReloadDefault, 
+                  luxlIcfgControlGlobalsDeleteFile }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIcfgMibGroups 4 }
+
+luxlIcfgControlCopyConfigInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlIcfgControlCopyConfigCopy, 
+                  luxlIcfgControlCopyConfigSourceConfigType, 
+                  luxlIcfgControlCopyConfigSourceConfigFile, 
+                  luxlIcfgControlCopyConfigDestinationConfigType, 
+                  luxlIcfgControlCopyConfigDestinationConfigFile, 
+                  luxlIcfgControlCopyConfigMerge }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlIcfgMibGroups 5 }
+
+luxlIcfgMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlIcfgStatusFileStatisticsInfoGroup, 
+                  luxlIcfgStatusFileTableInfoGroup, 
+                  luxlIcfgStatusCopyConfigInfoGroup, 
+                  luxlIcfgControlGlobalsInfoGroup, 
+                  luxlIcfgControlCopyConfigInfoGroup }
+
+    ::= { luxlIcfgMibCompliances 1 }
+
+END

@@ -1,0 +1,583 @@
+-- *****************************************************************
+-- MAC-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-MAC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLPortList FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLUnsigned8 FROM LUXL-TC
+    LUXLVlan FROM LUXL-TC
+    ;
+
+luxlMacMib MODULE-IDENTITY
+    LAST-UPDATED "201408200000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the MAC MIB"
+    REVISION    "201408200000Z"
+    DESCRIPTION
+        "Updated types"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 12 }
+
+
+LUXLMACPortLearnMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The learning mode of the port."
+    SYNTAX      INTEGER { auto(0), disable(1), secure(2) }
+
+luxlMacMibObjects OBJECT IDENTIFIER
+    ::= { luxlMacMib 1 }
+
+luxlMacCapabilities OBJECT IDENTIFIER
+    ::= { luxlMacMibObjects 1 }
+
+luxlMacCapabilitiesNonVolatileMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Max number of static non-volatile MAC addresses that can be stored in
+         the system."
+    ::= { luxlMacCapabilities 1 }
+
+luxlMacConfig OBJECT IDENTIFIER
+    ::= { luxlMacMibObjects 2 }
+
+luxlMacConfigFdbGlobal OBJECT IDENTIFIER
+    ::= { luxlMacConfig 1 }
+
+luxlMacConfigFdbGlobalAgeTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Mac address aging time in the FDB."
+    ::= { luxlMacConfigFdbGlobal 1 }
+
+luxlMacConfigFdbTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMacConfigFdbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents static mac addresses added through the mgmt
+         interface. "
+    ::= { luxlMacConfig 2 }
+
+luxlMacConfigFdbEntry OBJECT-TYPE
+    SYNTAX      LUXLMacConfigFdbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlMacConfigFdbVlanId, luxlMacConfigFdbMacAddress }
+    ::= { luxlMacConfigFdbTable 1 }
+
+LUXLMacConfigFdbEntry ::= SEQUENCE {
+    luxlMacConfigFdbVlanId      LUXLVlan,
+    luxlMacConfigFdbMacAddress      MacAddress,
+    luxlMacConfigFdbPortList    LUXLPortList,
+    luxlMacConfigFdbAction      LUXLRowEditorState
+}
+
+luxlMacConfigFdbVlanId OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id used for indexing."
+    ::= { luxlMacConfigFdbEntry 1 }
+
+luxlMacConfigFdbMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The destination MAC address which this entry applies."
+    ::= { luxlMacConfigFdbEntry 2 }
+
+luxlMacConfigFdbPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of destination ports for which frames with this DMAC is forwarded
+         to."
+    ::= { luxlMacConfigFdbEntry 3 }
+
+luxlMacConfigFdbAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMacConfigFdbEntry 100 }
+
+luxlMacConfigFdbTableRowEditor OBJECT IDENTIFIER
+    ::= { luxlMacConfig 3 }
+
+luxlMacConfigFdbTableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id used for indexing."
+    ::= { luxlMacConfigFdbTableRowEditor 1 }
+
+luxlMacConfigFdbTableRowEditorMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The destination MAC address which this entry applies."
+    ::= { luxlMacConfigFdbTableRowEditor 2 }
+
+luxlMacConfigFdbTableRowEditorPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "List of destination ports for which frames with this DMAC is forwarded
+         to."
+    ::= { luxlMacConfigFdbTableRowEditor 3 }
+
+luxlMacConfigFdbTableRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlMacConfigFdbTableRowEditor 100 }
+
+luxlMacConfigPortLearnTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMacConfigPortLearnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents the learning mode of each port"
+    ::= { luxlMacConfig 4 }
+
+luxlMacConfigPortLearnEntry OBJECT-TYPE
+    SYNTAX      LUXLMacConfigPortLearnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlMacConfigPortLearnIfIndex }
+    ::= { luxlMacConfigPortLearnTable 1 }
+
+LUXLMacConfigPortLearnEntry ::= SEQUENCE {
+    luxlMacConfigPortLearnIfIndex   LUXLInterfaceIndex,
+    luxlMacConfigPortLearnLearnMode     LUXLMACPortLearnMode,
+    luxlMacConfigPortLearnChangeAllowed     TruthValue
+}
+
+luxlMacConfigPortLearnIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index."
+    ::= { luxlMacConfigPortLearnEntry 1 }
+
+luxlMacConfigPortLearnLearnMode OBJECT-TYPE
+    SYNTAX      LUXLMACPortLearnMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The learn mode of the port. Auto(0) means auto learning. Disable(1)
+         means that learning is disabled. Secure(2) means that learning frames
+         are discarded."
+    ::= { luxlMacConfigPortLearnEntry 2 }
+
+luxlMacConfigPortLearnChangeAllowed OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "If internal modules have changed the learned mode then the user is not
+         allowed to change it from this interface. This entry tells you if the
+         LearnMode can be changed (true) or not (false). This is a read only
+         entry - write is ignored."
+    ::= { luxlMacConfigPortLearnEntry 3 }
+
+luxlMacConfigVlanLearnTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMacConfigVlanLearnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents the learning mode of each vlan 1-4095"
+    ::= { luxlMacConfig 5 }
+
+luxlMacConfigVlanLearnEntry OBJECT-TYPE
+    SYNTAX      LUXLMacConfigVlanLearnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlMacConfigVlanLearnVlanId }
+    ::= { luxlMacConfigVlanLearnTable 1 }
+
+LUXLMacConfigVlanLearnEntry ::= SEQUENCE {
+    luxlMacConfigVlanLearnVlanId    LUXLVlan,
+    luxlMacConfigVlanLearnMode      TruthValue
+}
+
+luxlMacConfigVlanLearnVlanId OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id used for indexing."
+    ::= { luxlMacConfigVlanLearnEntry 1 }
+
+luxlMacConfigVlanLearnMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Learn mode of the VLAN, True = Enabled, False = Disabled"
+    ::= { luxlMacConfigVlanLearnEntry 2 }
+
+luxlMacStatus OBJECT IDENTIFIER
+    ::= { luxlMacMibObjects 3 }
+
+luxlMacStatusFdbTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMacStatusFdbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents all mac addresses in the FDB"
+    ::= { luxlMacStatus 1 }
+
+luxlMacStatusFdbEntry OBJECT-TYPE
+    SYNTAX      LUXLMacStatusFdbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlMacStatusFdbVlanId, luxlMacStatusFdbMacAddress }
+    ::= { luxlMacStatusFdbTable 1 }
+
+LUXLMacStatusFdbEntry ::= SEQUENCE {
+    luxlMacStatusFdbVlanId      LUXLVlan,
+    luxlMacStatusFdbMacAddress      MacAddress,
+    luxlMacStatusFdbPortList    LUXLPortList,
+    luxlMacStatusFdbDynamic     LUXLUnsigned8,
+    luxlMacStatusFdbCopyToCpu   LUXLUnsigned8
+}
+
+luxlMacStatusFdbVlanId OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id used for indexing."
+    ::= { luxlMacStatusFdbEntry 1 }
+
+luxlMacStatusFdbMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The destination MAC address which this entry applies."
+    ::= { luxlMacStatusFdbEntry 2 }
+
+luxlMacStatusFdbPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "List of destination ports for which frames with this DMAC is forwarded
+         to."
+    ::= { luxlMacStatusFdbEntry 3 }
+
+luxlMacStatusFdbDynamic OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The entry is dynamically learned (True) or statically added (False)"
+    ::= { luxlMacStatusFdbEntry 4 }
+
+luxlMacStatusFdbCopyToCpu OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Copy this frame to the CPU (True) or not (False)"
+    ::= { luxlMacStatusFdbEntry 5 }
+
+luxlMacStatusFdbStaticTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMacStatusFdbStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represents all static mac addresses in the FDB"
+    ::= { luxlMacStatus 2 }
+
+luxlMacStatusFdbStaticEntry OBJECT-TYPE
+    SYNTAX      LUXLMacStatusFdbStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlMacStatusFdbStaticVlanId, luxlMacStatusFdbStaticMacAddress }
+    ::= { luxlMacStatusFdbStaticTable 1 }
+
+LUXLMacStatusFdbStaticEntry ::= SEQUENCE {
+    luxlMacStatusFdbStaticVlanId    LUXLVlan,
+    luxlMacStatusFdbStaticMacAddress    MacAddress,
+    luxlMacStatusFdbStaticPortList      LUXLPortList,
+    luxlMacStatusFdbStaticDynamic   LUXLUnsigned8,
+    luxlMacStatusFdbStaticCopyToCpu     LUXLUnsigned8
+}
+
+luxlMacStatusFdbStaticVlanId OBJECT-TYPE
+    SYNTAX      LUXLVlan
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Vlan id used for indexing."
+    ::= { luxlMacStatusFdbStaticEntry 1 }
+
+luxlMacStatusFdbStaticMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The destination MAC address which this entry applies."
+    ::= { luxlMacStatusFdbStaticEntry 2 }
+
+luxlMacStatusFdbStaticPortList OBJECT-TYPE
+    SYNTAX      LUXLPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "List of destination ports for which frames with this DMAC is forwarded
+         to."
+    ::= { luxlMacStatusFdbStaticEntry 3 }
+
+luxlMacStatusFdbStaticDynamic OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The entry is dynamically learned (True) or statically added (False)"
+    ::= { luxlMacStatusFdbStaticEntry 4 }
+
+luxlMacStatusFdbStaticCopyToCpu OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Copy this frame to the CPU (True) or not (False)"
+    ::= { luxlMacStatusFdbStaticEntry 5 }
+
+luxlMacStatusFdbPortStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLMacStatusFdbPortStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table represent the statistics of the Port interfaces"
+    ::= { luxlMacStatus 3 }
+
+luxlMacStatusFdbPortStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLMacStatusFdbPortStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a number of learned addresses"
+    INDEX       { luxlMacStatusFdbPortStatisticsIfIndex }
+    ::= { luxlMacStatusFdbPortStatisticsTable 1 }
+
+LUXLMacStatusFdbPortStatisticsEntry ::= SEQUENCE {
+    luxlMacStatusFdbPortStatisticsIfIndex   LUXLInterfaceIndex,
+    luxlMacStatusFdbPortStatisticsDynamic   Unsigned32
+}
+
+luxlMacStatusFdbPortStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Interface index."
+    ::= { luxlMacStatusFdbPortStatisticsEntry 1 }
+
+luxlMacStatusFdbPortStatisticsDynamic OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Total number of dynamic learned addresses on the port"
+    ::= { luxlMacStatusFdbPortStatisticsEntry 2 }
+
+luxlMacStatusFdbStatistics OBJECT IDENTIFIER
+    ::= { luxlMacStatus 4 }
+
+luxlMacStatusFdbStatisticsTotalDynamic OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Total dynamic learned addresses in the FDB"
+    ::= { luxlMacStatusFdbStatistics 1 }
+
+luxlMacStatusFdbStatisticsTotalStatic OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Total static addresses in the FDB"
+    ::= { luxlMacStatusFdbStatistics 2 }
+
+luxlMacControl OBJECT IDENTIFIER
+    ::= { luxlMacMibObjects 4 }
+
+luxlMacControlFlushAll OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Flush all dynamic learned Mac addresses. Set the value to 'true' to
+         perform the action. Read will always return 'false'."
+    ::= { luxlMacControl 1 }
+
+luxlMacMibConformance OBJECT IDENTIFIER
+    ::= { luxlMacMib 2 }
+
+luxlMacMibCompliances OBJECT IDENTIFIER
+    ::= { luxlMacMibConformance 1 }
+
+luxlMacMibGroups OBJECT IDENTIFIER
+    ::= { luxlMacMibConformance 2 }
+
+luxlMacCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacCapabilitiesNonVolatileMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 1 }
+
+luxlMacConfigFdbGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacConfigFdbGlobalAgeTime }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 2 }
+
+luxlMacConfigFdbTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacConfigFdbPortList, luxlMacConfigFdbAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 3 }
+
+luxlMacConfigFdbTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacConfigFdbTableRowEditorVlanId, 
+                  luxlMacConfigFdbTableRowEditorMacAddress, 
+                  luxlMacConfigFdbTableRowEditorPortList, 
+                  luxlMacConfigFdbTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 4 }
+
+luxlMacConfigPortLearnInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacConfigPortLearnLearnMode, 
+                  luxlMacConfigPortLearnChangeAllowed }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 5 }
+
+luxlMacConfigVlanLearnInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacConfigVlanLearnMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 6 }
+
+luxlMacStatusFdbTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacStatusFdbPortList, luxlMacStatusFdbDynamic, 
+                  luxlMacStatusFdbCopyToCpu }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 7 }
+
+luxlMacStatusFdbStaticTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacStatusFdbStaticPortList, luxlMacStatusFdbStaticDynamic, 
+                  luxlMacStatusFdbStaticCopyToCpu }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 8 }
+
+luxlMacStatusFdbPortStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacStatusFdbPortStatisticsDynamic }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 9 }
+
+luxlMacStatusFdbStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacStatusFdbStatisticsTotalDynamic, 
+                  luxlMacStatusFdbStatisticsTotalStatic }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 10 }
+
+luxlMacControlInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlMacControlFlushAll }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlMacMibGroups 11 }
+
+luxlMacMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlMacCapabilitiesInfoGroup, 
+                  luxlMacConfigFdbGlobalInfoGroup, 
+                  luxlMacConfigFdbTableInfoGroup, 
+                  luxlMacConfigFdbTableRowEditorInfoGroup, 
+                  luxlMacConfigPortLearnInfoGroup, 
+                  luxlMacConfigVlanLearnInfoGroup, 
+                  luxlMacStatusFdbTableInfoGroup, 
+                  luxlMacStatusFdbStaticTableInfoGroup, 
+                  luxlMacStatusFdbPortStatisticsInfoGroup, 
+                  luxlMacStatusFdbStatisticsInfoGroup, luxlMacControlInfoGroup }
+
+    ::= { luxlMacMibCompliances 1 }
+
+END

@@ -1,0 +1,221 @@
+-- *****************************************************************
+-- FAN-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-FAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    LUXLUnsigned8 FROM LUXL-TC
+    LUXLInteger16 FROM LUXL-TC
+    Integer32 FROM SNMPv2-SMI
+    LUXLUnsigned16 FROM LUXL-TC
+    ;
+
+luxlFanMib MODULE-IDENTITY
+    LAST-UPDATED "201405220000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application Support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private MIB for controlling fan speed, in order to reduce
+         noise and power consumption"
+    REVISION    "201405220000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 75 }
+
+
+luxlFanMibObjects OBJECT IDENTIFIER
+    ::= { luxlFanMib 1 }
+
+luxlFanCapabilities OBJECT IDENTIFIER
+    ::= { luxlFanMibObjects 1 }
+
+luxlFanCapabilitiesSensorCount OBJECT-TYPE
+    SYNTAX      LUXLUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum supported temperature sensors in a switch. "
+    ::= { luxlFanCapabilities 1 }
+
+luxlFanConfig OBJECT IDENTIFIER
+    ::= { luxlFanMibObjects 2 }
+
+luxlFanConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlFanConfig 1 }
+
+luxlFanConfigGlobalsMaxSpeedTemperature OBJECT-TYPE
+    SYNTAX      LUXLInteger16 (-127..127)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The temperature(in C) where fan shall be running at full speed (maximum
+         cooling). Valid range:-127 to 127"
+    ::= { luxlFanConfigGlobals 1 }
+
+luxlFanConfigGlobalsOnTemperature OBJECT-TYPE
+    SYNTAX      LUXLInteger16 (-127..127)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "The temperature(in C) where cooling is needed (fan is started). Valid
+         range:-127 to 127"
+    ::= { luxlFanConfigGlobals 2 }
+
+luxlFanStatus OBJECT IDENTIFIER
+    ::= { luxlFanMibObjects 3 }
+
+luxlFanStatusSpeedTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLFanStatusSpeedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table for switch fan speed"
+    ::= { luxlFanStatus 1 }
+
+luxlFanStatusSpeedEntry OBJECT-TYPE
+    SYNTAX      LUXLFanStatusSpeedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each switch have fan module"
+    INDEX       { luxlFanStatusSpeedSwitchId }
+    ::= { luxlFanStatusSpeedTable 1 }
+
+LUXLFanStatusSpeedEntry ::= SEQUENCE {
+    luxlFanStatusSpeedSwitchId      Integer32,
+    luxlFanStatusSpeedRunning   LUXLUnsigned16
+}
+
+luxlFanStatusSpeedSwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The identification of switch. For non-stackable switch, the valid value
+         is limited to 1."
+    ::= { luxlFanStatusSpeedEntry 1 }
+
+luxlFanStatusSpeedRunning OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The fan speed, currently running (in RPM)."
+    ::= { luxlFanStatusSpeedEntry 3 }
+
+luxlFanStatusSensorTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLFanStatusSensorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to chip temperature"
+    ::= { luxlFanStatus 2 }
+
+luxlFanStatusSensorEntry OBJECT-TYPE
+    SYNTAX      LUXLFanStatusSensorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each switch have temperature sensor status"
+    INDEX       { luxlFanStatusSensorSwitchId, luxlFanStatusSensorIndex }
+    ::= { luxlFanStatusSensorTable 1 }
+
+LUXLFanStatusSensorEntry ::= SEQUENCE {
+    luxlFanStatusSensorSwitchId     Integer32,
+    luxlFanStatusSensorIndex    Integer32,
+    luxlFanStatusSensorChipTemp     LUXLInteger16
+}
+
+luxlFanStatusSensorSwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The identification of switch. For non-stackable switch, the valid value
+         is limited to 1."
+    ::= { luxlFanStatusSensorEntry 1 }
+
+luxlFanStatusSensorIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..4)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The temperature sensor index. Some switches may also have more than one
+         temperature sensor."
+    ::= { luxlFanStatusSensorEntry 2 }
+
+luxlFanStatusSensorChipTemp OBJECT-TYPE
+    SYNTAX      LUXLInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current chip temperature (in C)."
+    ::= { luxlFanStatusSensorEntry 4 }
+
+luxlFanMibConformance OBJECT IDENTIFIER
+    ::= { luxlFanMib 2 }
+
+luxlFanMibCompliances OBJECT IDENTIFIER
+    ::= { luxlFanMibConformance 1 }
+
+luxlFanMibGroups OBJECT IDENTIFIER
+    ::= { luxlFanMibConformance 2 }
+
+luxlFanCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlFanCapabilitiesSensorCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlFanMibGroups 1 }
+
+luxlFanConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlFanConfigGlobalsMaxSpeedTemperature, 
+                  luxlFanConfigGlobalsOnTemperature }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlFanMibGroups 2 }
+
+luxlFanStatusSpeedInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlFanStatusSpeedRunning }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlFanMibGroups 3 }
+
+luxlFanStatusSensorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlFanStatusSensorChipTemp }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlFanMibGroups 4 }
+
+luxlFanMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlFanCapabilitiesInfoGroup, 
+                  luxlFanConfigGlobalsInfoGroup, luxlFanStatusSpeedInfoGroup, 
+                  luxlFanStatusSensorInfoGroup }
+
+    ::= { luxlFanMibCompliances 1 }
+
+END

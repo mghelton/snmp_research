@@ -1,0 +1,581 @@
+-- *****************************************************************
+-- DHCP-SNOOPING-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-DHCP-SNOOPING-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    ;
+
+luxlDhcpSnoopingMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the DHCP Snooping MIB"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 56 }
+
+
+luxlDhcpSnoopingMibObjects OBJECT IDENTIFIER
+    ::= { luxlDhcpSnoopingMib 1 }
+
+luxlDhcpSnoopingConfig OBJECT IDENTIFIER
+    ::= { luxlDhcpSnoopingMibObjects 2 }
+
+luxlDhcpSnoopingConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlDhcpSnoopingConfig 1 }
+
+luxlDhcpSnoopingConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the DHCP snooping mode operation. Possible modes are - true:
+         Enable DHCP snooping mode operation. When DHCP snooping mode operation
+         is enabled, the DHCP request messages will be forwarded to trusted
+         ports and only allow reply packets from trusted ports. false: Disable
+         DHCP snooping mode operation."
+    ::= { luxlDhcpSnoopingConfigGlobals 1 }
+
+luxlDhcpSnoopingConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcpSnoopingConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of DHCP Snooping port configuration parameters"
+    ::= { luxlDhcpSnoopingConfig 2 }
+
+luxlDhcpSnoopingConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcpSnoopingConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters"
+    INDEX       { luxlDhcpSnoopingConfigInterfaceIfIndex }
+    ::= { luxlDhcpSnoopingConfigInterfaceTable 1 }
+
+LUXLDhcpSnoopingConfigInterfaceEntry ::= SEQUENCE {
+    luxlDhcpSnoopingConfigInterfaceIfIndex      LUXLInterfaceIndex,
+    luxlDhcpSnoopingConfigInterfaceTrustMode    TruthValue
+}
+
+luxlDhcpSnoopingConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlDhcpSnoopingConfigInterfaceEntry 1 }
+
+luxlDhcpSnoopingConfigInterfaceTrustMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Indicates the DHCP snooping port mode. Possible port modes are - true:
+         Configures the port as trusted source of the DHCP messages. false:
+         Configures the port as untrusted source of the DHCP messages."
+    ::= { luxlDhcpSnoopingConfigInterfaceEntry 2 }
+
+luxlDhcpSnoopingStatus OBJECT IDENTIFIER
+    ::= { luxlDhcpSnoopingMibObjects 3 }
+
+luxlDhcpSnoopingStatusAssignedIpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcpSnoopingStatusAssignedIpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of assigned IP information in DHCP Snooping "
+    ::= { luxlDhcpSnoopingStatus 1 }
+
+luxlDhcpSnoopingStatusAssignedIpEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcpSnoopingStatusAssignedIpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlDhcpSnoopingStatusAssignedIpMacAddress, luxlDhcpSnoopingStatusAssignedIpVlanId }
+    ::= { luxlDhcpSnoopingStatusAssignedIpTable 1 }
+
+LUXLDhcpSnoopingStatusAssignedIpEntry ::= SEQUENCE {
+    luxlDhcpSnoopingStatusAssignedIpMacAddress      MacAddress,
+    luxlDhcpSnoopingStatusAssignedIpVlanId      Integer32,
+    luxlDhcpSnoopingStatusAssignedIpIfIndex     LUXLInterfaceIndex,
+    luxlDhcpSnoopingStatusAssignedIpIpAddress   IpAddress,
+    luxlDhcpSnoopingStatusAssignedIpNetmask     IpAddress,
+    luxlDhcpSnoopingStatusAssignedIpDhcpServerIp    IpAddress
+}
+
+luxlDhcpSnoopingStatusAssignedIpMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "MAC address."
+    ::= { luxlDhcpSnoopingStatusAssignedIpEntry 1 }
+
+luxlDhcpSnoopingStatusAssignedIpVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "The VLAN id of the VLAN."
+    ::= { luxlDhcpSnoopingStatusAssignedIpEntry 2 }
+
+luxlDhcpSnoopingStatusAssignedIpIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port of the DHCP client."
+    ::= { luxlDhcpSnoopingStatusAssignedIpEntry 3 }
+
+luxlDhcpSnoopingStatusAssignedIpIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "IP address assigned to DHCP client by DHCP server."
+    ::= { luxlDhcpSnoopingStatusAssignedIpEntry 4 }
+
+luxlDhcpSnoopingStatusAssignedIpNetmask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Netmask assigned to DHCP client by DHCP server."
+    ::= { luxlDhcpSnoopingStatusAssignedIpEntry 5 }
+
+luxlDhcpSnoopingStatusAssignedIpDhcpServerIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "IP address of the DHCP server that assigns the IP address and netmask."
+    ::= { luxlDhcpSnoopingStatusAssignedIpEntry 6 }
+
+luxlDhcpSnoopingControl OBJECT IDENTIFIER
+    ::= { luxlDhcpSnoopingMibObjects 4 }
+
+luxlDhcpSnoopingControlInterfaceClearStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcpSnoopingControlInterfaceClearStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table to clear port statistics in DHCP Snooping"
+    ::= { luxlDhcpSnoopingControl 1 }
+
+luxlDhcpSnoopingControlInterfaceClearStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcpSnoopingControlInterfaceClearStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each port has a set of parameters"
+    INDEX       { luxlDhcpSnoopingControlInterfaceClearStatisticsIfIndex }
+    ::= { luxlDhcpSnoopingControlInterfaceClearStatisticsTable 1 }
+
+LUXLDhcpSnoopingControlInterfaceClearStatisticsEntry ::= SEQUENCE {
+    luxlDhcpSnoopingControlInterfaceClearStatisticsIfIndex      LUXLInterfaceIndex,
+    luxlDhcpSnoopingControlInterfaceClearStatisticsClear    TruthValue
+}
+
+luxlDhcpSnoopingControlInterfaceClearStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlDhcpSnoopingControlInterfaceClearStatisticsEntry 1 }
+
+luxlDhcpSnoopingControlInterfaceClearStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "clear statistics per physical port."
+    ::= { luxlDhcpSnoopingControlInterfaceClearStatisticsEntry 2 }
+
+luxlDhcpSnoopingStatistics OBJECT IDENTIFIER
+    ::= { luxlDhcpSnoopingMibObjects 5 }
+
+luxlDhcpSnoopingStatisticsInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDhcpSnoopingStatisticsInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a table of port statistics in DHCP Snooping "
+    ::= { luxlDhcpSnoopingStatistics 2 }
+
+luxlDhcpSnoopingStatisticsInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLDhcpSnoopingStatisticsInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of parameters"
+    INDEX       { luxlDhcpSnoopingStatisticsInterfaceIfIndex }
+    ::= { luxlDhcpSnoopingStatisticsInterfaceTable 1 }
+
+LUXLDhcpSnoopingStatisticsInterfaceEntry ::= SEQUENCE {
+    luxlDhcpSnoopingStatisticsInterfaceIfIndex      LUXLInterfaceIndex,
+    luxlDhcpSnoopingStatisticsInterfaceRxDiscover   Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxOffer      Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxRequest    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxDecline    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxAck    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxNak    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxRelease    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxInform     Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxLeaseQuery     Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxLeaseUnassigned    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxLeaseUnknown   Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxLeaseActive    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxDiscardChksumErr   Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceRxDiscardUntrust     Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxDiscover   Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxOffer      Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxRequest    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxDecline    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxAck    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxNak    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxRelease    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxInform     Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxLeaseQuery     Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxLeaseUnassigned    Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxLeaseUnknown   Unsigned32,
+    luxlDhcpSnoopingStatisticsInterfaceTxLeaseActive    Unsigned32
+}
+
+luxlDhcpSnoopingStatisticsInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of the physical port."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 1 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxDiscover OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of discover (option 53 with value 1) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 2 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxOffer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of offer (option 53 with value 2) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 3 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxRequest OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of request (option 53 with value 3) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 4 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxDecline OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of decline (option 53 with value 4) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 5 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxAck OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of ACK (option 53 with value 5) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 6 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxNak OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of NAK (option 53 with value 6) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 7 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxRelease OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of release (option 53 with value 7) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 8 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxInform OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of inform (option 53 with value 8) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 9 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxLeaseQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of lease query (option 53 with value 10) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 10 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxLeaseUnassigned OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of lease unassigned (option 53 with value 11) packets
+         received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 11 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxLeaseUnknown OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of lease unknown (option 53 with value 12) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 12 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxLeaseActive OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of lease active (option 53 with value 13) packets received."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 13 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxDiscardChksumErr OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of discard packet that IP/UDP checksum is error."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 14 }
+
+luxlDhcpSnoopingStatisticsInterfaceRxDiscardUntrust OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of discard packet that are coming from untrusted port."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 15 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxDiscover OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of discover (option 53 with value 1) packets transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 16 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxOffer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of offer (option 53 with value 2) packets transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 17 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxRequest OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of request (option 53 with value 3) packets transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 18 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxDecline OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of decline (option 53 with value 4) packets transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 19 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxAck OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of ACK (option 53 with value 5) packets transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 20 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxNak OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of NAK (option 53 with value 6) packets transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 21 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxRelease OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of release (option 53 with value 7) packets transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 22 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxInform OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of inform (option 53 with value 8) packets transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 23 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxLeaseQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of lease query (option 53 with value 10) packets transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 24 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxLeaseUnassigned OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of lease unassigned (option 53 with value 11) packets
+         transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 25 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxLeaseUnknown OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of lease unknown (option 53 with value 12) packets
+         transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 26 }
+
+luxlDhcpSnoopingStatisticsInterfaceTxLeaseActive OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The number of lease active (option 53 with value 13) packets
+         transmited."
+    ::= { luxlDhcpSnoopingStatisticsInterfaceEntry 27 }
+
+luxlDhcpSnoopingMibConformance OBJECT IDENTIFIER
+    ::= { luxlDhcpSnoopingMib 2 }
+
+luxlDhcpSnoopingMibCompliances OBJECT IDENTIFIER
+    ::= { luxlDhcpSnoopingMibConformance 1 }
+
+luxlDhcpSnoopingMibGroups OBJECT IDENTIFIER
+    ::= { luxlDhcpSnoopingMibConformance 2 }
+
+luxlDhcpSnoopingConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpSnoopingConfigGlobalsMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpSnoopingMibGroups 1 }
+
+luxlDhcpSnoopingConfigInterfaceInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpSnoopingConfigInterfaceTrustMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpSnoopingMibGroups 2 }
+
+luxlDhcpSnoopingStatusAssignedIpTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpSnoopingStatusAssignedIpIfIndex, 
+                  luxlDhcpSnoopingStatusAssignedIpIpAddress, 
+                  luxlDhcpSnoopingStatusAssignedIpNetmask, 
+                  luxlDhcpSnoopingStatusAssignedIpDhcpServerIp }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpSnoopingMibGroups 3 }
+
+luxlDhcpSnoopingControlInterfaceClearStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpSnoopingControlInterfaceClearStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpSnoopingMibGroups 4 }
+
+luxlDhcpSnoopingStatisticsInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDhcpSnoopingStatisticsInterfaceRxDiscover, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxOffer, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxRequest, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxDecline, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxAck, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxNak, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxRelease, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxInform, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxLeaseQuery, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxLeaseUnassigned, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxLeaseUnknown, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxLeaseActive, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxDiscardChksumErr, 
+                  luxlDhcpSnoopingStatisticsInterfaceRxDiscardUntrust, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxDiscover, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxOffer, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxRequest, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxDecline, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxAck, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxNak, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxRelease, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxInform, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxLeaseQuery, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxLeaseUnassigned, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxLeaseUnknown, 
+                  luxlDhcpSnoopingStatisticsInterfaceTxLeaseActive }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDhcpSnoopingMibGroups 5 }
+
+luxlDhcpSnoopingMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlDhcpSnoopingConfigGlobalsInfoGroup, 
+                  luxlDhcpSnoopingConfigInterfaceInfoGroup, 
+                  luxlDhcpSnoopingStatusAssignedIpTableInfoGroup, 
+                  luxlDhcpSnoopingControlInterfaceClearStatisticsTableInfoGroup, 
+                  luxlDhcpSnoopingStatisticsInterfaceTableInfoGroup }
+
+    ::= { luxlDhcpSnoopingMibCompliances 1 }
+
+END

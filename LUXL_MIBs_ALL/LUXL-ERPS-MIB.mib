@@ -1,0 +1,1183 @@
+-- *****************************************************************
+-- ERPS-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-ERPS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Counter64 FROM SNMPv2-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLRowEditorState FROM LUXL-TC
+    LUXLVlanListQuarter FROM LUXL-TC
+    ;
+
+luxlErpsMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "Private MIB for Ethernet Ring Protection Switching, ERPS."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 72 }
+
+
+LUXLErpsAdminCmd ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the Administrative command."
+    SYNTAX      INTEGER { manualSwitch(1), forcedSwitch(2), clear(3) }
+
+LUXLErpsControlCmd ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies a control command."
+    SYNTAX      INTEGER { none(0), admCmdForcedSwitch(1), admCmdManualSwitch(2), admCmdClear(3), statisticsClear(4) }
+
+LUXLErpsPort ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies a particular logical ring port."
+    SYNTAX      INTEGER { port0(1), port1(2) }
+
+LUXLErpsPortState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the ring port state."
+    SYNTAX      INTEGER { ok(1), signalFail(2) }
+
+LUXLErpsProtectionState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the ring protection state."
+    SYNTAX      INTEGER { none(1), idle(2), protected(3), forcedSwitch(4), manualSwitch(5), pending(6) }
+
+LUXLErpsRequestState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies a request/state."
+    SYNTAX      INTEGER { none(1), manualSwitch(2), signalFail(3), forcedSwitch(4), event(5) }
+
+LUXLErpsRingType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the ERPS ring type."
+    SYNTAX      INTEGER { major(1), sub(2) }
+
+LUXLErpsRplMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the Ring Protection Link mode. Use 'none' if port is neither
+         RPL owner nor neighbour."
+    SYNTAX      INTEGER { none(1), owner(2), neighbour(3) }
+
+LUXLErpsVersion ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the ERPS protocol version."
+    SYNTAX      INTEGER { version1(1), version2(2) }
+
+luxlErpsMibObjects OBJECT IDENTIFIER
+    ::= { luxlErpsMib 1 }
+
+luxlErpsCapabilities OBJECT IDENTIFIER
+    ::= { luxlErpsMibObjects 1 }
+
+luxlErpsCapabilitiesMaxGroups OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of configured ERPS groups."
+    ::= { luxlErpsCapabilities 1 }
+
+luxlErpsCapabilitiesMaxVlansPerGroup OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Maximum number of protected VLANS per ERPS group."
+    ::= { luxlErpsCapabilities 2 }
+
+luxlErpsConfig OBJECT IDENTIFIER
+    ::= { luxlErpsMibObjects 2 }
+
+luxlErpsConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLErpsConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the ERPS group configuration table."
+    ::= { luxlErpsConfig 1 }
+
+luxlErpsConfigEntry OBJECT-TYPE
+    SYNTAX      LUXLErpsConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents an ERPS group."
+    INDEX       { luxlErpsConfigGroupIndex }
+    ::= { luxlErpsConfigTable 1 }
+
+LUXLErpsConfigEntry ::= SEQUENCE {
+    luxlErpsConfigGroupIndex    Integer32,
+    luxlErpsConfigRingType      LUXLErpsRingType,
+    luxlErpsConfigPort0     LUXLInterfaceIndex,
+    luxlErpsConfigPort1     LUXLInterfaceIndex,
+    luxlErpsConfigInterconnectMajorRingGroupIndex   Unsigned32,
+    luxlErpsConfigVirtualChannel    TruthValue,
+    luxlErpsConfigPort0SignalFailMepIndex   Unsigned32,
+    luxlErpsConfigPort0ApsMepIndex      Unsigned32,
+    luxlErpsConfigPort1SignalFailMepIndex   Unsigned32,
+    luxlErpsConfigPort1ApsMepIndex      Unsigned32,
+    luxlErpsConfigHoldOffTime   Unsigned32,
+    luxlErpsConfigWaitToRestoreTime     Unsigned32,
+    luxlErpsConfigGuardTime     Unsigned32,
+    luxlErpsConfigRplMode   LUXLErpsRplMode,
+    luxlErpsConfigRplPort   LUXLErpsPort,
+    luxlErpsConfigRevertive     TruthValue,
+    luxlErpsConfigVersion   LUXLErpsVersion,
+    luxlErpsConfigTopologyChange    TruthValue,
+    luxlErpsConfigProtectedVlans0Kto1K      LUXLVlanListQuarter,
+    luxlErpsConfigProtectedVlans1Kto2K      LUXLVlanListQuarter,
+    luxlErpsConfigProtectedVlans2Kto3K      LUXLVlanListQuarter,
+    luxlErpsConfigProtectedVlans3Kto4K      LUXLVlanListQuarter,
+    luxlErpsConfigAction    LUXLRowEditorState
+}
+
+luxlErpsConfigGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "ERPS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the ERPS
+         capabilities."
+    ::= { luxlErpsConfigEntry 1 }
+
+luxlErpsConfigRingType OBJECT-TYPE
+    SYNTAX      LUXLErpsRingType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of ring. Can only be set once for a ring instance."
+    ::= { luxlErpsConfigEntry 2 }
+
+luxlErpsConfigPort0 OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "ifindex of ring protection port 0. Can only be set once for a ring
+         instance."
+    ::= { luxlErpsConfigEntry 3 }
+
+luxlErpsConfigPort1 OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "ifindex of ring protection Port 1. For interconnected sub-rings this
+         value must be zero. Can only be set once for a ring instance."
+    ::= { luxlErpsConfigEntry 4 }
+
+luxlErpsConfigInterconnectMajorRingGroupIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "For sub-ring: zero = not interconnected; > zero = index of major ring
+         group. For major ring: zero = not interconnected; > zero = is
+         interconnected (i.e flag-like semantics). Can only be set once for a
+         ring instance."
+    ::= { luxlErpsConfigEntry 5 }
+
+luxlErpsConfigVirtualChannel OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Whether to use a virtual channel. Can only be set once for a ring
+         instance."
+    ::= { luxlErpsConfigEntry 6 }
+
+luxlErpsConfigPort0SignalFailMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Index of SignalFail MEP for Port 0. Zero if not set. To clear an ERPS
+         group's MEP association, set this to zero; it affects all MEP indices."
+    ::= { luxlErpsConfigEntry 7 }
+
+luxlErpsConfigPort0ApsMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Index of APS MEP for Port 0. Zero if not set."
+    ::= { luxlErpsConfigEntry 8 }
+
+luxlErpsConfigPort1SignalFailMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Index of SignalFail MEP for Port 1. Zero if not set. Must be zero for
+         interconnected sub-rings."
+    ::= { luxlErpsConfigEntry 9 }
+
+luxlErpsConfigPort1ApsMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Index of APS MEP for Port 1. Zero if not set. Must be zero for
+         interconnected sub-rings with virtual channel."
+    ::= { luxlErpsConfigEntry 10 }
+
+luxlErpsConfigHoldOffTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Hold off time in ms. Value is rounded down to 100ms precision. Valid
+         range is 0-10000 ms"
+    ::= { luxlErpsConfigEntry 11 }
+
+luxlErpsConfigWaitToRestoreTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Wait-to-Restore time in ms. Valid range is 60000-720000 ms (1-12
+         minutes)."
+    ::= { luxlErpsConfigEntry 12 }
+
+luxlErpsConfigGuardTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Guard time in ms. Valid range is 10-2000 ms."
+    ::= { luxlErpsConfigEntry 13 }
+
+luxlErpsConfigRplMode OBJECT-TYPE
+    SYNTAX      LUXLErpsRplMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ring Protection Link mode."
+    ::= { luxlErpsConfigEntry 14 }
+
+luxlErpsConfigRplPort OBJECT-TYPE
+    SYNTAX      LUXLErpsPort
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "RPL port. Only valid if the ERPS group is RPL owner or neighbour."
+    ::= { luxlErpsConfigEntry 15 }
+
+luxlErpsConfigRevertive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Revertive (true) or Non-revertive (false) mode."
+    ::= { luxlErpsConfigEntry 16 }
+
+luxlErpsConfigVersion OBJECT-TYPE
+    SYNTAX      LUXLErpsVersion
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "ERPS protocol version."
+    ::= { luxlErpsConfigEntry 17 }
+
+luxlErpsConfigTopologyChange OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Whether to enable Topology Change propagation; only valid for an
+         interconnected node."
+    ::= { luxlErpsConfigEntry 18 }
+
+luxlErpsConfigProtectedVlans0Kto1K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "First quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { luxlErpsConfigEntry 19 }
+
+luxlErpsConfigProtectedVlans1Kto2K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Second quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { luxlErpsConfigEntry 20 }
+
+luxlErpsConfigProtectedVlans2Kto3K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Third quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { luxlErpsConfigEntry 21 }
+
+luxlErpsConfigProtectedVlans3Kto4K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Fourth quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { luxlErpsConfigEntry 22 }
+
+luxlErpsConfigAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlErpsConfigEntry 100 }
+
+luxlErpsConfigRowEditor OBJECT IDENTIFIER
+    ::= { luxlErpsConfig 2 }
+
+luxlErpsConfigRowEditorGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "ERPS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the ERPS
+         capabilities."
+    ::= { luxlErpsConfigRowEditor 1 }
+
+luxlErpsConfigRowEditorRingType OBJECT-TYPE
+    SYNTAX      LUXLErpsRingType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Type of ring. Can only be set once for a ring instance."
+    ::= { luxlErpsConfigRowEditor 2 }
+
+luxlErpsConfigRowEditorPort0 OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "ifindex of ring protection port 0. Can only be set once for a ring
+         instance."
+    ::= { luxlErpsConfigRowEditor 3 }
+
+luxlErpsConfigRowEditorPort1 OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "ifindex of ring protection Port 1. For interconnected sub-rings this
+         value must be zero. Can only be set once for a ring instance."
+    ::= { luxlErpsConfigRowEditor 4 }
+
+luxlErpsConfigRowEditorInterconnectMajorRingGroupIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "For sub-ring: zero = not interconnected; > zero = index of major ring
+         group. For major ring: zero = not interconnected; > zero = is
+         interconnected (i.e flag-like semantics). Can only be set once for a
+         ring instance."
+    ::= { luxlErpsConfigRowEditor 5 }
+
+luxlErpsConfigRowEditorVirtualChannel OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Whether to use a virtual channel. Can only be set once for a ring
+         instance."
+    ::= { luxlErpsConfigRowEditor 6 }
+
+luxlErpsConfigRowEditorPort0SignalFailMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Index of SignalFail MEP for Port 0. Zero if not set. To clear an ERPS
+         group's MEP association, set this to zero; it affects all MEP indices."
+    ::= { luxlErpsConfigRowEditor 7 }
+
+luxlErpsConfigRowEditorPort0ApsMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Index of APS MEP for Port 0. Zero if not set."
+    ::= { luxlErpsConfigRowEditor 8 }
+
+luxlErpsConfigRowEditorPort1SignalFailMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Index of SignalFail MEP for Port 1. Zero if not set. Must be zero for
+         interconnected sub-rings."
+    ::= { luxlErpsConfigRowEditor 9 }
+
+luxlErpsConfigRowEditorPort1ApsMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Index of APS MEP for Port 1. Zero if not set. Must be zero for
+         interconnected sub-rings with virtual channel."
+    ::= { luxlErpsConfigRowEditor 10 }
+
+luxlErpsConfigRowEditorHoldOffTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Hold off time in ms. Value is rounded down to 100ms precision. Valid
+         range is 0-10000 ms"
+    ::= { luxlErpsConfigRowEditor 11 }
+
+luxlErpsConfigRowEditorWaitToRestoreTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Wait-to-Restore time in ms. Valid range is 60000-720000 ms (1-12
+         minutes)."
+    ::= { luxlErpsConfigRowEditor 12 }
+
+luxlErpsConfigRowEditorGuardTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Guard time in ms. Valid range is 10-2000 ms."
+    ::= { luxlErpsConfigRowEditor 13 }
+
+luxlErpsConfigRowEditorRplMode OBJECT-TYPE
+    SYNTAX      LUXLErpsRplMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ring Protection Link mode."
+    ::= { luxlErpsConfigRowEditor 14 }
+
+luxlErpsConfigRowEditorRplPort OBJECT-TYPE
+    SYNTAX      LUXLErpsPort
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "RPL port. Only valid if the ERPS group is RPL owner or neighbour."
+    ::= { luxlErpsConfigRowEditor 15 }
+
+luxlErpsConfigRowEditorRevertive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Revertive (true) or Non-revertive (false) mode."
+    ::= { luxlErpsConfigRowEditor 16 }
+
+luxlErpsConfigRowEditorVersion OBJECT-TYPE
+    SYNTAX      LUXLErpsVersion
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "ERPS protocol version."
+    ::= { luxlErpsConfigRowEditor 17 }
+
+luxlErpsConfigRowEditorTopologyChange OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Whether to enable Topology Change propagation; only valid for an
+         interconnected node."
+    ::= { luxlErpsConfigRowEditor 18 }
+
+luxlErpsConfigRowEditorProtectedVlans0Kto1K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "First quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { luxlErpsConfigRowEditor 19 }
+
+luxlErpsConfigRowEditorProtectedVlans1Kto2K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Second quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { luxlErpsConfigRowEditor 20 }
+
+luxlErpsConfigRowEditorProtectedVlans2Kto3K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Third quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { luxlErpsConfigRowEditor 21 }
+
+luxlErpsConfigRowEditorProtectedVlans3Kto4K OBJECT-TYPE
+    SYNTAX      LUXLVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Fourth quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { luxlErpsConfigRowEditor 22 }
+
+luxlErpsConfigRowEditorAction OBJECT-TYPE
+    SYNTAX      LUXLRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Action"
+    ::= { luxlErpsConfigRowEditor 100 }
+
+luxlErpsStatus OBJECT IDENTIFIER
+    ::= { luxlErpsMibObjects 3 }
+
+luxlErpsStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLErpsStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains status per EPRS group."
+    ::= { luxlErpsStatus 1 }
+
+luxlErpsStatusEntry OBJECT-TYPE
+    SYNTAX      LUXLErpsStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Status."
+    INDEX       { luxlErpsStatusGroupIndex }
+    ::= { luxlErpsStatusTable 1 }
+
+LUXLErpsStatusEntry ::= SEQUENCE {
+    luxlErpsStatusGroupIndex    Integer32,
+    luxlErpsStatusActive    TruthValue,
+    luxlErpsStatusProtectionState   LUXLErpsProtectionState,
+    luxlErpsStatusRplBlocked    TruthValue,
+    luxlErpsStatusWtrRemaining      Unsigned32,
+    luxlErpsStatusAdminCmd      LUXLErpsAdminCmd,
+    luxlErpsStatusFopAlarm      TruthValue,
+    luxlErpsStatusTxActive      TruthValue,
+    luxlErpsStatusTxRequestOrState      LUXLErpsRequestState,
+    luxlErpsStatusTxRplBlocked      TruthValue,
+    luxlErpsStatusTxDoNotFlush      TruthValue,
+    luxlErpsStatusBlockedPortReference      LUXLErpsPort,
+    luxlErpsStatusPort0Blocked      TruthValue,
+    luxlErpsStatusPort0State    LUXLErpsPortState,
+    luxlErpsStatusPort0RxActive     TruthValue,
+    luxlErpsStatusPort0RxRequestOrState     LUXLErpsRequestState,
+    luxlErpsStatusPort0RxRplBlocked     TruthValue,
+    luxlErpsStatusPort0RxDoNotFlush     TruthValue,
+    luxlErpsStatusPort0RxBlockedPortReference   LUXLErpsPort,
+    luxlErpsStatusPort0RxNodeId     OCTET STRING,
+    luxlErpsStatusPort1Blocked      TruthValue,
+    luxlErpsStatusPort1State    LUXLErpsPortState,
+    luxlErpsStatusPort1RxActive     TruthValue,
+    luxlErpsStatusPort1RxRequestOrState     LUXLErpsRequestState,
+    luxlErpsStatusPort1RxRplBlocked     TruthValue,
+    luxlErpsStatusPort1RxDoNotFlush     TruthValue,
+    luxlErpsStatusPort1RxBlockedPortReference   LUXLErpsPort,
+    luxlErpsStatusPort1RxNodeId     OCTET STRING
+}
+
+luxlErpsStatusGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "ERPS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the ERPS
+         capabilities."
+    ::= { luxlErpsStatusEntry 1 }
+
+luxlErpsStatusActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies whether ERPS group is currently active or not."
+    ::= { luxlErpsStatusEntry 2 }
+
+luxlErpsStatusProtectionState OBJECT-TYPE
+    SYNTAX      LUXLErpsProtectionState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies current ERPS group protection state."
+    ::= { luxlErpsStatusEntry 3 }
+
+luxlErpsStatusRplBlocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies whether the RPL is currently blocked or not."
+    ::= { luxlErpsStatusEntry 4 }
+
+luxlErpsStatusWtrRemaining OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the remaining wait-time before restoring ring."
+    ::= { luxlErpsStatusEntry 5 }
+
+luxlErpsStatusAdminCmd OBJECT-TYPE
+    SYNTAX      LUXLErpsAdminCmd
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the currently active administrative command."
+    ::= { luxlErpsStatusEntry 6 }
+
+luxlErpsStatusFopAlarm OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies whether the FailureOfProtocol alarm is currently active or
+         not."
+    ::= { luxlErpsStatusEntry 7 }
+
+luxlErpsStatusTxActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies whether R-APS transmission is currently active."
+    ::= { luxlErpsStatusEntry 8 }
+
+luxlErpsStatusTxRequestOrState OBJECT-TYPE
+    SYNTAX      LUXLErpsRequestState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the currently transmitted request/state. Only relevant when
+         Tx is active."
+    ::= { luxlErpsStatusEntry 9 }
+
+luxlErpsStatusTxRplBlocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the currently transmitted RPL Blocked flag. Only relevant
+         when Tx is active."
+    ::= { luxlErpsStatusEntry 10 }
+
+luxlErpsStatusTxDoNotFlush OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the currently transmitted Do Not Flush flag. Only relevant
+         when Tx is active."
+    ::= { luxlErpsStatusEntry 11 }
+
+luxlErpsStatusBlockedPortReference OBJECT-TYPE
+    SYNTAX      LUXLErpsPort
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the currently transmitted Blocked Port Reference. Only
+         relevant when Tx is active."
+    ::= { luxlErpsStatusEntry 12 }
+
+luxlErpsStatusPort0Blocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies whether ring Port 0 is blocked or not."
+    ::= { luxlErpsStatusEntry 13 }
+
+luxlErpsStatusPort0State OBJECT-TYPE
+    SYNTAX      LUXLErpsPortState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the state of ring Port 0."
+    ::= { luxlErpsStatusEntry 14 }
+
+luxlErpsStatusPort0RxActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies if ring Port0 receives R-APS."
+    ::= { luxlErpsStatusEntry 15 }
+
+luxlErpsStatusPort0RxRequestOrState OBJECT-TYPE
+    SYNTAX      LUXLErpsRequestState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the most recently received request/state on ring Port 0. Only
+         relevant when Rx is active."
+    ::= { luxlErpsStatusEntry 16 }
+
+luxlErpsStatusPort0RxRplBlocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the most recently received RPL Blocked flag on ring Port 0.
+         Only relevant when Rx is active."
+    ::= { luxlErpsStatusEntry 17 }
+
+luxlErpsStatusPort0RxDoNotFlush OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the most recently received Do Not Flush flag on ring Port 0.
+         Only relevant when Rx is active."
+    ::= { luxlErpsStatusEntry 18 }
+
+luxlErpsStatusPort0RxBlockedPortReference OBJECT-TYPE
+    SYNTAX      LUXLErpsPort
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the most recently received Blocked Port Reference on ring
+         Port 0. Only relevant when Rx is active."
+    ::= { luxlErpsStatusEntry 19 }
+
+luxlErpsStatusPort0RxNodeId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(6))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the most recently received node ID on ring Port 0. Only
+         relevant when Rx is active."
+    ::= { luxlErpsStatusEntry 20 }
+
+luxlErpsStatusPort1Blocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies whether ring Port 1 is blocked or not."
+    ::= { luxlErpsStatusEntry 21 }
+
+luxlErpsStatusPort1State OBJECT-TYPE
+    SYNTAX      LUXLErpsPortState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the state of ring Port 1."
+    ::= { luxlErpsStatusEntry 22 }
+
+luxlErpsStatusPort1RxActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies if ring Port1 receives R-APS."
+    ::= { luxlErpsStatusEntry 23 }
+
+luxlErpsStatusPort1RxRequestOrState OBJECT-TYPE
+    SYNTAX      LUXLErpsRequestState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the most recently received request/state on ring Port 1. Only
+         relevant when Rx is active."
+    ::= { luxlErpsStatusEntry 24 }
+
+luxlErpsStatusPort1RxRplBlocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the most recently received RPL Blocked flag on ring Port 1.
+         Only relevant when Rx is active."
+    ::= { luxlErpsStatusEntry 25 }
+
+luxlErpsStatusPort1RxDoNotFlush OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the most recently received Do Not Flush flag on ring Port 1.
+         Only relevant when Rx is active."
+    ::= { luxlErpsStatusEntry 26 }
+
+luxlErpsStatusPort1RxBlockedPortReference OBJECT-TYPE
+    SYNTAX      LUXLErpsPort
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the most recently received Blocked Port Reference on ring
+         Port 1. Only relevant when Rx is active."
+    ::= { luxlErpsStatusEntry 27 }
+
+luxlErpsStatusPort1RxNodeId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(6))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Specifies the most recently received node ID on ring Port 1. Only
+         relevant when Rx is active."
+    ::= { luxlErpsStatusEntry 28 }
+
+luxlErpsControl OBJECT IDENTIFIER
+    ::= { luxlErpsMibObjects 4 }
+
+luxlErpsControlTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLErpsControlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is the ERPS group control table."
+    ::= { luxlErpsControl 1 }
+
+luxlErpsControlEntry OBJECT-TYPE
+    SYNTAX      LUXLErpsControlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry in this table represents dynamic control elements an ERPS
+         group."
+    INDEX       { luxlErpsControlGroupIndex }
+    ::= { luxlErpsControlTable 1 }
+
+LUXLErpsControlEntry ::= SEQUENCE {
+    luxlErpsControlGroupIndex   Integer32,
+    luxlErpsControlCommand      LUXLErpsControlCmd,
+    luxlErpsControlPort     LUXLErpsPort
+}
+
+luxlErpsControlGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "ERPS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the ERPS
+         capabilities."
+    ::= { luxlErpsControlEntry 1 }
+
+luxlErpsControlCommand OBJECT-TYPE
+    SYNTAX      LUXLErpsControlCmd
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Control command to execute. Always returns none when read."
+    ::= { luxlErpsControlEntry 2 }
+
+luxlErpsControlPort OBJECT-TYPE
+    SYNTAX      LUXLErpsPort
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Ring port affected by control command. Only relevant for administrative
+         commands. Always returns port0 when read."
+    ::= { luxlErpsControlEntry 3 }
+
+luxlErpsStatistics OBJECT IDENTIFIER
+    ::= { luxlErpsMibObjects 5 }
+
+luxlErpsStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLErpsStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This table contains statistics per EPRS group."
+    ::= { luxlErpsStatistics 1 }
+
+luxlErpsStatisticsEntry OBJECT-TYPE
+    SYNTAX      LUXLErpsStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Various PDU and event counters."
+    INDEX       { luxlErpsStatisticsGroupIndex }
+    ::= { luxlErpsStatisticsTable 1 }
+
+LUXLErpsStatisticsEntry ::= SEQUENCE {
+    luxlErpsStatisticsGroupIndex    Integer32,
+    luxlErpsStatisticsRapsTx    Counter64,
+    luxlErpsStatisticsRapsRx    Counter64,
+    luxlErpsStatisticsRapsRxDrop    Counter64,
+    luxlErpsStatisticsLocalSF   Counter64,
+    luxlErpsStatisticsLocalSFCleared    Counter64,
+    luxlErpsStatisticsRemoteSF      Counter64,
+    luxlErpsStatisticsNR    Counter64,
+    luxlErpsStatisticsRemoteMS      Counter64,
+    luxlErpsStatisticsLocalMS   Counter64,
+    luxlErpsStatisticsRemoteFS      Counter64,
+    luxlErpsStatisticsLocalFS   Counter64,
+    luxlErpsStatisticsAdminClear    Counter64
+}
+
+luxlErpsStatisticsGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "ERPS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the ERPS
+         capabilities."
+    ::= { luxlErpsStatisticsEntry 1 }
+
+luxlErpsStatisticsRapsTx OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of transmitted RAPS PDUs."
+    ::= { luxlErpsStatisticsEntry 2 }
+
+luxlErpsStatisticsRapsRx OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received RAPS PDUs."
+    ::= { luxlErpsStatisticsEntry 3 }
+
+luxlErpsStatisticsRapsRxDrop OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of received RAPS PDUs that were dropped."
+    ::= { luxlErpsStatisticsEntry 4 }
+
+luxlErpsStatisticsLocalSF OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of local SignalFail events."
+    ::= { luxlErpsStatisticsEntry 5 }
+
+luxlErpsStatisticsLocalSFCleared OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of local SignalFail clear events."
+    ::= { luxlErpsStatisticsEntry 6 }
+
+luxlErpsStatisticsRemoteSF OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of remote SignalFail events."
+    ::= { luxlErpsStatisticsEntry 7 }
+
+luxlErpsStatisticsNR OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of NoRequest events."
+    ::= { luxlErpsStatisticsEntry 8 }
+
+luxlErpsStatisticsRemoteMS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of remote ManualSwitch events."
+    ::= { luxlErpsStatisticsEntry 9 }
+
+luxlErpsStatisticsLocalMS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of local ManualSwitch events."
+    ::= { luxlErpsStatisticsEntry 10 }
+
+luxlErpsStatisticsRemoteFS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of remote ForcedSwitch events."
+    ::= { luxlErpsStatisticsEntry 11 }
+
+luxlErpsStatisticsLocalFS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of local ForcedSwitch events."
+    ::= { luxlErpsStatisticsEntry 12 }
+
+luxlErpsStatisticsAdminClear OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Number of AdminClear events."
+    ::= { luxlErpsStatisticsEntry 13 }
+
+luxlErpsMibConformance OBJECT IDENTIFIER
+    ::= { luxlErpsMib 2 }
+
+luxlErpsMibCompliances OBJECT IDENTIFIER
+    ::= { luxlErpsMibConformance 1 }
+
+luxlErpsMibGroups OBJECT IDENTIFIER
+    ::= { luxlErpsMibConformance 2 }
+
+luxlErpsCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlErpsCapabilitiesMaxGroups, 
+                  luxlErpsCapabilitiesMaxVlansPerGroup }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlErpsMibGroups 1 }
+
+luxlErpsConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlErpsConfigRingType, luxlErpsConfigPort0, luxlErpsConfigPort1, 
+                  luxlErpsConfigInterconnectMajorRingGroupIndex, 
+                  luxlErpsConfigVirtualChannel, 
+                  luxlErpsConfigPort0SignalFailMepIndex, 
+                  luxlErpsConfigPort0ApsMepIndex, 
+                  luxlErpsConfigPort1SignalFailMepIndex, 
+                  luxlErpsConfigPort1ApsMepIndex, luxlErpsConfigHoldOffTime, 
+                  luxlErpsConfigWaitToRestoreTime, luxlErpsConfigGuardTime, 
+                  luxlErpsConfigRplMode, luxlErpsConfigRplPort, 
+                  luxlErpsConfigRevertive, luxlErpsConfigVersion, 
+                  luxlErpsConfigTopologyChange, 
+                  luxlErpsConfigProtectedVlans0Kto1K, 
+                  luxlErpsConfigProtectedVlans1Kto2K, 
+                  luxlErpsConfigProtectedVlans2Kto3K, 
+                  luxlErpsConfigProtectedVlans3Kto4K, luxlErpsConfigAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlErpsMibGroups 2 }
+
+luxlErpsConfigRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlErpsConfigRowEditorGroupIndex, 
+                  luxlErpsConfigRowEditorRingType, luxlErpsConfigRowEditorPort0, 
+                  luxlErpsConfigRowEditorPort1, 
+                  luxlErpsConfigRowEditorInterconnectMajorRingGroupIndex, 
+                  luxlErpsConfigRowEditorVirtualChannel, 
+                  luxlErpsConfigRowEditorPort0SignalFailMepIndex, 
+                  luxlErpsConfigRowEditorPort0ApsMepIndex, 
+                  luxlErpsConfigRowEditorPort1SignalFailMepIndex, 
+                  luxlErpsConfigRowEditorPort1ApsMepIndex, 
+                  luxlErpsConfigRowEditorHoldOffTime, 
+                  luxlErpsConfigRowEditorWaitToRestoreTime, 
+                  luxlErpsConfigRowEditorGuardTime, 
+                  luxlErpsConfigRowEditorRplMode, luxlErpsConfigRowEditorRplPort, 
+                  luxlErpsConfigRowEditorRevertive, 
+                  luxlErpsConfigRowEditorVersion, 
+                  luxlErpsConfigRowEditorTopologyChange, 
+                  luxlErpsConfigRowEditorProtectedVlans0Kto1K, 
+                  luxlErpsConfigRowEditorProtectedVlans1Kto2K, 
+                  luxlErpsConfigRowEditorProtectedVlans2Kto3K, 
+                  luxlErpsConfigRowEditorProtectedVlans3Kto4K, 
+                  luxlErpsConfigRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlErpsMibGroups 3 }
+
+luxlErpsStatusTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlErpsStatusActive, luxlErpsStatusProtectionState, 
+                  luxlErpsStatusRplBlocked, luxlErpsStatusWtrRemaining, 
+                  luxlErpsStatusAdminCmd, luxlErpsStatusFopAlarm, 
+                  luxlErpsStatusTxActive, luxlErpsStatusTxRequestOrState, 
+                  luxlErpsStatusTxRplBlocked, luxlErpsStatusTxDoNotFlush, 
+                  luxlErpsStatusBlockedPortReference, luxlErpsStatusPort0Blocked, 
+                  luxlErpsStatusPort0State, luxlErpsStatusPort0RxActive, 
+                  luxlErpsStatusPort0RxRequestOrState, 
+                  luxlErpsStatusPort0RxRplBlocked, 
+                  luxlErpsStatusPort0RxDoNotFlush, 
+                  luxlErpsStatusPort0RxBlockedPortReference, 
+                  luxlErpsStatusPort0RxNodeId, luxlErpsStatusPort1Blocked, 
+                  luxlErpsStatusPort1State, luxlErpsStatusPort1RxActive, 
+                  luxlErpsStatusPort1RxRequestOrState, 
+                  luxlErpsStatusPort1RxRplBlocked, 
+                  luxlErpsStatusPort1RxDoNotFlush, 
+                  luxlErpsStatusPort1RxBlockedPortReference, 
+                  luxlErpsStatusPort1RxNodeId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlErpsMibGroups 4 }
+
+luxlErpsControlTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlErpsControlCommand, luxlErpsControlPort }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlErpsMibGroups 5 }
+
+luxlErpsStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlErpsStatisticsRapsTx, luxlErpsStatisticsRapsRx, 
+                  luxlErpsStatisticsRapsRxDrop, luxlErpsStatisticsLocalSF, 
+                  luxlErpsStatisticsLocalSFCleared, luxlErpsStatisticsRemoteSF, 
+                  luxlErpsStatisticsNR, luxlErpsStatisticsRemoteMS, 
+                  luxlErpsStatisticsLocalMS, luxlErpsStatisticsRemoteFS, 
+                  luxlErpsStatisticsLocalFS, luxlErpsStatisticsAdminClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlErpsMibGroups 6 }
+
+luxlErpsMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlErpsCapabilitiesInfoGroup, 
+                  luxlErpsConfigTableInfoGroup, luxlErpsConfigRowEditorInfoGroup, 
+                  luxlErpsStatusTableInfoGroup, luxlErpsControlTableInfoGroup, 
+                  luxlErpsStatisticsTableInfoGroup }
+
+    ::= { luxlErpsMibCompliances 1 }
+
+END

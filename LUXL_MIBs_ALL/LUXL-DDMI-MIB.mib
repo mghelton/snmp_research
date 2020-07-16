@@ -1,0 +1,478 @@
+-- *****************************************************************
+-- DDMI-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-DDMI-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLSfpTransceiver FROM LUXL-TC
+    ;
+
+luxlDdmiMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of DDMI"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 121 }
+
+
+luxlDdmiMibObjects OBJECT IDENTIFIER
+    ::= { luxlDdmiMib 1 }
+
+luxlDdmiConfig OBJECT IDENTIFIER
+    ::= { luxlDdmiMibObjects 2 }
+
+luxlDdmiConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlDdmiConfig 1 }
+
+luxlDdmiConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+        "Global operation mode of DDMI. true is to enable the functions of DDMI
+         and false is to disable it."
+    ::= { luxlDdmiConfigGlobals 1 }
+
+luxlDdmiStatus OBJECT IDENTIFIER
+    ::= { luxlDdmiMibObjects 3 }
+
+luxlDdmiStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLDdmiStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "This is a DDMI status table of port interface."
+    ::= { luxlDdmiStatus 2 }
+
+luxlDdmiStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      LUXLDdmiStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Each entry has a set of DDMI status."
+    INDEX       { luxlDdmiStatusInterfaceIfIndex }
+    ::= { luxlDdmiStatusInterfaceTable 1 }
+
+LUXLDdmiStatusInterfaceEntry ::= SEQUENCE {
+    luxlDdmiStatusInterfaceIfIndex      LUXLInterfaceIndex,
+    luxlDdmiStatusInterfaceA0Supported      TruthValue,
+    luxlDdmiStatusInterfaceA0SfpDetected    TruthValue,
+    luxlDdmiStatusInterfaceA0Vendor     LUXLDisplayString,
+    luxlDdmiStatusInterfaceA0PartNumber     LUXLDisplayString,
+    luxlDdmiStatusInterfaceA0SerialNumber   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA0Revision   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA0DateCode   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA0SfpType    LUXLSfpTransceiver,
+    luxlDdmiStatusInterfaceA2Supported      TruthValue,
+    luxlDdmiStatusInterfaceA2CurrentTemperature     LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TemperatureHighAlarmThreshold      LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TemperatureLowAlarmThreshold   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TemperatureHighWarnThreshold   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TemperatureLowWarnThreshold    LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2CurrentVoltage     LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2VoltageHighAlarmThreshold      LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2VoltageLowAlarmThreshold   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2VoltageHighWarnThreshold   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2VoltageLowWarnThreshold    LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2CurrentTxBias      LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TxBiasHighAlarmThreshold   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TxBiasLowAlarmThreshold    LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TxBiasHighWarnThreshold    LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TxBiasLowWarnThreshold     LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2CurrentTxPower     LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TxPowerHighAlarmThreshold      LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TxPowerLowAlarmThreshold   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TxPowerHighWarnThreshold   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2TxPowerLowWarnThreshold    LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2CurrentRxPower     LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2RxPowerHighAlarmThreshold      LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2RxPowerLowAlarmThreshold   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2RxPowerHighWarnThreshold   LUXLDisplayString,
+    luxlDdmiStatusInterfaceA2RxPowerLowWarnThreshold    LUXLDisplayString
+}
+
+luxlDdmiStatusInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION 
+        "Logical interface number of physical port."
+    ::= { luxlDdmiStatusInterfaceEntry 1 }
+
+luxlDdmiStatusInterfaceA0Supported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Support transceiver status information or not. true is to supported and
+         false is not supported."
+    ::= { luxlDdmiStatusInterfaceEntry 2 }
+
+luxlDdmiStatusInterfaceA0SfpDetected OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "SFP module is detected or not. true is to detected and false is not
+         detected."
+    ::= { luxlDdmiStatusInterfaceEntry 3 }
+
+luxlDdmiStatusInterfaceA0Vendor OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Vendor name."
+    ::= { luxlDdmiStatusInterfaceEntry 4 }
+
+luxlDdmiStatusInterfaceA0PartNumber OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Part number."
+    ::= { luxlDdmiStatusInterfaceEntry 5 }
+
+luxlDdmiStatusInterfaceA0SerialNumber OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Serial number."
+    ::= { luxlDdmiStatusInterfaceEntry 6 }
+
+luxlDdmiStatusInterfaceA0Revision OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Revision."
+    ::= { luxlDdmiStatusInterfaceEntry 7 }
+
+luxlDdmiStatusInterfaceA0DateCode OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Date Code."
+    ::= { luxlDdmiStatusInterfaceEntry 8 }
+
+luxlDdmiStatusInterfaceA0SfpType OBJECT-TYPE
+    SYNTAX      LUXLSfpTransceiver
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "SFP type. none(0) means no SFP module. notSupported(1) means SFP module
+         is not supported. sfp100Fx(2) means SFP 100BASE-FX. sfp100BaseLx(3)
+         means SFP 100BASE-LX. sfp100BaseBx10(4) means SFP 100BASE-BX10.
+         sfp100BaseT(5) means SFP 100BASE-T. sfp1000BaseBx10(6) means SFP
+         1000BASE-BX10. sfp1000BaseT(7) means SFP 1000BASE-T. sfp1000BaseCx(8)
+         means SFP 1000BASE-CX. sfp1000BaseSx(9) means SFP 1000BASE-SX.
+         sfp1000BaseLx(10) means SFP 1000BASE-LX. sfp1000BaseX(11) means SFP
+         1000BASE-X. sfp2G5(12) means SFP 2.5G. sfp5G(13) means SFP 5G.
+         sfp10G(14) means SFP 10G."
+    ::= { luxlDdmiStatusInterfaceEntry 9 }
+
+luxlDdmiStatusInterfaceA2Supported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Support DDMI status information or not. true is to supported and false
+         is not supported."
+    ::= { luxlDdmiStatusInterfaceEntry 1002 }
+
+luxlDdmiStatusInterfaceA2CurrentTemperature OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current temperature in Celcius."
+    ::= { luxlDdmiStatusInterfaceEntry 1003 }
+
+luxlDdmiStatusInterfaceA2TemperatureHighAlarmThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Temperature high alarm threshold in Celcius."
+    ::= { luxlDdmiStatusInterfaceEntry 1004 }
+
+luxlDdmiStatusInterfaceA2TemperatureLowAlarmThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Temperature low alarm threshold in Celcius."
+    ::= { luxlDdmiStatusInterfaceEntry 1005 }
+
+luxlDdmiStatusInterfaceA2TemperatureHighWarnThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Temperature high warning threshold in Celcius."
+    ::= { luxlDdmiStatusInterfaceEntry 1006 }
+
+luxlDdmiStatusInterfaceA2TemperatureLowWarnThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Temperature low warning threshold in Celcius."
+    ::= { luxlDdmiStatusInterfaceEntry 1007 }
+
+luxlDdmiStatusInterfaceA2CurrentVoltage OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current voltage in Volt."
+    ::= { luxlDdmiStatusInterfaceEntry 1008 }
+
+luxlDdmiStatusInterfaceA2VoltageHighAlarmThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Voltage high alarm threshold in Volt."
+    ::= { luxlDdmiStatusInterfaceEntry 1009 }
+
+luxlDdmiStatusInterfaceA2VoltageLowAlarmThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Voltage low alarm threshold in Volt."
+    ::= { luxlDdmiStatusInterfaceEntry 1010 }
+
+luxlDdmiStatusInterfaceA2VoltageHighWarnThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Voltage high warning threshold in Volt."
+    ::= { luxlDdmiStatusInterfaceEntry 1011 }
+
+luxlDdmiStatusInterfaceA2VoltageLowWarnThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Voltage low warning threshold in Volt."
+    ::= { luxlDdmiStatusInterfaceEntry 1012 }
+
+luxlDdmiStatusInterfaceA2CurrentTxBias OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current Tx bias in mA."
+    ::= { luxlDdmiStatusInterfaceEntry 1013 }
+
+luxlDdmiStatusInterfaceA2TxBiasHighAlarmThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx bias high alarm threshold in mA."
+    ::= { luxlDdmiStatusInterfaceEntry 1014 }
+
+luxlDdmiStatusInterfaceA2TxBiasLowAlarmThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx bias low alarm threshold in mA."
+    ::= { luxlDdmiStatusInterfaceEntry 1015 }
+
+luxlDdmiStatusInterfaceA2TxBiasHighWarnThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx bias high warning threshold in mA."
+    ::= { luxlDdmiStatusInterfaceEntry 1016 }
+
+luxlDdmiStatusInterfaceA2TxBiasLowWarnThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx bias low warning threshold in mA."
+    ::= { luxlDdmiStatusInterfaceEntry 1017 }
+
+luxlDdmiStatusInterfaceA2CurrentTxPower OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current Tx power in mV."
+    ::= { luxlDdmiStatusInterfaceEntry 1018 }
+
+luxlDdmiStatusInterfaceA2TxPowerHighAlarmThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx power high alarm threshold in mV."
+    ::= { luxlDdmiStatusInterfaceEntry 1019 }
+
+luxlDdmiStatusInterfaceA2TxPowerLowAlarmThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx power low alarm threshold in mV."
+    ::= { luxlDdmiStatusInterfaceEntry 1020 }
+
+luxlDdmiStatusInterfaceA2TxPowerHighWarnThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx power high warning threshold in mV."
+    ::= { luxlDdmiStatusInterfaceEntry 1021 }
+
+luxlDdmiStatusInterfaceA2TxPowerLowWarnThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Tx power low warning threshold in mV."
+    ::= { luxlDdmiStatusInterfaceEntry 1022 }
+
+luxlDdmiStatusInterfaceA2CurrentRxPower OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Current Rx power in mV."
+    ::= { luxlDdmiStatusInterfaceEntry 1023 }
+
+luxlDdmiStatusInterfaceA2RxPowerHighAlarmThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Rx power high alarm threshold in mV."
+    ::= { luxlDdmiStatusInterfaceEntry 1024 }
+
+luxlDdmiStatusInterfaceA2RxPowerLowAlarmThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Rx power low alarm threshold in mV."
+    ::= { luxlDdmiStatusInterfaceEntry 1025 }
+
+luxlDdmiStatusInterfaceA2RxPowerHighWarnThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Rx power high warning threshold in mV."
+    ::= { luxlDdmiStatusInterfaceEntry 1026 }
+
+luxlDdmiStatusInterfaceA2RxPowerLowWarnThreshold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Rx power low warning threshold in mV."
+    ::= { luxlDdmiStatusInterfaceEntry 1027 }
+
+luxlDdmiMibConformance OBJECT IDENTIFIER
+    ::= { luxlDdmiMib 2 }
+
+luxlDdmiMibCompliances OBJECT IDENTIFIER
+    ::= { luxlDdmiMibConformance 1 }
+
+luxlDdmiMibGroups OBJECT IDENTIFIER
+    ::= { luxlDdmiMibConformance 2 }
+
+luxlDdmiConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDdmiConfigGlobalsMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDdmiMibGroups 1 }
+
+luxlDdmiStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlDdmiStatusInterfaceA0Supported, 
+                  luxlDdmiStatusInterfaceA0SfpDetected, 
+                  luxlDdmiStatusInterfaceA0Vendor, 
+                  luxlDdmiStatusInterfaceA0PartNumber, 
+                  luxlDdmiStatusInterfaceA0SerialNumber, 
+                  luxlDdmiStatusInterfaceA0Revision, 
+                  luxlDdmiStatusInterfaceA0DateCode, 
+                  luxlDdmiStatusInterfaceA0SfpType, 
+                  luxlDdmiStatusInterfaceA2Supported, 
+                  luxlDdmiStatusInterfaceA2CurrentTemperature, 
+                  luxlDdmiStatusInterfaceA2TemperatureHighAlarmThreshold, 
+                  luxlDdmiStatusInterfaceA2TemperatureLowAlarmThreshold, 
+                  luxlDdmiStatusInterfaceA2TemperatureHighWarnThreshold, 
+                  luxlDdmiStatusInterfaceA2TemperatureLowWarnThreshold, 
+                  luxlDdmiStatusInterfaceA2CurrentVoltage, 
+                  luxlDdmiStatusInterfaceA2VoltageHighAlarmThreshold, 
+                  luxlDdmiStatusInterfaceA2VoltageLowAlarmThreshold, 
+                  luxlDdmiStatusInterfaceA2VoltageHighWarnThreshold, 
+                  luxlDdmiStatusInterfaceA2VoltageLowWarnThreshold, 
+                  luxlDdmiStatusInterfaceA2CurrentTxBias, 
+                  luxlDdmiStatusInterfaceA2TxBiasHighAlarmThreshold, 
+                  luxlDdmiStatusInterfaceA2TxBiasLowAlarmThreshold, 
+                  luxlDdmiStatusInterfaceA2TxBiasHighWarnThreshold, 
+                  luxlDdmiStatusInterfaceA2TxBiasLowWarnThreshold, 
+                  luxlDdmiStatusInterfaceA2CurrentTxPower, 
+                  luxlDdmiStatusInterfaceA2TxPowerHighAlarmThreshold, 
+                  luxlDdmiStatusInterfaceA2TxPowerLowAlarmThreshold, 
+                  luxlDdmiStatusInterfaceA2TxPowerHighWarnThreshold, 
+                  luxlDdmiStatusInterfaceA2TxPowerLowWarnThreshold, 
+                  luxlDdmiStatusInterfaceA2CurrentRxPower, 
+                  luxlDdmiStatusInterfaceA2RxPowerHighAlarmThreshold, 
+                  luxlDdmiStatusInterfaceA2RxPowerLowAlarmThreshold, 
+                  luxlDdmiStatusInterfaceA2RxPowerHighWarnThreshold, 
+                  luxlDdmiStatusInterfaceA2RxPowerLowWarnThreshold }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlDdmiMibGroups 2 }
+
+luxlDdmiMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlDdmiConfigGlobalsInfoGroup, 
+                  luxlDdmiStatusInterfaceTableInfoGroup }
+
+    ::= { luxlDdmiMibCompliances 1 }
+
+END

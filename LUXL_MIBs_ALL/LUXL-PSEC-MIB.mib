@@ -1,0 +1,422 @@
+-- *****************************************************************
+-- PSEC-MIB:  Vitesse private MIB
+--
+-- Copyright (c) 2002-2013 Vitesse Semiconductor Corporation "Vitesse".
+-- All Rights Reserved.
+--
+-- ****************************************************************
+
+LUXL-PSEC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    luxlSwitchMgmt
+        FROM LUXL-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    LUXLDisplayString FROM LUXL-TC
+    LUXLInterfaceIndex FROM LUXL-TC
+    LUXLUnsigned16 FROM LUXL-TC
+    ;
+
+luxlPsecMib MODULE-IDENTITY
+    LAST-UPDATED "201412100000Z"
+    ORGANIZATION
+        "Vitesse Semiconductor Corporation"
+    CONTACT-INFO
+        "Application support <application_support@vitesse.com>"
+    DESCRIPTION
+        "This is a private version of the Port Security MIB"
+    REVISION    "201412100000Z"
+    DESCRIPTION
+        "Remove user of DHCP snooping"
+    REVISION    "201412080000Z"
+    DESCRIPTION
+        "Add users in status port table"
+    REVISION    "201410130000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { luxlSwitchMgmt 66 }
+
+
+LUXLPsecLimitActionType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the Action type in psec function."
+    SYNTAX      INTEGER { none(0), trap(1), shutdown(2), trapShutdown(3) }
+
+LUXLPsecStateType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the state of Psec config."
+    SYNTAX      INTEGER { forwarding(0), blocked(1) }
+
+luxlPsecMibObjects OBJECT IDENTIFIER
+    ::= { luxlPsecMib 1 }
+
+luxlPsecConfig OBJECT IDENTIFIER
+    ::= { luxlPsecMibObjects 2 }
+
+luxlPsecConfigGlobals OBJECT IDENTIFIER
+    ::= { luxlPsecConfig 1 }
+
+luxlPsecConfigGlobalsEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Globally enable/disable aging of secured entries. This doesn't affect
+         aging of addresses secured by other modules."
+    ::= { luxlPsecConfigGlobals 1 }
+
+luxlPsecConfigGlobalsEnableAging OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If aging is globally enabled, this is the aging period in seconds.
+         Valid range is [10; 10000000] seconds(max is around 115 days)."
+    ::= { luxlPsecConfigGlobals 2 }
+
+luxlPsecConfigGlobalsAgingPeriodSecs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If aging is globally enabled, this is the aging period in seconds.
+         Valid range is [10; 10000000] seconds(max is around 115 days)."
+    ::= { luxlPsecConfigGlobals 3 }
+
+luxlPsecConfigPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPsecConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of port configuration per session"
+    ::= { luxlPsecConfig 2 }
+
+luxlPsecConfigPortEntry OBJECT-TYPE
+    SYNTAX      LUXLPsecConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each session has a set of parameters"
+    INDEX       { luxlPsecConfigPortIfIndex }
+    ::= { luxlPsecConfigPortTable 1 }
+
+LUXLPsecConfigPortEntry ::= SEQUENCE {
+    luxlPsecConfigPortIfIndex   LUXLInterfaceIndex,
+    luxlPsecConfigPortEnabled   TruthValue,
+    luxlPsecConfigPortLimit     Unsigned32,
+    luxlPsecConfigPortAction    LUXLPsecLimitActionType
+}
+
+luxlPsecConfigPortIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { luxlPsecConfigPortEntry 1 }
+
+luxlPsecConfigPortEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether Port Security Limit Control is enabled for this port."
+    ::= { luxlPsecConfigPortEntry 2 }
+
+luxlPsecConfigPortLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of MAC addresses allowed on this port.Valid values =
+         [PSEC_LIMIT_MIN; PSEC_LIMIT_MAX]."
+    ::= { luxlPsecConfigPortEntry 3 }
+
+luxlPsecConfigPortAction OBJECT-TYPE
+    SYNTAX      LUXLPsecLimitActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action to take if number of MAC addresses exceeds the limit. NONE(0) Do
+         nothing, except disallowing further clients. TRAP(1) Send an SNMP trap
+         notification. SHUTDOWN(2) Shut-down the port. TRAP_AND_SHUTDOWN(3) Send
+         an SNMP trap notification and shut-down the port."
+    ::= { luxlPsecConfigPortEntry 4 }
+
+luxlPsecStatus OBJECT IDENTIFIER
+    ::= { luxlPsecMibObjects 3 }
+
+luxlPsecStatusPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPsecStatusPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of port configuration per session"
+    ::= { luxlPsecStatus 1 }
+
+luxlPsecStatusPortEntry OBJECT-TYPE
+    SYNTAX      LUXLPsecStatusPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each session has a set of parameters"
+    INDEX       { luxlPsecStatusPortIfIndex }
+    ::= { luxlPsecStatusPortTable 1 }
+
+LUXLPsecStatusPortEntry ::= SEQUENCE {
+    luxlPsecStatusPortIfIndex   LUXLInterfaceIndex,
+    luxlPsecStatusPortUsers     Unsigned32,
+    luxlPsecStatusPortLimitReached      TruthValue,
+    luxlPsecStatusPortShutdown      TruthValue,
+    luxlPsecStatusPortMacCount      Unsigned32
+}
+
+luxlPsecStatusPortIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { luxlPsecStatusPortEntry 1 }
+
+luxlPsecStatusPortUsers OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bit masks to indicate what users currently use port security on this
+         port. Where bit 0 - port security limit, bit 1 - 802.1x, bit 2 - voice
+         VLAN."
+    ::= { luxlPsecStatusPortEntry 2 }
+
+luxlPsecStatusPortLimitReached OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if the limit is reached on the port, FALSE otherwise."
+    ::= { luxlPsecStatusPortEntry 3 }
+
+luxlPsecStatusPortShutdown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if the port is shut down, FALSE otherwise."
+    ::= { luxlPsecStatusPortEntry 4 }
+
+luxlPsecStatusPortMacCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of MAC addresses currently assigned to this port. The number
+         does NOT include the number of entries that are held due to a H/W
+         failure or S/W failure."
+    ::= { luxlPsecStatusPortEntry 5 }
+
+luxlPsecControl OBJECT IDENTIFIER
+    ::= { luxlPsecMibObjects 4 }
+
+luxlPsecControlPortReopenTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPsecControlPortReopenEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to re-open port and move it to ready state, if it was
+         being disabled after limit was reached."
+    ::= { luxlPsecControl 1 }
+
+luxlPsecControlPortReopenEntry OBJECT-TYPE
+    SYNTAX      LUXLPsecControlPortReopenEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each session has a set of parameters"
+    INDEX       { luxlPsecControlPortReopenIfIndex }
+    ::= { luxlPsecControlPortReopenTable 1 }
+
+LUXLPsecControlPortReopenEntry ::= SEQUENCE {
+    luxlPsecControlPortReopenIfIndex    LUXLInterfaceIndex,
+    luxlPsecControlPortReopenPortReOpen     TruthValue
+}
+
+luxlPsecControlPortReopenIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { luxlPsecControlPortReopenEntry 1 }
+
+luxlPsecControlPortReopenPortReOpen OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to reopen after it is shutdown"
+    ::= { luxlPsecControlPortReopenEntry 2 }
+
+luxlPsecStatistics OBJECT IDENTIFIER
+    ::= { luxlPsecMibObjects 5 }
+
+luxlPsecStatisticsPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LUXLPsecStatisticsPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of port statistics per session"
+    ::= { luxlPsecStatistics 1 }
+
+luxlPsecStatisticsPortEntry OBJECT-TYPE
+    SYNTAX      LUXLPsecStatisticsPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each session has a set of parameters"
+    INDEX       { luxlPsecStatisticsPortIfIndex, luxlPsecStatisticsPortPsecStatsEntryIndex }
+    ::= { luxlPsecStatisticsPortTable 1 }
+
+LUXLPsecStatisticsPortEntry ::= SEQUENCE {
+    luxlPsecStatisticsPortIfIndex   LUXLInterfaceIndex,
+    luxlPsecStatisticsPortPsecStatsEntryIndex   LUXLUnsigned16,
+    luxlPsecStatisticsPortAgeOrHold     LUXLDisplayString,
+    luxlPsecStatisticsPortCreationTime      LUXLDisplayString,
+    luxlPsecStatisticsPortState     LUXLPsecStateType,
+    luxlPsecStatisticsPortMacId     MacAddress,
+    luxlPsecStatisticsPortVlanId    LUXLUnsigned16
+}
+
+luxlPsecStatisticsPortIfIndex OBJECT-TYPE
+    SYNTAX      LUXLInterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { luxlPsecStatisticsPortEntry 1 }
+
+luxlPsecStatisticsPortPsecStatsEntryIndex OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "PSEC statistics entry unique index number."
+    ::= { luxlPsecStatisticsPortEntry 3 }
+
+luxlPsecStatisticsPortAgeOrHold OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..14))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Down-counter used in block and ageing process."
+    ::= { luxlPsecStatisticsPortEntry 5 }
+
+luxlPsecStatisticsPortCreationTime OBJECT-TYPE
+    SYNTAX      LUXLDisplayString (SIZE(0..24))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Time when this entry was orignally added."
+    ::= { luxlPsecStatisticsPortEntry 6 }
+
+luxlPsecStatisticsPortState OBJECT-TYPE
+    SYNTAX      LUXLPsecStateType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current State of a entry, expected state can be either FORWARDING or
+         BLOCKED."
+    ::= { luxlPsecStatisticsPortEntry 7 }
+
+luxlPsecStatisticsPortMacId OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MAC address that this is all about."
+    ::= { luxlPsecStatisticsPortEntry 8 }
+
+luxlPsecStatisticsPortVlanId OBJECT-TYPE
+    SYNTAX      LUXLUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The VID that this is all about."
+    ::= { luxlPsecStatisticsPortEntry 9 }
+
+luxlPsecMibConformance OBJECT IDENTIFIER
+    ::= { luxlPsecMib 2 }
+
+luxlPsecMibCompliances OBJECT IDENTIFIER
+    ::= { luxlPsecMibConformance 1 }
+
+luxlPsecMibGroups OBJECT IDENTIFIER
+    ::= { luxlPsecMibConformance 2 }
+
+luxlPsecConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPsecConfigGlobalsEnabled, luxlPsecConfigGlobalsEnableAging,
+                  luxlPsecConfigGlobalsAgingPeriodSecs }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPsecMibGroups 1 }
+
+luxlPsecConfigPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPsecConfigPortEnabled, luxlPsecConfigPortLimit,
+                  luxlPsecConfigPortAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPsecMibGroups 2 }
+
+luxlPsecStatusPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPsecStatusPortUsers, luxlPsecStatusPortLimitReached,
+                  luxlPsecStatusPortShutdown, luxlPsecStatusPortMacCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPsecMibGroups 3 }
+
+luxlPsecControlPortReopenTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPsecControlPortReopenPortReOpen }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPsecMibGroups 4 }
+
+luxlPsecStatisticsPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { luxlPsecStatisticsPortAgeOrHold,
+                  luxlPsecStatisticsPortCreationTime,
+                  luxlPsecStatisticsPortState, luxlPsecStatisticsPortMacId,
+                  luxlPsecStatisticsPortVlanId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects suitable for bulk operations."
+    ::= { luxlPsecMibGroups 5 }
+
+luxlPsecMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+        MANDATORY-GROUPS        { luxlPsecConfigGlobalsInfoGroup,
+                  luxlPsecConfigPortTableInfoGroup,
+                  luxlPsecStatusPortTableInfoGroup,
+                  luxlPsecControlPortReopenTableInfoGroup,
+                  luxlPsecStatisticsPortTableInfoGroup }
+
+    ::= { luxlPsecMibCompliances 1 }
+
+END
