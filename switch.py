@@ -2,15 +2,11 @@ from pysnmp.hlapi import *
 from helpers import parse_kwargs
 from logg3r import Log
 
-class Switch(): #not meant to be used standalone. Inherit to sub switch classes
-    def __init__(self):
-        self.mac_table = {}
-        self.interface_status = {}
-
-    def set_state(self,_MIB: str,_OID: str,state):
+class SNMP():
+    def SNMP_set_state(self,_MIB: str,_OID: str,state):
         pass
     
-    def get_state(self,_MIB: str,_OID: str, _INT: int):
+    def SNMP_get_one(self,_MIB: str,_OID: str, _INT: int):
         varBinds = []
         g = getCmd(SnmpEngine(),
                     CommunityData('public'),
@@ -18,9 +14,11 @@ class Switch(): #not meant to be used standalone. Inherit to sub switch classes
                     ContextData(),
                     ObjectType(ObjectIdentity(_MIB, _OID, _INT)))
         gen = next(g)
-        
+        for item in gen:
+            if(isinstance(item,list)):
+                return [x.prettyPrint() for x in item][0].split("=")[1].strip()
 
-    def get_bulk(self,_MIB: str,_OID: str):
+    def SNMP_get_bulk(self,_MIB: str,_OID: str):
         l = []
         for errorIndication, errorStatus, errorIndex, varBinds in bulkCmd(
             SnmpEngine(),
@@ -40,11 +38,17 @@ class Switch(): #not meant to be used standalone. Inherit to sub switch classes
                 for varBind in varBinds:
                     l.append(varBind)
         return l
+
+class Switch(SNMP): #not meant to be used standalone. Inherit to sub switch classes
+    def __init__(self):
+        super(Switch,self).__init__()
+        self.mac_table = {}
+        self.interface_status = {}
     
     def update_interface_status(self,**kwargs):
         s = {}
         translate = {"1":"up","2":"down"}
-        varBinds = self.get_bulk('IF-MIB','ifOperStatus')
+        varBinds = self.SNMP_get_bulk('IF-MIB','ifOperStatus')
 
         index = -1
         for varBind in varBinds:
@@ -67,7 +71,7 @@ class Switch(): #not meant to be used standalone. Inherit to sub switch classes
         m = {}
         ignore = '1.3.6.1.2.1.17.4.3.1.2.' #OID prefix to ignore for mac address parsing
 
-        varBinds = self.get_bulk('BRIDGE-MIB','dot1dTpFdbPort')
+        varBinds = self.SNMP_get_bulk('BRIDGE-MIB','dot1dTpFdbPort')
         for varBind in varBinds:
             index = str(varBind[1])
             addr = str(varBind[0]).replace(ignore,"").split(".")
@@ -100,7 +104,7 @@ class Luxul(Switch):
             print("ERROR: {}".format(error))
 
     def update_poe_status(self):
-        varBinds = self.get_bulk('LUXL-POE-MIB','luxlPoeStatusInterfaceCurrentState')
+        varBinds = self.SNMP_get_bulk('LUXL-POE-MIB','luxlPoeStatusInterfaceCurrentState')
         join_char = " - "
         for varBind in varBinds:
             print(join_char.join([x.prettyPrint() for x in varBind]))

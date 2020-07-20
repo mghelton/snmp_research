@@ -8,7 +8,7 @@ g = getCmd(SnmpEngine(),
 gen = next(g)
 for item in gen:
     if(isinstance(item,list)):
-        print([x.prettyPrint() for x in item])
+        return [x.prettyPrint() for x in item][0].split("=")[1].strip()
 
 '''
 from pysnmp.hlapi import *
