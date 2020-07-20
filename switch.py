@@ -1,7 +1,8 @@
 from pysnmp.hlapi import *
 from helpers import parse_kwargs
+from logg3r import Log
 
-class Switch():
+class Switch(): #not meant to be used standalone. Inherit to sub switch classes
     def set_state(self,_MIB: str,_OID: str,state):
         pass
     
@@ -20,10 +21,10 @@ class Switch():
             lookupMib=False,lexicographicMode=False):
 
             if errorIndication:
-                print(errorIndication)   
+                self.logger.log("GET_BULK: errorIndicaton | {}".format(errorIndication),5)
                 break
             elif errorStatus:
-                print('%s at %s' % (errorStatus.prettyPrint(),errorIndex and varBinds[int(errorIndex)-1][0] or '?'))
+                self.logger.log("GET_BULK: errorStatus | {} at {}".format(errorStatus.prettyPrint(),errorIndex and varBinds[int(errorIndex)-1][0] or '?'),5)
             else:
                 for varBind in varBinds:
                     l.append(varBind)
@@ -45,16 +46,17 @@ class Switch():
             del s['0']
             return s
         else: return False
-        
 
 class luxul(Switch):
     def __init__(self,**kwargs):
-        required = {'ip':{'type':str,'state':False},'snmp_port':{'type':int,'state':False},'snmp_trap_port':{'type':int,'state':False}}
+        required = {'uid':{'type':str,'state':False},'ip':{'type':str,'state':False},'snmp_port':{'type':int,'state':False},'snmp_trap_port':{'type':int,'state':False}}
         success,error = parse_kwargs(required,kwargs)
         if(success):
             self.__dict__.update(kwargs)
+            self.logger = Log(log_path="./logs/",name='luxul_'+self.__dict__['uid'],level=1)
             self.mac_table = {}
             self.interface_status = self.get_interface_status()
+            self.logger.log("object initialized",1)
         else:
             print("ERROR: {}".format(error))
 
