@@ -5,9 +5,8 @@ from logg3r import Log
 class SNMP():
     def SNMP_set_state(self,_MIB: str,_OID: str,state):
         pass
-    
+
     def SNMP_get_one(self,_MIB: str,_OID: str, _INT: int):
-        varBinds = []
         g = getCmd(SnmpEngine(),
                     CommunityData('public'),
                     UdpTransportTarget((self.ip,self.snmp_port)),
