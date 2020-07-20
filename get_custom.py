@@ -32,7 +32,7 @@ g = getCmd(SnmpEngine(),
            CommunityData('public'),
            UdpTransportTarget(('192.168.61.6', 161)),
            ContextData(),
-           ObjectType(ObjectIdentity('IF-MIB', 'ifIndex').addAsn1MibSource('file:///Users/michaelhelton/Downloads/mibBrowser/IF-MIB')))
+           ObjectType(ObjectIdentity('IF-MIB', 'ifDescr').addAsn1MibSource('file:///Users/michaelhelton/Downloads/mibBrowser/IF-MIB')))
 '''
 )
 print(errorIndication)
