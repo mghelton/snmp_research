@@ -34,7 +34,10 @@ class luxul(Switch):
             print("ERROR: {}".format(error))
 
     def update_poe_status(self):
-        pass
+        varBinds = self.get_bulk('LUXL-POE-MIB','luxlPoeStatusInterfaceCurrentState')
+        join_char = " - "
+        for varBind in varBinds:
+            print(join_char.join([x.prettyPrint() for x in varBind]))
 
     def update_mac_table(self,**kwargs):
         #set join character, default to colon
