@@ -2,6 +2,12 @@ from pysnmp.hlapi import *
 from helpers import parse_kwargs
 
 class Switch():
+    def set_state(self,_MIB: str,_OID: str,state):
+        pass
+    
+    def get_state(self,_MIB: str,_OID: str):
+        pass
+
     def get_bulk(self,_MIB: str,_OID: str):
         l = []
         for errorIndication, errorStatus, errorIndex, varBinds in bulkCmd(
@@ -22,6 +28,24 @@ class Switch():
                 for varBind in varBinds:
                     l.append(varBind)
         return l
+    
+    def get_interface_status(self,**kwargs):
+        s = {}
+        translate = {"1":"up","2":"down"}
+        varBinds = self.get_bulk('IF-MIB','ifOperStatus')
+
+        index = -1
+        for varBind in varBinds:
+            index += 1
+            try:
+                s[str(index)] = translate[varBind[1].prettyPrint()]
+            except Exception as e:
+                print(type(e).__name__,e.args)
+        if(s):
+            del s['0']
+            return s
+        else: return False
+        
 
 class luxul(Switch):
     def __init__(self,**kwargs):
@@ -30,6 +54,7 @@ class luxul(Switch):
         if(success):
             self.__dict__.update(kwargs)
             self.mac_table = {}
+            self.interface_status = self.get_interface_status()
         else:
             print("ERROR: {}".format(error))
 
