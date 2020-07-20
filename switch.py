@@ -3,7 +3,6 @@ from helpers import parse_kwargs
 from logg3r import Log
 
 class Switch(): #not meant to be used standalone. Inherit to sub switch classes
-
     def __init__(self):
         self.mac_table = {}
         self.interface_status = {}
@@ -11,8 +10,15 @@ class Switch(): #not meant to be used standalone. Inherit to sub switch classes
     def set_state(self,_MIB: str,_OID: str,state):
         pass
     
-    def get_state(self,_MIB: str,_OID: str):
-        pass
+    def get_state(self,_MIB: str,_OID: str, _INT: int):
+        varBinds = []
+        g = getCmd(SnmpEngine(),
+                    CommunityData('public'),
+                    UdpTransportTarget((self.ip,self.snmp_port)),
+                    ContextData(),
+                    ObjectType(ObjectIdentity(_MIB, _OID, _INT)))
+        gen = next(g)
+        
 
     def get_bulk(self,_MIB: str,_OID: str):
         l = []

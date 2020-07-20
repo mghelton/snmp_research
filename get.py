@@ -1,4 +1,4 @@
-'''
+
 from pysnmp.hlapi import *
 g = getCmd(SnmpEngine(),
             CommunityData('public'),
@@ -6,10 +6,9 @@ g = getCmd(SnmpEngine(),
             ContextData(),
             ObjectType(ObjectIdentity('SNMPv2-MIB', 'sysName', 0)))
 gen = next(g)
-print(gen[3])
-for item in gen[3]:
-    print(item)
-'''
+for item in gen:
+    if(isinstance(item,list)):
+        print([x.prettyPrint() for x in item])
 
 '''
 from pysnmp.hlapi import *
