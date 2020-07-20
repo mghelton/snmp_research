@@ -2,7 +2,7 @@ from pysnmp.hlapi import *
 from helpers import parse_kwargs
 
 class Switch():
-    def bulk(self,mib,oid):
+    def get_bulk(self,_MIB: str,_OID: str):
         l = []
         for errorIndication, errorStatus, errorIndex, varBinds in bulkCmd(
             SnmpEngine(),
@@ -10,7 +10,7 @@ class Switch():
             UdpTransportTarget((self.ip,self.snmp_port)),
             ContextData(),
             0,100, #GETBULK specific request up to 100 OIDs in a single response
-            ObjectType(ObjectIdentity(mib,oid)),
+            ObjectType(ObjectIdentity(_MIB,_OID)),
             lookupMib=False,lexicographicMode=False):
 
             if errorIndication:
@@ -32,31 +32,40 @@ class luxul(Switch):
             self.mac_table = {}
         else:
             print("ERROR: {}".format(error))
-        print(self.__dict__)
 
-    def update_mac_table(self):
+    def update_poe_status(self):
+        pass
+
+    def update_mac_table(self,**kwargs):
+        #set join character, default to colon
+        try: join_char = kwargs['join_character'] 
+        except KeyError: join_char = ":"
+        
         m = {}
         ignore = '1.3.6.1.2.1.17.4.3.1.2.' #OID prefix to ignore for mac address parsing
-        varBinds = self.bulk('BRIDGE-MIB','dot1dTpFdbPort')
+
+        varBinds = self.get_bulk('BRIDGE-MIB','dot1dTpFdbPort')
         for varBind in varBinds:
-            stringed = str(varBind[0]).replace(ignore,"")
-            stringed = stringed.split(".")
             index = str(varBind[1])
+            addr = str(varBind[0]).replace(ignore,"").split(".")
             def convert(value):
                 hexVal = hex(int(value))[2:]
-                if(len(hexVal) == 1):
-                    return "0"+hexVal
-                else:
-                    return hexVal        
+                if(len(hexVal) == 1): return "0"+hexVal
+                else: return hexVal.lower()
             try:
-                 m[index].append('-'.join([convert(i) for i in stringed]))
+                 m[index].append(join_char.join([convert(i) for i in addr]))
             except KeyError:
-                m[index] = []
-                m[index].append('-'.join([convert(i) for i in stringed]))
+                m[index] = [] #initialize key
+                m[index].append(join_char.join([convert(i) for i in addr]))
             except Exception as e:
                 print(type(e).__name__,e.args)
         if(m):
             self.mac_table.update(m)
             return True
-        else:
-            return False
+        else: return False
+
+    def control_poe(self):
+        pass
+
+    def control_port(self):
+        pass
