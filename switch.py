@@ -3,6 +3,11 @@ from helpers import parse_kwargs
 from logg3r import Log
 
 class Switch(): #not meant to be used standalone. Inherit to sub switch classes
+
+    def __init__(self):
+        self.mac_table = {}
+        self.interface_status = {}
+
     def set_state(self,_MIB: str,_OID: str,state):
         pass
     
@@ -30,7 +35,7 @@ class Switch(): #not meant to be used standalone. Inherit to sub switch classes
                     l.append(varBind)
         return l
     
-    def get_interface_status(self,**kwargs):
+    def update_interface_status(self,**kwargs):
         s = {}
         translate = {"1":"up","2":"down"}
         varBinds = self.get_bulk('IF-MIB','ifOperStatus')
@@ -44,27 +49,9 @@ class Switch(): #not meant to be used standalone. Inherit to sub switch classes
                 print(type(e).__name__,e.args)
         if(s):
             del s['0']
-            return s
+            self.interface_status.update(s)
+            return True
         else: return False
-
-class luxul(Switch):
-    def __init__(self,**kwargs):
-        required = {'uid':{'type':str,'state':False},'ip':{'type':str,'state':False},'snmp_port':{'type':int,'state':False},'snmp_trap_port':{'type':int,'state':False}}
-        success,error = parse_kwargs(required,kwargs)
-        if(success):
-            self.__dict__.update(kwargs)
-            self.logger = Log(log_path="./logs/",name='luxul_'+self.__dict__['uid'],level=1)
-            self.mac_table = {}
-            self.interface_status = self.get_interface_status()
-            self.logger.log("object initialized",1)
-        else:
-            print("ERROR: {}".format(error))
-
-    def update_poe_status(self):
-        varBinds = self.get_bulk('LUXL-POE-MIB','luxlPoeStatusInterfaceCurrentState')
-        join_char = " - "
-        for varBind in varBinds:
-            print(join_char.join([x.prettyPrint() for x in varBind]))
 
     def update_mac_table(self,**kwargs):
         #set join character, default to colon
@@ -93,6 +80,24 @@ class luxul(Switch):
             self.mac_table.update(m)
             return True
         else: return False
+
+class Luxul(Switch):
+    def __init__(self,**kwargs):
+        required = {'uid':{'type':str,'state':False},'ip':{'type':str,'state':False},'snmp_port':{'type':int,'state':False},'snmp_trap_port':{'type':int,'state':False}}
+        success,error = parse_kwargs(required,kwargs)
+        if(success):
+            self.__dict__.update(kwargs)
+            super(Luxul,self).__init__()
+            self.logger = Log(log_path="./logs/",name='luxul_'+self.__dict__['uid'],level=1)
+            self.logger.log("object initialized",1)
+        else:
+            print("ERROR: {}".format(error))
+
+    def update_poe_status(self):
+        varBinds = self.get_bulk('LUXL-POE-MIB','luxlPoeStatusInterfaceCurrentState')
+        join_char = " - "
+        for varBind in varBinds:
+            print(join_char.join([x.prettyPrint() for x in varBind]))
 
     def control_poe(self):
         pass
