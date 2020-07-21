@@ -1,4 +1,5 @@
 from pysnmp.hlapi import *
+from pysnmp.hlapi import UsmUserData
 from helpers import parse_kwargs
 from logg3r import Log
 
@@ -92,7 +93,13 @@ class Switch(SNMP): #not meant to be used standalone. Inherit to sub switch clas
 
 class Luxul(Switch):
     def __init__(self,**kwargs):
-        required = {'uid':{'type':str,'state':False},'ip':{'type':str,'state':False},'snmp_port':{'type':int,'state':False},'snmp_trap_port':{'type':int,'state':False}}
+        required = {'uid':{'type':str,'state':False},
+                    'ip':{'type':str,'state':False},
+                    'snmp_port':{'type':int,'state':False},
+                    'snmp_trap_port':{'type':int,'state':False},
+                    'snmp_username':{'type':str,'state':False},
+                    'snmp_password':{'type':str,'state':False}
+        }
         success,error = parse_kwargs(required,kwargs)
         if(success):
             self.__dict__.update(kwargs)
@@ -108,8 +115,33 @@ class Luxul(Switch):
         for varBind in varBinds:
             print(join_char.join([x.prettyPrint() for x in varBind]))
 
-    def control_poe(self):
-        pass
+    def control_poe(self,_PORT: int,_STATE: int):
+        # _STATE
+        # 0 = disabled
+        # 1 = PoE
+        # 2 = PoE+
+
+        if(len(str(_PORT)) == 1):
+            _PORT = int("100000"+str(_PORT))
+        elif(len(str(_PORT)) == 2):
+            _PORT = int("10000"+str(_PORT))
+
+        errorIndication, errorStatus, errorIndex, varBinds = next(
+            setCmd(SnmpEngine(),
+                UsmUserData(self.snmp_username,authKey=self.snmp_password),
+                UdpTransportTarget((self.ip, self.snmp_port)),
+                ContextData(),
+                ObjectType(ObjectIdentity('LUXL-POE-MIB', 'luxlPoeConfigInterfaceParamMode', _PORT).addAsn1MibSource('file:///Users/michaelhelton/Downloads/LUXL_MIBs_ALL/LUXL-POE-MIB.mib'),_STATE))
+        )
+
+        if errorIndication:
+            print(errorIndication)
+        elif errorStatus:
+            print('%s at %s' % (errorStatus.prettyPrint(),
+                                errorIndex and varBinds[int(errorIndex) - 1][0] or '?'))
+        else:
+            for varBind in varBinds:
+                print(' = '.join([x.prettyPrint() for x in varBind]))
 
     def control_port(self):
         pass
