@@ -4,8 +4,24 @@ from helpers import parse_kwargs
 from logg3r import Log
 
 class SNMP():
-    def SNMP_set_state(self,_MIB: str,_OID: str,state):
-        pass
+    def SNMP_set_state(self,_MIB: str,_OID: str,_PORT: int, _STATE: int):
+        l = []
+        errorIndication, errorStatus, errorIndex, varBinds = next(
+            setCmd(SnmpEngine(),
+                UsmUserData(self.snmp_username,authKey=self.snmp_password),
+                UdpTransportTarget((self.ip, self.snmp_port)),
+                ContextData(),
+                ObjectType(ObjectIdentity('LUXL-POE-MIB', 'luxlPoeConfigInterfaceParamMode', _PORT),_STATE))
+        )
+
+        if errorIndication:
+            self.logger.log("GET_BULK: errorIndicaton | {}".format(errorIndication),5)
+        elif errorStatus:
+            self.logger.log("GET_BULK: errorStatus | {} at {}".format(errorStatus.prettyPrint(),errorIndex and varBinds[int(errorIndex)-1][0] or '?'),5)
+        else:
+            for varBind in varBinds:
+                l.append(varBind)
+        return l
 
     def SNMP_get_one(self,_MIB: str,_OID: str, _INT: int):
         g = getCmd(SnmpEngine(),
@@ -125,13 +141,18 @@ class Luxul(Switch):
             _PORT = int("100000"+str(_PORT))
         elif(len(str(_PORT)) == 2):
             _PORT = int("10000"+str(_PORT))
-
+        
+        varBinds = self.SNMP_set_state('LUXL-POE-MIB','luxlPoeConfigInterfaceParamMode',_PORT,_STATE)
+        join_char = " - "
+        for varBind in varBinds:
+            print(join_char.join([x.prettyPrint() for x in varBind]))
+        '''
         errorIndication, errorStatus, errorIndex, varBinds = next(
             setCmd(SnmpEngine(),
                 UsmUserData(self.snmp_username,authKey=self.snmp_password),
                 UdpTransportTarget((self.ip, self.snmp_port)),
                 ContextData(),
-                ObjectType(ObjectIdentity('LUXL-POE-MIB', 'luxlPoeConfigInterfaceParamMode', _PORT).addAsn1MibSource('file:///Users/michaelhelton/Downloads/LUXL_MIBs_ALL/LUXL-POE-MIB.mib'),_STATE))
+                ObjectType(ObjectIdentity('LUXL-POE-MIB', 'luxlPoeConfigInterfaceParamMode', _PORT),_STATE))
         )
 
         if errorIndication:
@@ -142,6 +163,7 @@ class Luxul(Switch):
         else:
             for varBind in varBinds:
                 print(' = '.join([x.prettyPrint() for x in varBind]))
+        '''
 
     def control_port(self):
         pass
